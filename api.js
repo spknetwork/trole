@@ -5,7 +5,7 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({});
 
 exports.proxy = (req, res) => {
-  const target = config.IPFS_ENDPOINT
+  const target = config.ENDPOINT
   console.log(`Validation success. Proxying request to ${target}`);
 
   proxy.web(req, res, { target }, (error) => {
@@ -60,7 +60,7 @@ function verifySig(msg, sig, keys){
 function getAccount(acc, chain = 'HIVE') {
   return new Promise((res, rej) => {
     if(chain == 'HIVE'){
-    fetch("https://anyx.io", {
+    fetch(config.HIVE_API, {
       body: `{\"jsonrpc\":\"2.0\", \"method\":\"condenser_api.get_accounts\", \"params\":[[\"${acc}\"]], \"id\":1}`,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
