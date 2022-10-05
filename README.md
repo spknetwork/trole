@@ -1,6 +1,6 @@
 # Trole
 
-Trole is a reverse proxy that verifies a challenge is signed by a valid Hive `posting` of `active` key. Initially used for IPFS uploads to log where content comes from and to utilize a blacklist if necessary.
+Trole is a reverse proxy that verifies a structed message is signed by a valid Hive `posting` of `active` key before bridging to a service. Initially used for IPFS uploads to log where content comes from and to utilize a blacklist if necessary.
 
 Trole uses no secrets. It verifies a valid message was signed, this message is `account_name:timecode` the account name is used to query a Hive API to find the public keys to verify the signature, while the timecode expires old signatures. 
 
@@ -61,3 +61,32 @@ server {
 }
 ```
 Run with `pm2`
+
+###
+
+Client Side append the following headers
+
+`account`:`valid-hive-account`
+`nonce`: `Date.now()`
+`sig`:`0123456789abcdef...`
+`chain`: `HIVE` //default value
+
+#### With HiveKeychain
+`window.hive_keychain.requestSignBuffer("disregardfiat","disregardfiat:1000","posting",sig=>{console.log(sig)})`
+
+#### With Key
+Client side signing:
+`https://www.npmjs.com/package/hive-tx`
+```
+const hiveTx = require("hive-tx") || 
+<script src="https://cdn.jsdelivr.net/npm/hive-tx/dist/hive-tx.min.js"></script>
+
+const sig = sign(sha256(`${account}:${nonce}`), key)
+
+function sign (msg, key){
+    const { sha256 } = require( 'hive-tx/helpers/crypto' )
+    const privateKey = hiveTx.PrivateKey.from(key)
+    const message = sha256(msg)
+    return privateKey.sign(message)
+}
+```
