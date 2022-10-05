@@ -66,10 +66,10 @@ Run with `pm2`
 
 Client Side append the following headers
 
-`account`:`valid-hive-account`
-`nonce`: `Date.now()`
-`sig`:`0123456789abcdef...`
-`chain`: `HIVE` //default value
+* `account`:`valid-hive-account`
+* `nonce`: `Date.now()`
+* `sig`:`0123456789abcdef...`
+* `chain`: `HIVE` //default value
 
 #### With HiveKeychain
 `window.hive_keychain.requestSignBuffer("disregardfiat","disregardfiat:1000","posting",sig=>{console.log(sig)})`
