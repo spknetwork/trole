@@ -5,8 +5,9 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({});
 
 exports.proxy = (req, res) => {
+  let account = req.headers.account || req.query.account;
   const target = config.ENDPOINT
-  console.log(`Validation success. Proxying request to ${target}`);
+  console.log(`@${account} validation success. Proxying request to ${target}`);
 
   proxy.web(req, res, { target }, (error) => {
     console.error(error);
