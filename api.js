@@ -45,7 +45,7 @@ function sign (msg, key){
     return privateKey.sign(message)
 }
 
-function verifySig(msg, sig, keys){
+function verifySig(msg, sig, keys, nonce){
     const { sha256 } = require("hive-tx/helpers/crypto");
     const signature = hiveTx.Signature.from(sig)
     const message = sha256(`${msg}:${nonce}`);

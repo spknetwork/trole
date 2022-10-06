@@ -81,7 +81,7 @@ Client side signing:
 const hiveTx = require("hive-tx") || 
 <script src="https://cdn.jsdelivr.net/npm/hive-tx/dist/hive-tx.min.js"></script>
 
-const sig = sign(sha256(`${account}:${nonce}`), key)
+const sig = sign(`${account}:${nonce}`, key)
 
 function sign (msg, key){
     const { sha256 } = require( 'hive-tx/helpers/crypto' )
