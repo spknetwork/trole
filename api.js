@@ -9,8 +9,9 @@ exports.proxy = (req, res) => {
   const target = config.ENDPOINT
   console.log(`@${account} validation success. Proxying request to ${target}`);
 
-  proxy.web(req, res, { target }, (error) => {
+  proxy.web(req, res, { target }, (error, r, e, t) => {
     console.error(error);
+    console.log({r,e,t})
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
