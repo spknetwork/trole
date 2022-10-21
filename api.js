@@ -7,19 +7,24 @@ const proxy = httpProxy.createProxyServer({});
 exports.proxy = (req, res) => {
   let account = req.headers.account || req.query.account;
   const target = config.ENDPOINT
-  console.log(`@${account} validation success. Proxying request to ${target}`);
+  console.log(`@${account} validated`);
 
   proxy.web(req, res, { target }, (error, r, e, t) => {
-    console.error(error);
-    console.log({r,e,t})
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({
-        Error: error.message,
-      })
-    );
+    if(error)console.log('Error: ', error)
   });
 };
+
+proxy.on("proxyRes", function (proxyRes, req, res, a) {
+  console.log(req.headers.account);
+  //console.log(proxyRes)
+  proxyRes.on("data", function (chunk) {
+
+    console.log("Account: " + req.headers.account + " BODY: " + chunk);
+    const json = JSON.parse(chunk)
+    console.log(json)
+  });
+});
+
 
 exports.auth = (req, res, next) => {
 let chain = req.headers.chain

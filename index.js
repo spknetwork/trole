@@ -6,7 +6,7 @@ const cors = require("cors");
 const api = express();
 var http = require("http").Server(api);
 const API = require("./api");
-api.use(cors());
+//api.use(cors());
 api.use(API.auth);
 
 api.all("*", API.proxy);
