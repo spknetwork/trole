@@ -34,7 +34,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
           json.Hash +
           " size: " +
           json.Size,
-          res.headers.account
+          req.headers.account
       );
   });
 });
