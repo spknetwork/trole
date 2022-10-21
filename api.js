@@ -7,18 +7,35 @@ const proxy = httpProxy.createProxyServer({});
 exports.proxy = (req, res) => {
   let account = req.headers.account || req.query.account;
   const target = config.ENDPOINT
-  console.log(`@${account} validated`);
+  if (req.url.split("?")[0] == "/api/v0/add") {
+    req.url = 'api/v0/add?stream-channels=true&pin=false&wrap-with-directory=true&progress=true'
+    req.query = {
+      "stream-channels": "true",
+      pin: "false",
+      "wrap-with-directory": "true",
+      progress: "true",
+    };
+    proxy.web(req, res, { target }, (error, r, e, t) => {
+      if (error) console.log("Error: ", error);
+    });
+  } else res.sendStatus(403);
 
-  proxy.web(req, res, { target }, (error, r, e, t) => {
-    if(error)console.log('Error: ', error)
-  });
 };
 
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
     const json = JSON.parse(chunk);
     //get sig and nonce as well... use it to build a futures contract for payment
-    if(json.Hash != json.Name)console.log("Account: " + req.headers.account + " hash: " + json.Hash + " size: " + json.Size)
+    if (json.Hash != json.Name && json.Size)
+      console.log(
+        "Account: " +
+          req.headers.account +
+          " hash: " +
+          json.Hash +
+          " size: " +
+          json.Size,
+          res.headers.account
+      );
   });
 });
 
