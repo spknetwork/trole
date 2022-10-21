@@ -17,6 +17,8 @@ services:
     restart: unless-stopped
     ports:
       - "5050:5050"
+    networks:
+      - default
     environment:
       - PORT=5050
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
