@@ -171,6 +171,7 @@ function updatePins(data) {
       data,
       (err, res) => {
         if (err) {
+          console.log(data)
           console.log(`Error - Failed to insert data into pins`);
           e(err);
         } else {
