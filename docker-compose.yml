@@ -21,6 +21,8 @@ services:
       - ENDPOINT=host.docker.internal:5001
     ports:
       - '5050:5050'
+    extra_hosts:
+      - host.docker.internal:host-gateway
     logging:
       options:
         max-size: "2m"
