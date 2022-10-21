@@ -18,7 +18,7 @@ services:
     environment:
       - PORT=5050
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
-      - ENDPOINT=host.docker.internal
+      - ENDPOINT=127.0.0.1
       - ENDPORT=5001
     ports:
       - '5050:5050'
