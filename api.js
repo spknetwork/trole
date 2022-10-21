@@ -70,7 +70,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
     data = [
       json.Hash,
       parseInt(json.Size),
-      req.headers.nonce,
+      parseInt(req.headers.nonce),
       req.headers.account,
       req.headers.sig,
       Date.now() + 86400000,
