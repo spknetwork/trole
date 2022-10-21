@@ -15,13 +15,10 @@ exports.proxy = (req, res) => {
 };
 
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
-  console.log(req.headers.account);
-  //console.log(proxyRes)
   proxyRes.on("data", function (chunk) {
-
-    console.log("Account: " + req.headers.account + " BODY: " + chunk);
-    const json = JSON.parse(chunk)
-    console.log(json)
+    const json = JSON.parse(chunk);
+    //get sig and nonce as well... use it to build a futures contract for payment
+    if(json.Hash != json.Name)console.log("Account: " + req.headers.account + " hash: " + json.Hash + " size: " + json.Size)
   });
 });
 
