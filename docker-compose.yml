@@ -20,12 +20,10 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
       - ENDPOINT=127.0.0.1
       - ENDPORT=5001
-    ports:
-      - '5050:5050'
+    # ports:
+    #   - '5050:5050'
     extra_hosts:
-      - host.docker.internal:127.0.0.1
-      #- host.docker.internal:host-gateway
-      # windows and mac recipe
+      - "host.docker.internal:127.0.0.1"
     logging:
       options:
         max-size: "2m"
