@@ -57,29 +57,21 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
     const json = JSON.parse(chunk);
     //get sig and nonce as well... use it to build a futures contract for payment
-    if (json.Size)
-      console.log(
-        "Account: " +
-        req.headers.account +
-        " hash: " +
-        json.Hash +
-        " size: " +
-        json.Size,
-        req.headers.account
-      );
-    data = [
-      json.Hash,
-      parseInt(json.Size),
-      parseInt(req.headers.nonce),
-      req.headers.account,
-      req.headers.sig,
-      Date.now() + 86400000,
-      "",
-      true,
-      0,
-      0
-    ];
-    updatePins(data)
+    if (json.Size){
+      const data = [
+        json.Hash,
+        parseInt(json.Size),
+        parseInt(req.headers.nonce),
+        req.headers.account,
+        req.headers.sig,
+        Date.now() + 86400000,
+        "",
+        true,
+        0,
+        0
+      ];
+      updatePins(data)
+    }
   });
 });
 
