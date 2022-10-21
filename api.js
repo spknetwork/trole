@@ -37,7 +37,6 @@ for (var table in config.tables.db) {
 }
 
 exports.proxy = (req, res) => {
-  console.log(config.ENDPOINT);
   const target = config.ENDPOINT + ':' + config.ENDPORT
   if (req.url.split("?")[0] == "/api/v0/add") {
     req.url = 'api/v0/add?stream-channels=true&pin=true&wrap-with-directory=true&progress=true'

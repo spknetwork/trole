@@ -19,8 +19,8 @@ services:
     environment:
       - PORT=${API_PORT}
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/postgres?sslmode=disable
-      - ENDPOINT=localhost
-      - ENDPORT=5001
+      - ENDPOINT=${ENDPOINT}
+      - ENDPORT=${ENDPORT}
     network_mode: "host"
     # ports:
     #   - '5050:5050'
