@@ -1,0 +1,33 @@
+version: '3.3'
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    # ports:
+    #   - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+  api:
+    depends_on:
+      - db
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      - PORT=5050
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+    logging:
+      options:
+        max-size: "2m"
+        max-file: "3"
+    # stdin_open: true
+    # tty: true
+    stdin_open: true
+    tty: true
+volumes:
+  db:
+    driver: local

@@ -10,11 +10,11 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.1",
     "hive-tx": "^4.1.1",
     "http-proxy": "^1.18.1",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "pg": "^8.8.0"
   }
 }
