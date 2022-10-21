@@ -3,7 +3,7 @@ const express = require("express");
 const api = express();
 var http = require("http").Server(api);
 const API = require("./api");
-
+console.log(config.dbcs)
 api.use(API.auth);
 api.all("*", API.proxy);
 

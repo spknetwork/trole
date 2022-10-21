@@ -6,8 +6,9 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    ports:
-      - '5432:5432'
+    network_mode: "host"
+    # ports:
+    #   - '5432:5432'
     volumes: 
       - db:/var/lib/postgresql/data
   api:
@@ -16,12 +17,13 @@ services:
     build: .
     restart: unless-stopped
     environment:
-      - PORT=5050
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/postgres?sslmode=disable
-      - ENDPOINT=127.0.0.1
+      - PORT=${API_PORT}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/postgres?sslmode=disable
+      - ENDPOINT=localhost
       - ENDPORT=5001
-    ports:
-      - '5050:5050'
+    network_mode: "host"
+    # ports:
+    #   - '5050:5050'
     logging:
       options:
         max-size: "2m"
