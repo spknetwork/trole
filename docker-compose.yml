@@ -4,10 +4,10 @@ services:
     image: postgres:14.1-alpine
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    # ports:
-    #   - '5432:5432'
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - '5432:5432'
     volumes: 
       - db:/var/lib/postgresql/data
   api:
@@ -17,13 +17,11 @@ services:
     restart: unless-stopped
     environment:
       - PORT=5050
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/postgres?sslmode=disable
       - ENDPOINT=127.0.0.1
       - ENDPORT=5001
     ports:
       - '5050:5050'
-    extra_hosts:
-      - "host.docker.internal:127.0.0.1"
     logging:
       options:
         max-size: "2m"
