@@ -2,11 +2,15 @@ require("dotenv").config();
 const ENV = process.env;
 const dbcs = ENV.DATABASE_URL || "";
 const port = ENV.PORT || 5050;
+const account = ENV.account || '';
+const posting_key = ENV.posting_key || ''
+const active_key = ENV.active_key || ''
 const posting = ENV.posting || true
 const active = ENV.active || true;
 const ENDPOINT = ENV.ENDPOINT || "localhost";
 const ENDPORT = ENV.ENDPORT || 5001
 const HIVE_API = ENV.HIVE_API || "https://anyx.io";
+const SPK_API = ENV.SPK_API || "https://spkinstant.hivehoneycomb.com";
 
 const tables = {
   db:{
@@ -63,9 +67,13 @@ const config = {
   posting,
   active,
   dbcs,
+  account,
+  active_key,
+  posting_key,
   ENDPOINT,
   ENDPORT,
   HIVE_API,
+  SPK_API,
   tables
 };
 

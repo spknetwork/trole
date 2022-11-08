@@ -4,6 +4,7 @@ const config = require('./config')
 const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({});
 const { Pool } = require("pg");
+var crypto = require("crypto");
 
 const pool = new Pool({
   connectionString: config.dbcs,
@@ -49,9 +50,35 @@ exports.proxy = (req, res) => {
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) console.log("Error: ", error);
     });
+  } else if (req.url.split("?")[0] == "/api/auth") {
+    res.setHeader("Content-Type", "application/json");
+    res.send(
+      JSON.stringify(
+        {
+          hive_account: config.account,
+          
+        },
+        null,
+        3
+      )
+    );
   } else res.sendStatus(403);
 
 };
+
+proxy.on("proxyReq", function (proxyReq, req, res, options) {
+  var hash = crypto.createHash("md5"), i = 0
+  hash.setEncoding("hex");
+  proxyReq.on("data", function(chunk){
+    console.log(i, chunk)
+    i++
+    hash.update(chunk)
+  });
+  proxyReq.on('end', function(){
+    hash.end()
+    console.log('end',hash.read())
+  });
+});
 
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
@@ -199,3 +226,12 @@ function initTable(struct) {
     );
   })
 }
+
+var HiveMirror = require('hive-tx')
+HiveMirror.config.node = "https://api.fake.openhive.network";
+HiveMirror.config.chain_id =
+  "42";
+HiveMirror.config.address_prefix = "STM";
+HiveMirror.call("condenser_api.get_accounts", [["mahdiyari"]]).then((res) =>
+  console.log(res)
+);
