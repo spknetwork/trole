@@ -40,14 +40,14 @@ var crypto = require("crypto");
 exports.proxy = (req, res) => {
   const target = config.ENDPOINT + ':' + config.ENDPORT
   if (req.url.split("?")[0] == "/api/v0/add") {
-    req.url = 'api/v0/add?stream-channels=true&pin=true&wrap-with-directory=true&progress=true'
+    req.url = 'api/v0/add?stream-channels=true&pin=false&wrap-with-directory=false&progress=true'
     req.query = {
       "stream-channels": "true",
-      pin: "true",
-      "wrap-with-directory": "true",
+      pin: "false",
+      "wrap-with-directory": "false",
       progress: "true",
     };
-    buildHash(req, req.query.account, req.query.md5)
+    //buildHash(req, req.query.account, req.query.nonce)
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) console.log("Proxy Web: ", error);
     });
