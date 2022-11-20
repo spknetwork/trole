@@ -47,7 +47,7 @@ exports.proxy = (req, res) => {
       "wrap-with-directory": "false",
       progress: "true",
     };
-    //buildHash(req, req.query.account, req.query.nonce)
+    //buildHash(req, req.query.account, req.query.cid)
     console.log("authed and proxied");
     console.log(req)
     proxy.web(req, res, { target }, (error, r, e, t) => {
@@ -104,19 +104,19 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
     
     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
     try{ console.log(chunk.toString()) } catch (e) {console.log(e)}
-    //get sig and nonce as well... use it to build a futures contract for payment
+    //get sig and cid as well... use it to build a futures contract for payment
     if (json && json.Size){
       const data = [
         json.Hash,
         parseInt(json.Size),
-        parseInt(req.headers.nonce),
-        req.headers.account,
-        req.headers.sig,
+        parseInt(req.query.cid),
+        req.query.account,
+        req.query.sig,
         Date.now() + 86400000,
         "",
         true,
         0,
-        0
+        0,
       ];
       console.log(data)
       //updatePins(data)
@@ -126,15 +126,15 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
 
 
 exports.auth = (req, res, next) => {
-  let chain = req.headers.chain
-  let account = req.headers.account || req.query.account;
-  let sig = req.headers.sig || req.query.sig;
-  let nonce = req.headers.nonce || req.query.nonce;
+  let chain = req.query.chain;
+  let account = req.query.account;
+  let sig = req.query.sig;
+  let cid = req.query.cid;
   if (!account || !sig) return res.status(401).send("Access denied. Signature Mismatch");
   getAccount(account, chain)
     .then((r) => {
       if (r[0]) return res.status(401).send(`Access denied. ${r[1]}`);
-      const challenge = verifySig(account, sig, r[1], nonce);
+      const challenge = verifySig(account, sig, r[1], cid);
       if (!challenge) return res.status(401).send("Access denied. Invalid Signature");
       else next();
     })
@@ -150,10 +150,10 @@ function sign(msg, key) {
   return privateKey.sign(message)
 }
 
-function verifySig(msg, sig, keys, nonce) {
+function verifySig(msg, sig, keys, cid) {
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
-  const message = sha256(`${msg}:${nonce}`);
+  const message = sha256(`${msg}:${cid}`);
   for (var i = 0; i < keys.length; i++) {
     const publicKey = hiveTx.PublicKey.from(keys[i][0]);
     const verify = publicKey.verify(message, signature);
