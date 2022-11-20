@@ -47,6 +47,7 @@ exports.proxy = (req, res) => {
       "wrap-with-directory": "false",
       progress: "true",
     };
+    req.headers.origin = ""
     //buildHash(req, req.query.account, req.query.cid)
     console.log("authed and proxied");
     console.log(req)
@@ -109,7 +110,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
       const data = [
         json.Hash,
         parseInt(json.Size),
-        parseInt(req.query.cid),
+        req.query.cid,
         req.query.account,
         req.query.sig,
         Date.now() + 86400000,
@@ -118,6 +119,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
         0,
         0,
       ];
+
       console.log(data)
       //updatePins(data)
     }
