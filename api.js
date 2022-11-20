@@ -6,36 +6,36 @@ const proxy = httpProxy.createProxyServer({});
 const { Pool } = require("pg");
 var crypto = require("crypto");
 
-const pool = new Pool({
-  connectionString: config.dbcs,
-});
-for (var table in config.tables.db) {
-  pool.query(`SELECT * FROM ${table} LIMIT 1`, [], (e, r) => {
-    if (e) {
-      console.log(`Building table: ${table}`)
-      initTable(config.tables.db[table]);
-    } else {
-      console.log(`${table} already exists.`);
-      var columns = Object.keys(config.tables.db[table].table);
-      for (var i = 0; i < r.fields.length; i++) {
-        if (columns.indexOf(r.fields[i].name) >= 0) {
-          columns.splice(columns.indexOf(r.fields[i].name), 1);
-        }
-      }
-      for (var i = 0; i < columns.length; i++) {
-        pool.query(
-          `ALTER TABLE ${table} ADD ${columns[i]} ${config.tables.db[table].table[columns[i]].type
-          };`,
-          [],
-          (e, r) => {
-            if (e) console.log(e)
-            else console.log(`Added column ${columns[i]} to ${table}`)
-          }
-        );
-      }
-    }
-  });
-}
+// const pool = new Pool({
+//   connectionString: config.dbcs,
+// });
+// for (var table in config.tables.db) {
+//   pool.query(`SELECT * FROM ${table} LIMIT 1`, [], (e, r) => {
+//     if (e) {
+//       console.log(`Building table: ${table}`)
+//       initTable(config.tables.db[table]);
+//     } else {
+//       console.log(`${table} already exists.`);
+//       var columns = Object.keys(config.tables.db[table].table);
+//       for (var i = 0; i < r.fields.length; i++) {
+//         if (columns.indexOf(r.fields[i].name) >= 0) {
+//           columns.splice(columns.indexOf(r.fields[i].name), 1);
+//         }
+//       }
+//       for (var i = 0; i < columns.length; i++) {
+//         pool.query(
+//           `ALTER TABLE ${table} ADD ${columns[i]} ${config.tables.db[table].table[columns[i]].type
+//           };`,
+//           [],
+//           (e, r) => {
+//             if (e) console.log(e)
+//             else console.log(`Added column ${columns[i]} to ${table}`)
+//           }
+//         );
+//       }
+//     }
+//   });
+// }
 
 exports.proxy = (req, res) => {
   const target = config.ENDPOINT + ':' + config.ENDPORT
@@ -47,6 +47,7 @@ exports.proxy = (req, res) => {
       "wrap-with-directory": "true",
       progress: "true",
     };
+    buildHash(req.rawBody, req.headers.account, req.headers.hash)
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) console.log("Error: ", error);
     });
@@ -80,6 +81,14 @@ proxy.on("proxyReq", function (proxyReq, req, res, options) {
   });
 });
 
+function buildHash(rawBody, account, expectedHash = 'nothing'){
+  return new Promise((r,e)=>{
+    var hash = crypto.createHash("md5");
+    hash.setEncoding("hex");
+    
+  })
+}
+
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
     const json = JSON.parse(chunk);
@@ -97,7 +106,8 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
         0,
         0
       ];
-      updatePins(data)
+      console.log(data)
+      //updatePins(data)
     }
   });
 });
@@ -190,7 +200,7 @@ function updatePins(data) {
       data,
       (err, res) => {
         if (err) {
-          console.log(data)
+          //console.log(data)
           console.log(`Error - Failed to insert data into pins`);
           e(err);
         } else {
@@ -227,11 +237,11 @@ function initTable(struct) {
   })
 }
 
-var HiveMirror = require('hive-tx')
-HiveMirror.config.node = "https://api.fake.openhive.network";
-HiveMirror.config.chain_id =
-  "42";
-HiveMirror.config.address_prefix = "STM";
-HiveMirror.call("condenser_api.get_accounts", [["mahdiyari"]]).then((res) =>
-  console.log(res)
-);
+// var HiveMirror = require('hive-tx')
+// HiveMirror.config.node = "https://api.fake.openhive.network";
+// HiveMirror.config.chain_id =
+//   "42";
+// HiveMirror.config.address_prefix = "STM";
+// HiveMirror.call("condenser_api.get_accounts", [["mahdiyari"]]).then((res) =>
+//   console.log(res)
+// );
