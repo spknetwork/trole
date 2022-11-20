@@ -47,7 +47,7 @@ exports.proxy = (req, res) => {
       "wrap-with-directory": "true",
       progress: "true",
     };
-    buildHash(req.rawBody, req.headers.account, req.headers.hash)
+    buildHash(req, req.query.account, req.query.md5)
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) console.log("Proxy Web: ", error);
     });
