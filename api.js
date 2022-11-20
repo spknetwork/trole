@@ -49,7 +49,10 @@ exports.proxy = (req, res) => {
     };
     //buildHash(req, req.query.account, req.query.nonce)
     proxy.web(req, res, { target }, (error, r, e, t) => {
-      if (error) console.log("Proxy Web: ", error);
+      if (error) {
+        console.log("Proxy Web: ", error);
+        res.sendStatus(403);
+      }
     });
   } else if (req.url.split("?")[0] == "/api/auth") {
     res.setHeader("Content-Type", "application/json");
