@@ -51,7 +51,6 @@ exports.proxy = (req, res) => {
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) {
         console.log("Proxy Web: ", error);
-        res.sendStatus(501);
       }
     });
   } else if (req.url.split("?")[0] == "/api/auth") {
