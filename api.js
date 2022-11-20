@@ -49,6 +49,7 @@ exports.proxy = (req, res) => {
     };
     //buildHash(req, req.query.account, req.query.nonce)
     console.log("authed and proxied");
+    console.log(req)
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) {
         console.log("Proxy Web: ", error);
