@@ -65,7 +65,11 @@ exports.proxy = (req, res) => {
         3
       )
     );
-  } else res.sendStatus(403);
+    console.log("huh?");
+  } else {
+    console.log('else')
+    res.sendStatus(403);
+  }
 
 };
 
