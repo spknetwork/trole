@@ -97,6 +97,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
     var json 
     
     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
+    try{ console.log(chunk.toString()) } catch (e) {console.log(e)}
     //get sig and nonce as well... use it to build a futures contract for payment
     if (json && json.Size){
       const data = [
