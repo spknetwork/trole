@@ -91,6 +91,7 @@ function buildHash(rawBody, account, expectedHash = 'nothing'){
 
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
+    console.log(chunk)
     const json = JSON.parse(chunk);
     //get sig and nonce as well... use it to build a futures contract for payment
     if (json.Size){
@@ -118,7 +119,6 @@ exports.auth = (req, res, next) => {
   let account = req.headers.account || req.query.account;
   let sig = req.headers.sig || req.query.sig;
   let nonce = req.headers.nonce || req.query.nonce;
-  if (nonce < Date.now() - 604800000 || nonce > Date.now() + 3600000) return res.status(401).send("Access denied. Signature Expired");
   if (!account || !sig) return res.status(401).send("Access denied. Signature Mismatch");
   getAccount(account, chain)
     .then((r) => {
