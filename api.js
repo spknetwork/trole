@@ -49,7 +49,7 @@ exports.proxy = (req, res) => {
     };
     buildHash(req.rawBody, req.headers.account, req.headers.hash)
     proxy.web(req, res, { target }, (error, r, e, t) => {
-      if (error) console.log("Error: ", error);
+      if (error) console.log("Proxy Web: ", error);
     });
   } else if (req.url.split("?")[0] == "/api/auth") {
     res.setHeader("Content-Type", "application/json");
@@ -85,7 +85,7 @@ function buildHash(rawBody, account, expectedHash = 'nothing'){
   return new Promise((r,e)=>{
     var hash = crypto.createHash("md5");
     hash.setEncoding("hex");
-    
+    console.log({ rawBody, account, expectedHash });
   })
 }
 
