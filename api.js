@@ -51,7 +51,7 @@ exports.proxy = (req, res) => {
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) {
         console.log("Proxy Web: ", error);
-        res.sendStatus(403);
+        res.sendStatus(501);
       }
     });
   } else if (req.url.split("?")[0] == "/api/auth") {
@@ -99,7 +99,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
     
     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
     //get sig and nonce as well... use it to build a futures contract for payment
-    if (json.Size){
+    if (json && json.Size){
       const data = [
         json.Hash,
         parseInt(json.Size),
