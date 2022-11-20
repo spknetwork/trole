@@ -92,7 +92,9 @@ function buildHash(rawBody, account, expectedHash = 'nothing'){
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
     console.log(chunk)
-    const json = JSON.parse(chunk);
+    var json 
+    
+    try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
     //get sig and nonce as well... use it to build a futures contract for payment
     if (json.Size){
       const data = [
