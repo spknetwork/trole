@@ -1,6 +1,8 @@
 # Trole
 
-Trole is a reverse proxy that verifies a structed message is signed by a valid Hive `posting` of `active` key before bridging to a service. Initially used for IPFS uploads to log where content comes from and to utilize a blacklist if necessary.
+Trolls control the bridges. Trole does that based on hive role.
+
+Trole is a reverse proxy that verifies a structed message is signed by a valid Hive `posting` or `active` key before bridging to a service. 
 
 Trole uses no secrets. It verifies a valid message was signed, this message is `account_name:timecode` the account name is used to query a Hive API to find the public keys to verify the signature, while the timecode expires old signatures. 
 

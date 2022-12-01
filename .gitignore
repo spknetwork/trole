@@ -93,6 +93,7 @@ build/Release
 node_modules/
 jspm_packages/
 kubo/
+README.uninstall
 
 # Typescript v1 declaration files
 typings/

@@ -45,6 +45,8 @@ sudo apt update &> /dev/null
 #     echo -e "${GREEN}Docker-Compose installed${NC}"
 # fi
 
+# hive account active key will be required as well
+
 # Get configs
 if test -f .env;
 then
@@ -133,6 +135,7 @@ then
 else
     echo -e "Building IPFS Service${NC}"
     echo -e IPFSSERVICE="[Unit]\nDescription=ipfs daemon\n[Service]\nExecStart=/usr/local/bin/ipfs daemon\nRestart=always\nUser=${whoami}\nGroup=${whoami}\nEnvironment=”IPFS_PATH=/home/${whoami}/data/ipfs”\n[Install]\nWantedBy=multi-user.target" | sudo tee $IPFS_SERVICE_FILE    
+    sudo systemctl daemon-reload 
 fi
 
 ipfs_is_active=$(sudo systemctl is-active ipfs)
@@ -217,6 +220,187 @@ fi
 
 # Install Postgres
 
+# pg_is_active=$(sudo systemctl is-active postgres)
+# if [ $pg_is_active = 'active' ];
+# then
+#     echo Postgres is running
+# else
+
+#     sudo apt install libreadline-dev zlib1g-dev -y
+
+#     STARTDIR=$(pwd)
+#     BUILDDIR=/tmp/$USER-pg-build
+#     INSTALLDIR=$HOME/pgsql
+#     PGVERSION=12.5
+#     SOURCEPKG=postgresql-$PGVERSION.tar.bz2
+#     CONFIGUREOPTIONS="--with-openssl"
+
+#     # define PROFILEFILE
+
+#     SHELLNAME=$(basename "$SHELL")
+#     if [ "x$2" != "x" ]; then
+#     PROFILEFILE=$HOME/$2
+#     touch "$PROFILEFILE"
+#     # for example: .bash_profile, .profile or I_want_to_see_what_would_be_added
+#     echo "Using $2 to save environment variables."
+#     elif [ "$SHELLNAME" = "bash" ]; then
+#     PROFILEFILE=$HOME/.bashrc
+#     echo "You are currently using bash as your shell, so defaulting to .bashrc for environment variables."
+#     elif [ "$SHELLNAME" = "zsh" ]; then
+#     PROFILEFILE=$HOME/.zshrc
+#     echo "You are currently using zsh as your shell, so defaulting to .zshrc for environment variables."
+#     elif [ "$SHELLNAME" = "csh" ] || [ "$SHELLNAME" = "tcsh" ]; then
+#     PROFILEFILE=$HOME/pg-shellvariables
+#     echo "This script does not automatically add variables with csh syntax to your shell configuration."
+#     echo "Please add manually variables from $PROFILEFILE to your .cshrc using csh syntax."
+#     else
+#     PROFILEFILE=$HOME/.shrc
+#     echo "Defaulting to .shrc for environment variables, if this is incorrect, please copy these manually to correct file."
+#     fi
+
+#     echo "
+#     Building in $BUILDDIR
+#     Installing to $INSTALLDIR
+#     Adding environment variables to $PROFILEFILE
+#     Build should take about 5 minutes."
+#     sleep 5
+
+#     mkdir -p "$BUILDDIR"
+#     cd /tmp || exit
+#     curl -O https://ftp.postgresql.org/pub/source/v$PGVERSION/$SOURCEPKG
+#     PGFILE=$(realpath $SOURCEPKG)
+#     cd "$BUILDDIR" || exit
+
+#     SOURCEDIR=$(basename "$PGFILE" .tar.bz2)
+
+#     tar -xjf "$PGFILE"
+#     cd "$SOURCEDIR" || exit
+#     ./configure --prefix="$INSTALLDIR" $CONFIGUREOPTIONS
+#     echo $?
+#     if [ $? -gt 0 ];
+#     then
+#     exit 1
+#     fi
+#     make
+#     if [ $? -gt 0 ];
+#     then
+#     exit 1
+#     fi
+#     make install-strip
+#     if [ $? -gt 0 ];
+#     then
+#     exit 1
+#     fi
+
+#     # update profile file
+#     env_vars="export LD_LIBRARY_PATH=$INSTALLDIR/lib
+#     export PATH=$INSTALLDIR/bin:\$PATH
+#     export PGHOST=$INSTALLDIR/sock
+#     export PGDATA=$INSTALLDIR/data"
+
+#     if [ -f "$PROFILEFILE" ]; then
+#     if grep -q "$INSTALLDIR" "$PROFILEFILE" 2>/dev/null; then
+#     echo "
+#     $PROFILEFILE not updated, $INSTALLDIR is already mentioned there, so assuming this is reinstall and it is up to date.
+#     "
+#     else
+#     echo "$env_vars" >> "$PROFILEFILE"
+#     echo "
+#     Added environment variables to $PROFILEFILE
+#     "
+#     fi
+#     else
+#     echo "$PROFILEFILE does not exist!"
+#     echo "
+#     Added environment variables to $INSTALLDIR/README.environment, copy these manually to correct location.
+#     "
+#     fi
+
+#     echo "$env_vars" >> "$INSTALLDIR/README.environment"
+
+#     # modify default config to use only sockets
+
+#     mv "$INSTALLDIR/share/postgresql.conf.sample" "$INSTALLDIR/share/postgresql.conf.sample.orig"
+#     sed -e "s|#listen_addresses = 'localhost'|listen_addresses = ''|" \
+#     -e "s|#unix_socket_directories = '/tmp'|unix_socket_directories = '$INSTALLDIR/sock'|" \
+#     -e 's|#unix_socket_permissions = 0777|unix_socket_permissions = 0700|' \
+#     < "$INSTALLDIR/share/postgresql.conf.sample.orig" > "$INSTALLDIR/share/postgresql.conf.sample"
+
+#     mkdir "$INSTALLDIR/sock"
+#     chmod 0700 "$INSTALLDIR/sock"
+
+#     # move to where we started and clean up
+
+#     cd "$STARTDIR" || exit
+#     rm -R "$BUILDDIR"
+
+#     # initdb and createdb
+
+#     echo "Creating database, please wait."
+
+#     "$INSTALLDIR/bin/initdb" --auth-local=trust --auth-host=reject -D "$INSTALLDIR/data" > /dev/null
+#     "$INSTALLDIR/bin/pg_ctl" -s -D "$INSTALLDIR/data" -l "$INSTALLDIR/createdb-logfile" start
+#     "$INSTALLDIR/bin/createdb" -h "$INSTALLDIR/sock" "$USER"
+#     "$INSTALLDIR/bin/pg_ctl" -s -D "$INSTALLDIR/data" stop
+
+#     echo "
+#     ******
+#     You may need to start new terminal (or relogin) for environment variables 
+#     to update.
+#     When it is running, you can connect to database in different terminal with 
+#     command:
+#         psql
+#     When you need to connect to database from code, use socket in 
+#     $INSTALLDIR/sock 
+#     with default database name and no need to give username or password. Please 
+#     do not hardcode this into your code, this connection will only work for you.
+#     ******"
+
+#     # create file with variables
+
+#     echo "
+#     data directory (PGDATA): $INSTALLDIR/data
+#     socket directory (PGHOST): $INSTALLDIR/sock
+#     database name: $USER
+#     " > "$INSTALLDIR/README.variables"
+
+#     PG_SERVICE_FILE=/lib/systemd/system/postgres.service
+#     if test -f "$PG_SERVICE_FILE";
+#     then
+#         echo -e "${GREEN}Postgres service exists${NC}"
+#     else
+#         echo -e "Installing Postgres Service"
+#         echo -e PG_SERVICE="[Unit]\nDescription=postgres\n[Service]\nExecStart=/home/${whoami}/pgsql/bin/pg_ctl start -D /home/${whoami}/pgsql/data\nExecStop=/home/${whoami}/pgsql/bin/pg_ctl stop\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $PG_SERVICE_FILE
+#         sudo systemctl daemon-reload 
+#     fi
+
+#     pg_is_active=$(sudo systemctl is-active postgres)
+#     if [ $pg_is_active = 'active' ];
+#     then
+#         echo -e "${GREEN}Postgres is running${NC}"
+#     else
+#         echo 'Starting Postgres'
+#         sudo systemctl start postgres
+#     fi
+
+#     pg_is_enabled=$(sudo systemctl is-enabled postgres)
+#     if [ $pg_is_enabled = 'enabled' ];
+#     then
+#         echo -e "${GREEN}Postgres is set to auto-start${NC}"
+#     else
+#         echo 'Enabling Postgres auto-start'
+#         sudo systemctl enable postgres
+#     fi
+
+#     pg_is_active=$(sudo systemctl is-active postgres)
+#     if [ $pg_is_active != 'active' ];
+#     then
+#         echo -e "${RED}Postgres failed to start${NC}"
+#         exit
+#     else
+#         echo Postgres is running
+#     fi
+# fi
 # Install Trole
 
 NODE_PACKAGES=node_modules
@@ -266,4 +450,18 @@ else
 fi
 
 # install spk node?
+
+# Uninstall Directions
+echo "
+<<Uninstall:
+1) If you want to save your postgress database contents, move $INSTALLDIR/data
+   out of $INSTALLDIR.
+2) Delete entire $INSTALLDIR.
+3) Remove lines mentioning pgsql with LD_LIBRARY_PATH, PATH, PGHOST and
+   PGDATA at or near the end of your $PROFILEFILE 
+   (or where ever you have added them manually)
+Uninstall
+INSTALLDIR=$INSTALLDIR
+PROFILEFILE=$PROFILEFILE
+" > "README.uninstall"
 exit
