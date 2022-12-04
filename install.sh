@@ -24,6 +24,40 @@ fi
 
 sudo apt update &> /dev/null
 
+# install node
+
+if ! command -v node > /dev/null
+then
+    curl -s https://deb.nodesource.com/setup_16.x | sudo bash
+    sudo apt install nodejs -y
+fi
+
+if ! command -v npm > /dev/null
+then
+    sudo apt install npm -y
+fi
+
+# Install node for Trole
+
+NODE_VERSION=$(node -v | cut -f1 -d.)
+if [ ${NODE_VERSION/v} -lt 14 ];
+then
+    echo -e "${RED}NodeJS version 14 or higher is Required${NC}"
+    echo -e "Ensure node -v is version 14 or higher and run this script again."
+    exit
+fi
+
+# Install Trole
+
+NODE_PACKAGES=node_modules
+if test -d "$NODE_PACKAGES";
+then
+    echo -e "${GREEN}Trole is installed${NC}"
+else
+    echo -e "Installing Trole"
+    npm i
+fi
+
 # if ! command -v docker > /dev/null
 # then
 #     echo Installing Docker
@@ -56,13 +90,58 @@ then
     then
         echo What is your domain name? -dlux.io
         read DOMAIN
-        echo "DOMAIN=${DOMAIN}" | tee -a .env 
+        echo "DOMAIN=${DOMAIN}" | tee -a .env
+    else
+        echo "DOMAIN=${DOMAIN}"
     fi
     if [ -z "$ACCOUNT" ];
     then
         echo What is your HIVE account name? dlux-io
         read ACCOUNT
-        echo "ACCOUNT=${ACCOUNT}" | tee -a .env 
+        echo "ACCOUNT=${ACCOUNT}" | tee -a .env
+    else
+        echo "ACCOUNT=${ACCOUNT}"
+    fi
+    if [ -z "$ACTIVE" ];
+    then
+        echo "What is the ACTIVE key for $ACCOUNT"
+        read ACTIVE
+        echo "ACTIVE=${ACTIVE}" | tee -a .env
+    else
+        echo "ACTIVE=${ACTIVE}" | cut -b 1-10
+    fi
+    if [ -z "$SPKPRIV" ];
+    then
+        echo "Please input any existing SPK Keys, or generate a new keypair..."
+        while true; do
+            read -p "Do you have an existing SPK keypair? " yn
+            case $yn in
+                [Yy]* ) KEY_GEN=true ; break;;
+                [Nn]* ) KEY_PROMPT=true ; break;;
+                * ) echo "Please answer yes or no.";;
+            esac
+        done
+    else
+        KEY_PROMPT=false
+        echo "SPKPUB=${SPKPUB}"
+        echo "SPKPRIV=${SPKPRIV}" | cut -b 1-11
+    fi
+    if [ -z "$KEY_PROMPT" ];
+        then
+            echo "What is the Private SPK key for $ACCOUNT"
+            read SPKPRIV
+            echo "SPKPRIV=${SPKPRIV}" | tee -a .env 
+            echo "What is the Public SPK key for $ACCOUNT"
+            read SPKPUB
+            echo "SPKPUB=${SPKPUB}" | tee -a .env
+        elif [ $KEY_PROMPT = true ]
+            then
+                KEY_PAIR=$(node generate_key_pair.js)
+                echo $KEY_PAIR
+                SPKPRIV=$(echo $KEY_PAIR | cut -d " " -f1)
+                SPKPUB=$(echo $KEY_PAIR | cut -d " " -f2)
+                echo "SPKPRIV=${SPKPRIV}" | tee -a .env 
+                echo "SPKPUB=${SPKPUB}" | tee -a .env
     fi
     if [ -z "$API_PORT" ];
     then
@@ -197,220 +276,39 @@ else
     echo -e "${GREEN}Caddy is running${NC}"
 fi
 
-if ! command -v node > /dev/null
-then
-    curl -s https://deb.nodesource.com/setup_16.x | sudo bash
-    sudo apt install nodejs -y
-fi
-
-if ! command -v npm > /dev/null
-then
-    sudo apt install npm -y
-fi
-
-# Install node for Trol
-
-NODE_VERSION=$(node -v | cut -f1 -d.)
-if [ ${NODE_VERSION/v} -lt 14 ];
-then
-    echo -e "${RED}NodeJS version 14 or higher is Required${NC}"
-    echo -e "Ensure node -v is version 14 or higher and run this script again."
-    exit
-fi
-
 # Install Postgres
 
-# pg_is_active=$(sudo systemctl is-active postgres)
-# if [ $pg_is_active = 'active' ];
-# then
-#     echo Postgres is running
-# else
-
-#     sudo apt install libreadline-dev zlib1g-dev -y
-
-#     STARTDIR=$(pwd)
-#     BUILDDIR=/tmp/$USER-pg-build
-#     INSTALLDIR=$HOME/pgsql
-#     PGVERSION=12.5
-#     SOURCEPKG=postgresql-$PGVERSION.tar.bz2
-#     CONFIGUREOPTIONS="--with-openssl"
-
-#     # define PROFILEFILE
-
-#     SHELLNAME=$(basename "$SHELL")
-#     if [ "x$2" != "x" ]; then
-#     PROFILEFILE=$HOME/$2
-#     touch "$PROFILEFILE"
-#     # for example: .bash_profile, .profile or I_want_to_see_what_would_be_added
-#     echo "Using $2 to save environment variables."
-#     elif [ "$SHELLNAME" = "bash" ]; then
-#     PROFILEFILE=$HOME/.bashrc
-#     echo "You are currently using bash as your shell, so defaulting to .bashrc for environment variables."
-#     elif [ "$SHELLNAME" = "zsh" ]; then
-#     PROFILEFILE=$HOME/.zshrc
-#     echo "You are currently using zsh as your shell, so defaulting to .zshrc for environment variables."
-#     elif [ "$SHELLNAME" = "csh" ] || [ "$SHELLNAME" = "tcsh" ]; then
-#     PROFILEFILE=$HOME/pg-shellvariables
-#     echo "This script does not automatically add variables with csh syntax to your shell configuration."
-#     echo "Please add manually variables from $PROFILEFILE to your .cshrc using csh syntax."
-#     else
-#     PROFILEFILE=$HOME/.shrc
-#     echo "Defaulting to .shrc for environment variables, if this is incorrect, please copy these manually to correct file."
-#     fi
-
-#     echo "
-#     Building in $BUILDDIR
-#     Installing to $INSTALLDIR
-#     Adding environment variables to $PROFILEFILE
-#     Build should take about 5 minutes."
-#     sleep 5
-
-#     mkdir -p "$BUILDDIR"
-#     cd /tmp || exit
-#     curl -O https://ftp.postgresql.org/pub/source/v$PGVERSION/$SOURCEPKG
-#     PGFILE=$(realpath $SOURCEPKG)
-#     cd "$BUILDDIR" || exit
-
-#     SOURCEDIR=$(basename "$PGFILE" .tar.bz2)
-
-#     tar -xjf "$PGFILE"
-#     cd "$SOURCEDIR" || exit
-#     ./configure --prefix="$INSTALLDIR" $CONFIGUREOPTIONS
-#     echo $?
-#     if [ $? -gt 0 ];
-#     then
-#     exit 1
-#     fi
-#     make
-#     if [ $? -gt 0 ];
-#     then
-#     exit 1
-#     fi
-#     make install-strip
-#     if [ $? -gt 0 ];
-#     then
-#     exit 1
-#     fi
-
-#     # update profile file
-#     env_vars="export LD_LIBRARY_PATH=$INSTALLDIR/lib
-#     export PATH=$INSTALLDIR/bin:\$PATH
-#     export PGHOST=$INSTALLDIR/sock
-#     export PGDATA=$INSTALLDIR/data"
-
-#     if [ -f "$PROFILEFILE" ]; then
-#     if grep -q "$INSTALLDIR" "$PROFILEFILE" 2>/dev/null; then
-#     echo "
-#     $PROFILEFILE not updated, $INSTALLDIR is already mentioned there, so assuming this is reinstall and it is up to date.
-#     "
-#     else
-#     echo "$env_vars" >> "$PROFILEFILE"
-#     echo "
-#     Added environment variables to $PROFILEFILE
-#     "
-#     fi
-#     else
-#     echo "$PROFILEFILE does not exist!"
-#     echo "
-#     Added environment variables to $INSTALLDIR/README.environment, copy these manually to correct location.
-#     "
-#     fi
-
-#     echo "$env_vars" >> "$INSTALLDIR/README.environment"
-
-#     # modify default config to use only sockets
-
-#     mv "$INSTALLDIR/share/postgresql.conf.sample" "$INSTALLDIR/share/postgresql.conf.sample.orig"
-#     sed -e "s|#listen_addresses = 'localhost'|listen_addresses = ''|" \
-#     -e "s|#unix_socket_directories = '/tmp'|unix_socket_directories = '$INSTALLDIR/sock'|" \
-#     -e 's|#unix_socket_permissions = 0777|unix_socket_permissions = 0700|' \
-#     < "$INSTALLDIR/share/postgresql.conf.sample.orig" > "$INSTALLDIR/share/postgresql.conf.sample"
-
-#     mkdir "$INSTALLDIR/sock"
-#     chmod 0700 "$INSTALLDIR/sock"
-
-#     # move to where we started and clean up
-
-#     cd "$STARTDIR" || exit
-#     rm -R "$BUILDDIR"
-
-#     # initdb and createdb
-
-#     echo "Creating database, please wait."
-
-#     "$INSTALLDIR/bin/initdb" --auth-local=trust --auth-host=reject -D "$INSTALLDIR/data" > /dev/null
-#     "$INSTALLDIR/bin/pg_ctl" -s -D "$INSTALLDIR/data" -l "$INSTALLDIR/createdb-logfile" start
-#     "$INSTALLDIR/bin/createdb" -h "$INSTALLDIR/sock" "$USER"
-#     "$INSTALLDIR/bin/pg_ctl" -s -D "$INSTALLDIR/data" stop
-
-#     echo "
-#     ******
-#     You may need to start new terminal (or relogin) for environment variables 
-#     to update.
-#     When it is running, you can connect to database in different terminal with 
-#     command:
-#         psql
-#     When you need to connect to database from code, use socket in 
-#     $INSTALLDIR/sock 
-#     with default database name and no need to give username or password. Please 
-#     do not hardcode this into your code, this connection will only work for you.
-#     ******"
-
-#     # create file with variables
-
-#     echo "
-#     data directory (PGDATA): $INSTALLDIR/data
-#     socket directory (PGHOST): $INSTALLDIR/sock
-#     database name: $USER
-#     " > "$INSTALLDIR/README.variables"
-
-#     PG_SERVICE_FILE=/lib/systemd/system/postgres.service
-#     if test -f "$PG_SERVICE_FILE";
-#     then
-#         echo -e "${GREEN}Postgres service exists${NC}"
-#     else
-#         echo -e "Installing Postgres Service"
-#         echo -e PG_SERVICE="[Unit]\nDescription=postgres\n[Service]\nExecStart=/home/${whoami}/pgsql/bin/pg_ctl start -D /home/${whoami}/pgsql/data\nExecStop=/home/${whoami}/pgsql/bin/pg_ctl stop\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $PG_SERVICE_FILE
-#         sudo systemctl daemon-reload 
-#     fi
-
-#     pg_is_active=$(sudo systemctl is-active postgres)
-#     if [ $pg_is_active = 'active' ];
-#     then
-#         echo -e "${GREEN}Postgres is running${NC}"
-#     else
-#         echo 'Starting Postgres'
-#         sudo systemctl start postgres
-#     fi
-
-#     pg_is_enabled=$(sudo systemctl is-enabled postgres)
-#     if [ $pg_is_enabled = 'enabled' ];
-#     then
-#         echo -e "${GREEN}Postgres is set to auto-start${NC}"
-#     else
-#         echo 'Enabling Postgres auto-start'
-#         sudo systemctl enable postgres
-#     fi
-
-#     pg_is_active=$(sudo systemctl is-active postgres)
-#     if [ $pg_is_active != 'active' ];
-#     then
-#         echo -e "${RED}Postgres failed to start${NC}"
-#         exit
-#     else
-#         echo Postgres is running
-#     fi
-# fi
-# Install Trole
-
-NODE_PACKAGES=node_modules
-if test -d "$NODE_PACKAGES";
+pg_is_active=$(sudo systemctl is-active postgresql.service)
+if [ $pg_is_active != 'active' ];
 then
-    echo -e "${GREEN}Trole is installed${NC}"
+    sudo apt install postgresql postgresql-contrib -y
+    pg_is_active=$(sudo systemctl is-active postgresql.service)
+    if [ $pg_is_active != 'active' ];
+    then
+        echo -e "${RED}Postgres failed to install${NC}"
+        exit
+    else
+        echo Postgres is Installed and Running
+    fi
 else
-    echo -e "Installing Trole"
-    npm i
+    echo -e "${GREEN}Postgres is running${NC}"
 fi
+
+sudo -u postgres createdb trole &> /dev/null
+sudo -u postgres -H -- psql -d trole -c "create table pins (
+        id BIGSERIAL PRIMARY KEY,
+        hash VARCHAR UNIQUE,
+        size INT ,
+        ts BIGINT ,
+        account VARCHAR ,
+        sig VARCHAR ,
+        exp BIGINT ,
+        contract VARCHAR ,
+        pinned BOOLEAN ,
+        flag INT ,
+        state  INT
+     );" &> /dev/null
+
 
 TROLE_SERVICE_FILE=/lib/systemd/system/trole.service
 if test -f "$TROLE_SERVICE_FILE";
