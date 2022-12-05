@@ -283,6 +283,7 @@ pg_is_active=$(sudo systemctl is-active postgresql.service)
 if [ $pg_is_active != 'active' ];
 then
     sudo apt install postgresql postgresql-contrib -y
+    sudo systemctl start postgresql.service
     pg_is_active=$(sudo systemctl is-active postgresql.service)
     if [ $pg_is_active != 'active' ];
     then
