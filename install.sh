@@ -348,19 +348,8 @@ else
     echo Trole is running
 fi
 
+echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
+
 # install spk node?
 
-# Uninstall Directions
-echo "
-<<Uninstall:
-1) If you want to save your postgress database contents, move $INSTALLDIR/data
-   out of $INSTALLDIR.
-2) Delete entire $INSTALLDIR.
-3) Remove lines mentioning pgsql with LD_LIBRARY_PATH, PATH, PGHOST and
-   PGDATA at or near the end of your $PROFILEFILE 
-   (or where ever you have added them manually)
-Uninstall
-INSTALLDIR=$INSTALLDIR
-PROFILEFILE=$PROFILEFILE
-" > "README.uninstall"
 exit
