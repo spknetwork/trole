@@ -21,6 +21,7 @@ then
     echo -e "${RED}Ubuntu/Debian Required for Install Script${NC}"
     exit
 fi
+echo -e "${YELLOW}This script may ask some questions after it installs it's first set of dependencies. Stay tuned.${NC}"
 
 sudo apt update &> /dev/null
 
