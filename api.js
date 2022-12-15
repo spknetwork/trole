@@ -100,7 +100,6 @@ function buildHash(rawBody, account, expectedHash = 'nothing'){
 
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
-    console.log(chunk)
     var json 
     
     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}

@@ -208,6 +208,26 @@ ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '["Authorization
 ipfs config --json API.HTTPHeaders.Access-Control-Expose-Headers '["Location"]'
 ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
 
+IPFS_ID=$(ipfs id | grep ID | cut -d"\"" -f4 )
+if [ -z "$IPFSID" ];
+then
+    echo "IPFSID=${IPFS_ID}" | tee -a .env 
+elif [ $IPFS_ID != $IPFSID ];
+then
+    while true; do
+        read -p "Your IPFS ID seems to have changed. Replace IPFSID in .env(Yes / No)?" yn
+        case $yn in
+            [Yy]* ) REPLACE=true ; break;;
+            [Nn]* ) REPLACE=false ; break;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+    if [ $REPLACE = "true" ];
+        then
+        echo "IPFSID=${IPFS_ID}" | tee -a .env 
+    fi
+fi
+
 IPFS_SERVICE_FILE=/lib/systemd/system/ipfs.service
 if test -f "$IPFS_SERVICE_FILE";
 then
