@@ -52,7 +52,7 @@ exports.proxy = (req, res) => {
     console.log("authed and proxied");
     proxy.web(req, res, { target }, (error, r, e, t) => {
       if (error) {
-        console.log("Proxy Web: ", error);
+        console.log("Proxy Web: ", error, {r,e,t});
       }
     });
   } else if (req.url.split("?")[0] == "/api/auth") {
