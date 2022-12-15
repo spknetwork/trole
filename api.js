@@ -2,7 +2,7 @@ const fetch = require("node-fetch");
 const hiveTx = require("hive-tx")
 const config = require('./config')
 const httpProxy = require("http-proxy");
-const proxy = httpProxy.createProxyServer({});
+const proxy = httpProxy.createProxyServer({ agent: null});
 const { Pool } = require("pg");
 var crypto = require("crypto");
 
