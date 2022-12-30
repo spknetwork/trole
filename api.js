@@ -5,7 +5,7 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({ changeOrigin: true,
   secure: false,
   headers: {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://vue.dlux.io/',
     'Access-Control-Allow-Methods': 'POST',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Credentials': true,
