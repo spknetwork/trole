@@ -52,13 +52,13 @@ var crypto = require("crypto");
 exports.proxy = (req, res) => {
   console.log('Somebody wants me.')
   if (req.url.split("?")[0] == "/api/v0/add") {
-    req.url = 'api/v0/add?stream-channels=true&pin=false&wrap-with-directory=false&progress=true'
-    req.query = {
-      "stream-channels": "true",
-      pin: "false",
-      "wrap-with-directory": "false",
-      progress: "true",
-    };
+    // req.url = 'api/v0/add?stream-channels=true&pin=false&wrap-with-directory=false&progress=true'
+    // req.query = {
+    //   "stream-channels": "true",
+    //   pin: "false",
+    //   "wrap-with-directory": "false",
+    //   progress: "true",
+    // };
     //buildHash(req, req.query.account, req.query.cid)
     console.log("authed and proxied");
     proxy.web(req, res);
