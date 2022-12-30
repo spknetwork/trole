@@ -20,6 +20,14 @@ var crypto = require("crypto");
 
 proxy.on('proxyReq', (proxyReq, req, res, options) => {
   proxyReq.setHeader("origin", "");
+  proxyReq.setHeader("referer", "");
+  proxyReq.setHeader("sec-ch-ua", "");
+  proxyReq.setHeader("ec-ch-ua-mobile", "");
+  proxyReq.setHeader("sec-ch-ua-platform", "");
+  proxyReq.setHeader("sec-fetch-dest': '", "");
+  proxyReq.setHeader("sec-fetch-mode", "");
+  proxyReq.setHeader("sec-fetch-site", "");
+  proxyReq.setHeader("sec-gpc", "");
   console.log({proxyReq, req})
 });
 
