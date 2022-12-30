@@ -6,7 +6,7 @@ const proxy = httpProxy.createProxyServer({
   target: config.ENDPOINT + ':' + config.ENDPORT,
   changeOrigin: true,
   onProxyReq: function(request) {
-    request.setHeader("origin", "http://localhost:5050");
+    request.setHeader("origin", "");
   },
   headers: {
     'Access-Control-Allow-Origin': '*',
