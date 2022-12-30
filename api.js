@@ -132,6 +132,7 @@ proxy.on("proxyRes", function (proxyRes, req, res, a) {
 
 
 exports.auth = (req, res, next) => {
+  console.log('Authing')
   let chain = req.query.chain;
   let account = req.query.account;
   let sig = req.query.sig;
