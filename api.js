@@ -8,6 +8,7 @@ const proxy = httpProxy.createProxyServer({ changeOrigin: true,
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Credentials': true
     'Connection': 'keep-alive' }});
 const { Pool } = require("pg");
 var crypto = require("crypto");
