@@ -137,15 +137,27 @@ exports.auth = (req, res, next) => {
   let account = req.query.account;
   let sig = req.query.sig;
   let cid = req.query.cid;
-  if (!account || !sig) return res.status(401).send("Access denied. Signature Mismatch");
+  if (!account || !sig) {
+    console.log('first out')
+    res.status(401).send("Access denied. Signature Mismatch");
+    return
+  }
   getAccount(account, chain)
     .then((r) => {
-      if (r[0]) return res.status(401).send(`Access denied. ${r[1]}`);
+      if (r[0]) {
+        console.log('second out')
+        res.status(401).send(`Access denied. ${r[1]}`);
+        return
+      }
       const challenge = verifySig(account, sig, r[1], cid);
-      if (!challenge) return res.status(401).send("Access denied. Invalid Signature");
-      else next();
+      if (!challenge){
+        console.log('third out')
+        res.status(401).send("Access denied. Invalid Signature");
+        return
+      } else next();
     })
     .catch((e) => {
+      console.log('Error out')
       res.status(401).send(`Access denied. ${e}`);
     });
 };
