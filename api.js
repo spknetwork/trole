@@ -2,14 +2,19 @@ const fetch = require("node-fetch");
 const hiveTx = require("hive-tx")
 const config = require('./config')
 const httpProxy = require("http-proxy");
-const proxy = httpProxy.createProxyServer({ changeOrigin: true,
+const proxy = httpProxy.createProxyServer({ 
+  target: config.ENDPOINT + ':' + config.ENDPORT,
+  changeOrigin: true,
   secure: false,
   headers: {
-    'Access-Control-Allow-Origin': 'https://vue.dlux.io/',
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST',
     'Access-Control-Allow-Headers': 'Content-Type',
-    //'Access-Control-Allow-Credentials': true,
-    'Connection': 'keep-alive' }});
+    'Access-Control-Allow-Credentials': true,
+    'Access-Control-Expose-Headers': 'X-Ipfs-Hash',
+    'Connection': 'keep-alive'
+  }
+});
 const { Pool } = require("pg");
 var crypto = require("crypto");
 
@@ -45,7 +50,6 @@ var crypto = require("crypto");
 // }
 
 exports.proxy = (req, res) => {
-  const target = config.ENDPOINT + ':' + config.ENDPORT
   if (req.url.split("?")[0] == "/api/v0/add") {
     req.url = 'api/v0/add?stream-channels=true&pin=false&wrap-with-directory=false&progress=true'
     req.query = {
@@ -57,18 +61,13 @@ exports.proxy = (req, res) => {
     req.headers.origin = ""
     //buildHash(req, req.query.account, req.query.cid)
     console.log("authed and proxied");
-    proxy.web(req, res, { target }, (error, r, e, t) => {
-      if (error) {
-        console.log("Proxy Web: ", error);
-      }
-    });
+    proxy.web(req, res);
   } else if (req.url.split("?")[0] == "/api/auth") {
     res.setHeader("Content-Type", "application/json");
     res.send(
       JSON.stringify(
         {
           hive_account: config.account,
-          
         },
         null,
         3
