@@ -4,8 +4,8 @@ const config = require('./config')
 const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer({ 
   target: config.ENDPOINT + ':' + config.ENDPORT,
-  changeOrigin: true,
-  secure: false,
+  //changeOrigin: true,
+  //secure: false,
   headers: {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST',
