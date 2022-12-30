@@ -19,7 +19,7 @@ const { Pool } = require("pg");
 var crypto = require("crypto");
 
 proxy.on('proxyReq', (proxyReq, req, res, options) => {
-  console.log({options})
+  console.log({proxyReq, req})
 });
 
 // const pool = new Pool({
