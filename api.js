@@ -2,7 +2,13 @@ const fetch = require("node-fetch");
 const hiveTx = require("hive-tx")
 const config = require('./config')
 const httpProxy = require("http-proxy");
-const proxy = httpProxy.createProxyServer({ agent: null});
+const proxy = httpProxy.createProxyServer({ changeOrigin: true,
+  secure: false,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Connection': 'keep-alive' }});
 const { Pool } = require("pg");
 var crypto = require("crypto");
 
@@ -75,27 +81,27 @@ exports.proxy = (req, res) => {
 
 };
 
-proxy.on("proxyReq", function (proxyReq, req, res, options) {
-  var hash = crypto.createHash("md5"), i = 0
-  hash.setEncoding("hex");
-  proxyReq.on("data", function(chunk){
-    console.log(i, chunk)
-    i++
-    hash.update(chunk)
-  });
-  proxyReq.on('end', function(){
-    hash.end()
-    console.log('end',hash.read())
-  });
-});
+// proxy.on("proxyReq", function (proxyReq, req, res, options) {
+//   var hash = crypto.createHash("md5"), i = 0
+//   hash.setEncoding("hex");
+//   proxyReq.on("data", function(chunk){
+//     console.log(i, chunk)
+//     i++
+//     hash.update(chunk)
+//   });
+//   proxyReq.on('end', function(){
+//     hash.end()
+//     console.log('end',hash.read())
+//   });
+// });
 
-function buildHash(rawBody, account, expectedHash = 'nothing'){
-  return new Promise((r,e)=>{
-    var hash = crypto.createHash("md5");
-    hash.setEncoding("hex");
-    console.log({ rawBody, account, expectedHash });
-  })
-}
+// function buildHash(rawBody, account, expectedHash = 'nothing'){
+//   return new Promise((r,e)=>{
+//     var hash = crypto.createHash("md5");
+//     hash.setEncoding("hex");
+//     console.log({ rawBody, account, expectedHash });
+//   })
+// }
 
 proxy.on("proxyRes", function (proxyRes, req, res, a) {
   proxyRes.on("data", function (chunk) {
