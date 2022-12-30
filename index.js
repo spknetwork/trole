@@ -6,7 +6,7 @@ var http = require("http").Server(api);
 const API = require("./api");
 
 api.use(API.auth);
-//api.use(cors())
+api.use(cors())
 api.all("*", API.proxy);
 
 http.listen(config.port, function () {
