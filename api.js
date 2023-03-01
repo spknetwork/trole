@@ -1,35 +1,137 @@
 const fetch = require("node-fetch");
 const hiveTx = require("hive-tx")
 const config = require('./config')
-const httpProxy = require("http-proxy");
-const proxy = httpProxy.createProxyServer({ 
-  target: config.ENDPOINT + ':' + config.ENDPORT,
-  changeOrigin: true,
-  secure: false,
-  headers: {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Credentials': true,
-    'Access-Control-Expose-Headers': 'X-Ipfs-Hash',
-    'Connection': 'keep-alive'
-  }
-});
 const { Pool } = require("pg");
-var crypto = require("crypto");
+//var crypto = require("crypto");
+const fs = require('fs-extra')
+const { Blob } = require("buffer");
+const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
+const Ipfs = require('ipfs-api')
+var ipfs = new Ipfs(`127.0.0.1`, {protocol: 'http'})
+const Busboy = require('busboy');
 
-proxy.on('proxyReq', (proxyReq, req, res, options) => {
-  // proxyReq.setHeader("origin", "");
-  // proxyReq.setHeader("referer", "");
-  // proxyReq.setHeader("sec-ch-ua", "");
-  // proxyReq.setHeader("sec-ch-ua-mobile", "");
-  // proxyReq.setHeader("sec-ch-ua-platform", "");
-  // proxyReq.setHeader("sec-fetch-dest", "");
-  // proxyReq.setHeader("sec-fetch-mode", "");
-  // proxyReq.setHeader("sec-fetch-site", "");
-  // proxyReq.setHeader("sec-gpc", "");
-  console.log({proxyReq, req})
-});
+function localIpfsUpload(cid, contract){
+
+  ipfs.files.add(Buffer.from(fs.readFileSync(getFilePath(cid, contract))), function (err, file) {
+    if (err) {
+      console.log(err);
+    }
+    console.log(file)
+    //check that file[0].hash == cid and pin the file if true
+    if (file[0].hash == cid) {
+      ipfs.pin.add(cid, function (err, pin) {
+        if (err) {
+          console.log(err);
+        }
+        // sign and update contract
+      })
+    } else {
+      //delete file
+      fs.rmSync(getFilePath(cid, contract))
+      //inform user that file was not uploaded
+    }
+  })
+}
+
+
+
+exports.upload = (req, res) => {
+    const contract = req.headers['contract'];
+    const contentRange = req.headers['content-range'];
+    const fileId = req.headers['x-cid'];
+  
+    if (!contract) {
+      console.log('Missing Contract');
+      return res
+              .status(400)
+              .json({message: 'Missing "Content-Range" header'});
+        }
+
+    if (!contentRange) {
+	console.log('Missing Content-Range');
+	return res
+          .status(400)
+          .json({message: 'Missing "Content-Range" header'});
+    }
+	
+    if(!fileId) {
+	console.log('Missing File Id');
+	return res
+           .status(400)
+           .json({message: 'Missing "X-Cid" header'});
+    }
+	
+    const match = contentRange
+        .match(/bytes=(\d+)-(\d+)\/(\d+)/);
+	
+    if(!match) {
+	console.log('Invalid Content-Range Format');
+	return res
+            .status(400)
+            .json({message: 'Invalid "Content-Range" Format'});
+    }
+	
+    const rangeStart = Number(match[1]);
+    const rangeEnd = Number(match[2]);
+    const fileSize = Number(match[3]);
+	
+    if (
+       rangeStart >= fileSize || 
+       rangeStart >= rangeEnd || 
+       rangeEnd > fileSize
+    ) {
+	return res
+            .status(400)
+            .json({message: 'Invalid "Content-Range" provided'});
+    }
+	
+    const busboy = Busboy({ headers: req.headers });
+	
+    busboy.on('file', (name, file, info) => {
+	const filePath = getFilePath(fileId, contract);
+	
+        if (!fileId || !contract) {
+            req.pause();
+	}
+		
+	fs.stat(filePath)
+	    .then((stats) => {
+				
+		if (stats.size !== rangeStart) {
+		    return res
+			.status(400)
+			.json({message: 'Bad "chunk" provided'});
+		}
+				
+		file
+                 .pipe(fs.createWriteStream(filePath, {flags: 'a'}))
+		 .on('error', (e) => {
+		    console.error('failed upload', e);
+		    res.sendStatus(500);
+		 });
+	     })
+	     .catch(err => {
+		console.log('No File Match', err);
+		res
+                 .status(400)
+                 .json({
+                   message: 'No file with such credentials'
+                 });
+	     })
+    });
+	
+    busboy.on('error', (e) => {
+	console.error('failed upload', e);
+	res.sendStatus(500);
+    })
+	
+    busboy.on('finish', () => {
+      localIpfsUpload(cid, contract)
+	res.sendStatus(200)
+    });
+	
+    req.pipe(busboy);
+}
 
 // const pool = new Pool({
 //   connectionString: config.dbcs,
@@ -62,29 +164,202 @@ proxy.on('proxyReq', (proxyReq, req, res, options) => {
 //   });
 // }
 
-exports.proxy = (req, res) => {
-  console.log('Somebody wants me.')
-  if (req.url.split("?")[0] == "/api/v0/add") {
-    console.log("authed and proxied");
-    proxy.web(req, res);
-  } else if (req.url.split("?")[0] == "/api/auth") {
-    res.setHeader("Content-Type", "application/json");
-    res.send(
-      JSON.stringify(
-        {
-          hive_account: config.account,
-        },
-        null,
-        3
-      )
-    );
-    console.log("huh?");
-  } else {
-    console.log('else')
-    res.sendStatus(403);
+exports.stats = (req, res, next) => {
+  if (!req.headers || !req.headers.cid 
+    || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
+    res.status(400).json({message: 'Missing data'});
+ } else {
+  let chain = req.headers.chain;
+  let account = req.headers.account;
+  let sig = req.headers.sig;
+  let cid = req.headers.cid;
+  let contract = req.headers.contract;
+  if (!account || !sig) {
+    console.log('first out')
+    res.status(401).send("Access denied. Signature Mismatch");
+    return
   }
+  getAccountPubKeys(account)
+    .then((r) => {
+      if (
+        true
+        //!r[1][0] || //no error
+        //account == r[1][1].fo //or account mismatch
+        ) {
+        
+        fs.stat( getFilePath(cid, contract) )
+        .then( (stats) => {
+          res.status(200)
+             .json({totalChunkUploaded: stats.size});
+        })
+      } else {
+        res.status(400).send("Storage Mismatch: " + cid);
+      }
+    })
+ }
+}
 
-};
+exports.arrange = (req, res, next) => {
+  if (!req.headers || !req.headers.cid 
+    || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
+    res.status(400).json({message: 'Missing data'});
+ } else {
+  let chain = req.headers.chain;
+  let account = req.headers.account;
+  let sig = req.headers.sig;
+  let cid = req.headers.cid;
+  let contract = req.headers.contract;
+  if (!account || !sig) {
+    console.log('first out')
+    res.status(401).send("Access denied. No Valid Signature");
+    return
+  }
+  var getPubKeys = getAccountPubKeys(account)
+  Promise.all([getPubKeys, getContract(req.headers.contract)])
+    .then((r) => {
+      if (
+        false
+        //!r[1][0] || //no error
+        //account != r[1][1].fo //or account mismatch
+        ) {
+        
+        res.status(401).send("Access denied. Contract Mismatch");
+      } else if (verifySig(account, sig, r[0][1], cid)) {
+        fs.createWriteStream(
+          getFilePath(req.headers.cid, req.headers.contract), {flags: 'w'}
+        );
+        res.status(200).json({authorized: req.headers.cid}); //bytes and time remaining
+      } else {
+        res.status(401).send("Access denied. Signature Mismatch");
+      }
+    })
+ }
+}
+
+// exports.proxy = (req, res) => {
+//   console.log('Somebody wants me.')
+//   if (req.url.split("?")[0] == "/api/v0/add") {
+//     console.log("authed and proxied");
+//     proxy.web(req, res);
+//   } else if (req.url.split("?")[0] == "/upload-authorize") {
+//     if (!req.headers || !req.headers.cid 
+//       || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
+//       res.status(400).json({message: 'Missing data'});
+//    } else {
+//     let chain = req.headers.chain;
+//     let account = req.headers.account;
+//     let sig = req.headers.sig;
+//     let cid = req.headers.cid;
+//     let contract = req.headers.contract;
+//     if (!account || !sig) {
+//       console.log('first out')
+//       res.status(401).send("Access denied. No Valid Signature");
+//       return
+//     }
+//     var getPubKeys = getAccountPubKeys(account)
+//     Promise.all([getPubKeys, getContract(req.headers.contract)])
+//       .then((r) => {
+//         if (
+//           false
+//           //!r[1][0] || //no error
+//           //account != r[1][1].fo //or account mismatch
+//           ) {
+          
+//           res.status(401).send("Access denied. Contract Mismatch");
+//         } else if (verifySig(account, sig, r[0][1], cid)) {
+//           fs.createWriteStream(
+//             getFilePath(req.headers.cid, req.headers.contract), {flags: 'w'}
+//           );
+//           res.status(200).json({authorized: req.headers.cid}); //bytes and time remaining
+//         } else {
+//           res.status(401).send("Access denied. Signature Mismatch");
+//         }
+//       })
+//    }
+//   } else if (req.url.split("?")[0] == "/upload-cancel") {
+//     if (!req.headers || !req.headers.cid 
+//       || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
+//       res.status(400).json({message: 'Missing data'});
+//    } else {
+//     let chain = req.headers.chain;
+//     let account = req.headers.account;
+//     let sig = req.headers.sig;
+//     let cid = req.headers.cid;
+//     let contract = req.headers.contract;
+//     if (!account || !sig) {
+//       console.log('first out')
+//       res.status(401).send("Access denied. No Valid Signature");
+//       return
+//     }
+//     var getPubKeys = getAccountPubKeys(account)
+//     Promise.all([getPubKeys, getContract(req.headers.contract)])
+//       .then((r) => {
+//         if (
+//           false
+//           //!r[1][0] || //no error
+//           //account != r[1][1].fo //or account mismatch
+//           ) {
+//           res.status(401).send("Access denied. Contract Mismatch");
+//         } else if (verifySig(account, sig, r[0][1], cid)) {
+//           fs.createWriteStream(
+//             getFilePath(req.headers.cid, req.headers.contract), {flags: 'w'}
+//           );
+//           res.status(200).json({fileId: req.headers.cid});
+//         } else {
+//           res.status(401).send("Access denied. Signature Mismatch");
+//         }
+//       })
+//    }
+//   } else if (req.url.split("?")[0] == "/upload-check") {
+//     if (!req.headers || !req.headers.cid 
+//       || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
+//       res.status(400).json({message: 'Missing data'});
+//    } else {
+//     let chain = req.headers.chain;
+//     let account = req.headers.account;
+//     let sig = req.headers.sig;
+//     let cid = req.headers.cid;
+//     let contract = req.headers.contract;
+//     if (!account || !sig) {
+//       console.log('first out')
+//       res.status(401).send("Access denied. Signature Mismatch");
+//       return
+//     }
+//     getAccountPubKeys(account)
+//       .then((r) => {
+//         if (
+//           true
+//           //!r[1][0] || //no error
+//           //account == r[1][1].fo //or account mismatch
+//           ) {
+          
+//           fs.stat( getFilePath(cid, contract) )
+//           .then( (stats) => {
+//             res.status(200)
+//                .json({totalChunkUploaded: stats.size});
+//           })
+//         } else {
+//           res.status(400).send("Storage Mismatch: " + cid);
+//         }
+//       })
+//    }
+//   } else if (req.url.split("?")[0] == "/api/auth") {
+//     res.setHeader("Content-Type", "application/json");
+//     res.send(
+//       JSON.stringify(
+//         {
+//           hive_account: config.account,
+//         },
+//         null,
+//         3
+//       )
+//     );
+//     console.log("huh?");
+//   } else {
+//     console.log('else')
+//     res.sendStatus(200);
+//   }
+// };
 
 // proxy.on("proxyReq", function (proxyReq, req, res, options) {
 //   var hash = crypto.createHash("md5"), i = 0
@@ -108,64 +383,64 @@ exports.proxy = (req, res) => {
 //   })
 // }
 
-proxy.on("proxyRes", function (proxyRes, req, res, a) {
-  proxyRes.on("data", function (chunk) {
-    var json 
+// proxy.on("proxyRes", function (proxyRes, req, res, a) {
+//   proxyRes.on("data", function (chunk) {
+//     var json 
     
-    try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
-    try{ console.log(chunk.toString()) } catch (e) {console.log(e)}
-    //get sig and cid as well... use it to build a futures contract for payment
-    if (json && json.Size){
-      const data = [
-        json.Hash,
-        parseInt(json.Size),
-        req.query.cid,
-        req.query.account,
-        req.query.sig,
-        Date.now() + 86400000,
-        "",
-        true,
-        0,
-        0,
-      ];
+//     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
+//     try{ console.log(chunk.toString()) } catch (e) {console.log(e)}
+//     //get sig and cid as well... use it to build a futures contract for payment
+//     if (json && json.Size){
+//       const data = [
+//         json.Hash,
+//         parseInt(json.Size),
+//         req.headers.cid,
+//         req.headers.account,
+//         req.headers.sig,
+//         Date.now() + 86400000,
+//         "",
+//         true,
+//         0,
+//         0,
+//       ];
 
-      console.log(data)
-      //updatePins(data)
-    }
-  });
-});
+//       console.log(data)
+//       //updatePins(data)
+//     }
+//   });
+// });
 
 
-exports.auth = (req, res, next) => {
-  console.log('Authing')
-  let chain = req.query.chain;
-  let account = req.query.account;
-  let sig = req.query.sig;
-  let cid = req.query.cid;
-  if (!account || !sig) {
-    console.log('first out')
-    res.status(401).send("Access denied. Signature Mismatch");
-    return
-  }
-  getAccount(account, chain)
-    .then((r) => {
-      if (r[0]) {
-        console.log('second out')
-        res.status(401).send(`Access denied. ${r[1]}`);
-        return
-      }
-      const challenge = verifySig(account, sig, r[1], cid);
-      if (!challenge){
-        console.log('third out')
-        res.status(401).send("Access denied. Invalid Signature");
-        return
-      } else next();
-    })
-    .catch((e) => {
-      console.log('Error out')
-      res.status(401).send(`Access denied. ${e}`);
-    });
-};
+// exports.auth = (req, res, next) => {
+//   console.log('Authing')
+//   let chain = req.headers.chain;
+//   let account = req.headers.account;
+//   let sig = req.headers.sig;
+//   let cid = req.headers.cid;
+//   if (!account || !sig) {
+//     console.log('first out')
+//     res.status(401).send("Access denied. Signature Mismatch");
+//     return
+//   }
+//   getAccountPubKeys(account)
+//     .then((r) => {
+//       if (r[0]) {
+//         console.log('second out')
+//         res.status(401).send(`Access denied. ${r[1]}`);
+//         return
+//       }
+//       const challenge = verifySig(account, sig, r[1], cid);
+//       if (!challenge){
+//         console.log('third out')
+//         res.status(401).send("Access denied. Invalid Signature");
+//         return
+//       } else next();
+//     })
+//     .catch((e) => {
+//       console.log('Error out')
+//       res.status(401).send(`Access denied. ERROR: ${e}`);
+//     });
+// };
 
 function sign(msg, key) {
   const { sha256 } = require('hive-tx/helpers/crypto')
@@ -175,10 +450,12 @@ function sign(msg, key) {
 }
 
 function verifySig(msg, sig, keys, cid) {
+  console.log({msg, sig, keys: keys, cid})
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
   const message = sha256(`${msg}:${cid}`);
   for (var i = 0; i < keys.length; i++) {
+    console.log(keys[i][0])
     const publicKey = hiveTx.PublicKey.from(keys[i][0]);
     const verify = publicKey.verify(message, signature);
     if (verify) return true
@@ -186,7 +463,7 @@ function verifySig(msg, sig, keys, cid) {
   return false
 }
 
-function getAccount(acc, chain = 'HIVE') {
+function getAccountPubKeys(acc, chain = 'HIVE') {
   return new Promise((res, rej) => {
     if (chain == 'HIVE') {
       fetch(config.HIVE_API, {
@@ -200,10 +477,30 @@ function getAccount(acc, chain = 'HIVE') {
           return r.json();
         })
         .then((re) => {
-          //   console.log(re.result[0].active.key_auths);
+          console.log(re.result[0].active.key_auths);
           var rez = [...config.active ? re.result[0].active.key_auths : [],
           ...config.posting ? re.result[0].posting.key_auths : []]
+          console.log({rez})
           res([0, rez]);
+        })
+        .catch((e) => {
+          res([1, e]);
+        });
+    } else {
+      res([1, 'Chain not supported']);
+    }
+  });
+}
+
+function getContract(contract, chain = 'spk') {
+  return new Promise((res, rej) => {
+    if (chain == 'spk') {
+      fetch(config.SPK_API + `/api/contract/${contract}`)
+        .then((r) => {
+          return r.json();
+        })
+        .then((re) => {
+          res([0, re.contract]);
         })
         .catch((e) => {
           res([1, e]);

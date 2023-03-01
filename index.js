@@ -5,10 +5,14 @@ const api = express();
 var http = require("http").Server(api);
 const API = require("./api");
 
-api.use(API.auth);
-//api.use(cors())
-api.all("*", API.proxy);
+api.use(express.json())
+api.use(cors())
+
+api.get("/upload-check", API.stats)
+api.get("/upload-authorize", API.arrange)
+api.post("/upload", API.upload)
 
 http.listen(config.port, function () {
   console.log(`API listening on port ${config.port}`);
 });
+

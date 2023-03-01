@@ -11,12 +11,14 @@
   "license": "MIT",
   "dependencies": {
     "@hiveio/dhive": "^1.2.4",
+    "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.1",
+    "fs-extra": "^11.1.0",
     "hive-tx": "^4.1.1",
-    "http-proxy": "^1.18.1",
+    "ipfs-api": "^26.1.2",
     "node-fetch": "^2.6.7",
     "pg": "^8.8.0"
   }

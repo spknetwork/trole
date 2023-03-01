@@ -217,6 +217,8 @@ package-lock.json
 package-lock.json
 .DS_Store
 
+uploads/**
+
 db/
 .vscode/settings.json
 swarm.key

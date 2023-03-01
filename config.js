@@ -5,11 +5,11 @@ const port = ENV.PORT || 5050;
 const account = ENV.account || '';
 const posting_key = ENV.posting_key || ''
 const active_key = ENV.active_key || ''
-const posting = ENV.posting || true
-const active = ENV.active || true;
+const posting = ENV.POSTING || true
+const active = ENV.ACTIVE || true;
 const ENDPOINT = ENV.ENDPOINT || "localhost";
 const ENDPORT = ENV.ENDPORT || 5001
-const HIVE_API = ENV.HIVE_API || "https://anyx.io";
+const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
 const SPK_API = ENV.SPK_API || "https://spkinstant.hivehoneycomb.com";
 
 const tables = {
