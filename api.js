@@ -16,15 +16,16 @@ function localIpfsUpload(cid, contract) {
     if (err) {
       console.log(err);
     }
-    console.log(file)
     //check that file[0].hash == cid and pin the file if true
-    if (file[0].hash == cid) {
+    if (file[0].hash == cid ) {
+      if (contract.t + file[0].size <= contract.s) { //t total s storage
       ipfs.pin.add(cid, function (err, pin) {
         if (err) {
           console.log(err);
         }
         console.log(`pinned ${cid}`)
         // sign and update contract
+
       })
     } else {
       console.log(`mismatch between ${cid} and ${file[0].hash}`)
@@ -230,6 +231,7 @@ exports.arrange = (req, res, next) => {
           fs.createWriteStream(
             getFilePath(req.headers.cid, req.headers.contract), { flags: 'w' }
           );
+          console.log(`authorized: ${req.headers.cid}`)
           res.status(200).json({ authorized: req.headers.cid }); //bytes and time remaining
         } else {
           res.status(401).send("Access denied. Signature Mismatch");
@@ -477,7 +479,6 @@ function getAccountPubKeys(acc, chain = 'HIVE') {
           return r.json();
         })
         .then((re) => {
-          console.log(re.result[0].active.key_auths);
           var rez = [...config.active ? re.result[0].active.key_auths : [],
           ...config.posting ? re.result[0].posting.key_auths : []]
           res([0, rez]);
