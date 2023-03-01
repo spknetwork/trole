@@ -23,9 +23,11 @@ function localIpfsUpload(cid, contract) {
         if (err) {
           console.log(err);
         }
+        console.log(`pinned ${cid}`)
         // sign and update contract
       })
     } else {
+      console.log(`mismatch between ${cid} and ${file[0].hash}`)
       //delete file
       fs.rmSync(getFilePath(cid, contract))
       //inform user that file was not uploaded
