@@ -17,21 +17,22 @@ function localIpfsUpload(cid, contract) {
       console.log(err);
     }
     //check that file[0].hash == cid and pin the file if true
-    if (file[0].hash == cid ) {
+    if (file[0].hash == cid) {
       if (contract.t + file[0].size <= contract.s) { //t total s storage
-      ipfs.pin.add(cid, function (err, pin) {
-        if (err) {
-          console.log(err);
-        }
-        console.log(`pinned ${cid}`)
-        // sign and update contract
+        ipfs.pin.add(cid, function (err, pin) {
+          if (err) {
+            console.log(err);
+          }
+          console.log(`pinned ${cid}`)
+          // sign and update contract
 
-      })
-    } else {
-      console.log(`mismatch between ${cid} and ${file[0].hash}`)
-      //delete file
-      fs.rmSync(getFilePath(cid, contract))
-      //inform user that file was not uploaded
+        })
+      } else {
+        console.log(`mismatch between ${cid} and ${file[0].hash}`)
+        //delete file
+        fs.rmSync(getFilePath(cid, contract))
+        //inform user that file was not uploaded
+      }
     }
   })
 }
