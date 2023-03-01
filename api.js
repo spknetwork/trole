@@ -452,12 +452,10 @@ function sign(msg, key) {
 }
 
 function verifySig(msg, sig, keys, cid) {
-  console.log({ msg, sig, keys: keys, cid })
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
   const message = sha256(`${msg}:${cid}`);
   for (var i = 0; i < keys.length; i++) {
-    console.log(keys[i][0])
     const publicKey = hiveTx.PublicKey.from(keys[i][0]);
     const verify = publicKey.verify(message, signature);
     if (verify) return true
@@ -482,7 +480,6 @@ function getAccountPubKeys(acc, chain = 'HIVE') {
           console.log(re.result[0].active.key_auths);
           var rez = [...config.active ? re.result[0].active.key_auths : [],
           ...config.posting ? re.result[0].posting.key_auths : []]
-          console.log({ rez })
           res([0, rez]);
         })
         .catch((e) => {
