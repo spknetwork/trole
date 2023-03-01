@@ -7,10 +7,10 @@ const fs = require('fs-extra')
 const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
-var ipfs = new Ipfs(`127.0.0.1`, {protocol: 'http'})
+var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
-function localIpfsUpload(cid, contract){
+function localIpfsUpload(cid, contract) {
 
   ipfs.files.add(Buffer.from(fs.readFileSync(getFilePath(cid, contract))), function (err, file) {
     if (err) {
@@ -36,101 +36,101 @@ function localIpfsUpload(cid, contract){
 
 
 exports.upload = (req, res) => {
-    const contract = req.headers['contract'];
-    const contentRange = req.headers['content-range'];
-    const fileId = req.headers['x-cid'];
-  
-    if (!contract) {
-      console.log('Missing Contract');
-      return res
-              .status(400)
-              .json({message: 'Missing "Content-Range" header'});
+  const contract = req.headers['contract'];
+  const contentRange = req.headers['content-range'];
+  const fileId = req.headers['x-cid'];
+
+  if (!contract) {
+    console.log('Missing Contract');
+    return res
+      .status(400)
+      .json({ message: 'Missing "Content-Range" header' });
+  }
+
+  if (!contentRange) {
+    console.log('Missing Content-Range');
+    return res
+      .status(400)
+      .json({ message: 'Missing "Content-Range" header' });
+  }
+
+  if (!fileId) {
+    console.log('Missing File Id');
+    return res
+      .status(400)
+      .json({ message: 'Missing "X-Cid" header' });
+  }
+
+  const match = contentRange
+    .match(/bytes=(\d+)-(\d+)\/(\d+)/);
+
+  if (!match) {
+    console.log('Invalid Content-Range Format');
+    return res
+      .status(400)
+      .json({ message: 'Invalid "Content-Range" Format' });
+  }
+
+  const rangeStart = Number(match[1]);
+  const rangeEnd = Number(match[2]);
+  const fileSize = Number(match[3]);
+
+  if (
+    rangeStart >= fileSize ||
+    rangeStart >= rangeEnd ||
+    rangeEnd > fileSize
+  ) {
+    return res
+      .status(400)
+      .json({ message: 'Invalid "Content-Range" provided' });
+  }
+
+  const busboy = Busboy({ headers: req.headers });
+
+  busboy.on('file', (name, file, info) => {
+    const filePath = getFilePath(fileId, contract);
+
+    if (!fileId || !contract) {
+      req.pause();
+    }
+
+    fs.stat(filePath)
+      .then((stats) => {
+
+        if (stats.size !== rangeStart) {
+          return res
+            .status(400)
+            .json({ message: 'Bad "chunk" provided' });
         }
 
-    if (!contentRange) {
-	console.log('Missing Content-Range');
-	return res
+        file
+          .pipe(fs.createWriteStream(filePath, { flags: 'a' }))
+          .on('error', (e) => {
+            console.error('failed upload', e);
+            res.sendStatus(500);
+          });
+      })
+      .catch(err => {
+        console.log('No File Match', err);
+        res
           .status(400)
-          .json({message: 'Missing "Content-Range" header'});
-    }
-	
-    if(!fileId) {
-	console.log('Missing File Id');
-	return res
-           .status(400)
-           .json({message: 'Missing "X-Cid" header'});
-    }
-	
-    const match = contentRange
-        .match(/bytes=(\d+)-(\d+)\/(\d+)/);
-	
-    if(!match) {
-	console.log('Invalid Content-Range Format');
-	return res
-            .status(400)
-            .json({message: 'Invalid "Content-Range" Format'});
-    }
-	
-    const rangeStart = Number(match[1]);
-    const rangeEnd = Number(match[2]);
-    const fileSize = Number(match[3]);
-	
-    if (
-       rangeStart >= fileSize || 
-       rangeStart >= rangeEnd || 
-       rangeEnd > fileSize
-    ) {
-	return res
-            .status(400)
-            .json({message: 'Invalid "Content-Range" provided'});
-    }
-	
-    const busboy = Busboy({ headers: req.headers });
-	
-    busboy.on('file', (name, file, info) => {
-	const filePath = getFilePath(fileId, contract);
-	
-        if (!fileId || !contract) {
-            req.pause();
-	}
-		
-	fs.stat(filePath)
-	    .then((stats) => {
-				
-		if (stats.size !== rangeStart) {
-		    return res
-			.status(400)
-			.json({message: 'Bad "chunk" provided'});
-		}
-				
-		file
-                 .pipe(fs.createWriteStream(filePath, {flags: 'a'}))
-		 .on('error', (e) => {
-		    console.error('failed upload', e);
-		    res.sendStatus(500);
-		 });
-	     })
-	     .catch(err => {
-		console.log('No File Match', err);
-		res
-                 .status(400)
-                 .json({
-                   message: 'No file with such credentials'
-                 });
-	     })
-    });
-	
-    busboy.on('error', (e) => {
-	console.error('failed upload', e);
-	res.sendStatus(500);
-    })
-	
-    busboy.on('finish', () => {
-      localIpfsUpload(cid, contract)
-	res.sendStatus(200)
-    });
-	
-    req.pipe(busboy);
+          .json({
+            message: 'No file with such credentials'
+          });
+      })
+  });
+
+  busboy.on('error', (e) => {
+    console.error('failed upload', e);
+    res.sendStatus(500);
+  })
+
+  busboy.on('finish', () => {
+    localIpfsUpload(fileId, contract)
+    res.sendStatus(200)
+  });
+
+  req.pipe(busboy);
 }
 
 // const pool = new Pool({
@@ -165,75 +165,75 @@ exports.upload = (req, res) => {
 // }
 
 exports.stats = (req, res, next) => {
-  if (!req.headers || !req.headers.cid 
-    || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
-    res.status(400).json({message: 'Missing data'});
- } else {
-  let chain = req.headers.chain;
-  let account = req.headers.account;
-  let sig = req.headers.sig;
-  let cid = req.headers.cid;
-  let contract = req.headers.contract;
-  if (!account || !sig) {
-    console.log('first out')
-    res.status(401).send("Access denied. Signature Mismatch");
-    return
-  }
-  getAccountPubKeys(account)
-    .then((r) => {
-      if (
-        true
-        //!r[1][0] || //no error
-        //account == r[1][1].fo //or account mismatch
+  if (!req.headers || !req.headers.cid
+    || !req.headers.account || !req.headers.sig || !req.headers.contract) {
+    res.status(400).json({ message: 'Missing data' });
+  } else {
+    let chain = req.headers.chain;
+    let account = req.headers.account;
+    let sig = req.headers.sig;
+    let cid = req.headers.cid;
+    let contract = req.headers.contract;
+    if (!account || !sig) {
+      console.log('first out')
+      res.status(401).send("Access denied. Signature Mismatch");
+      return
+    }
+    getAccountPubKeys(account)
+      .then((r) => {
+        if (
+          true
+          //!r[1][0] || //no error
+          //account == r[1][1].fo //or account mismatch
         ) {
-        
-        fs.stat( getFilePath(cid, contract) )
-        .then( (stats) => {
-          res.status(200)
-             .json({totalChunkUploaded: stats.size});
-        })
-      } else {
-        res.status(400).send("Storage Mismatch: " + cid);
-      }
-    })
- }
+
+          fs.stat(getFilePath(cid, contract))
+            .then((stats) => {
+              res.status(200)
+                .json({ totalChunkUploaded: stats.size });
+            })
+        } else {
+          res.status(400).send("Storage Mismatch: " + cid);
+        }
+      })
+  }
 }
 
 exports.arrange = (req, res, next) => {
-  if (!req.headers || !req.headers.cid 
-    || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
-    res.status(400).json({message: 'Missing data'});
- } else {
-  let chain = req.headers.chain;
-  let account = req.headers.account;
-  let sig = req.headers.sig;
-  let cid = req.headers.cid;
-  let contract = req.headers.contract;
-  if (!account || !sig) {
-    console.log('first out')
-    res.status(401).send("Access denied. No Valid Signature");
-    return
-  }
-  var getPubKeys = getAccountPubKeys(account)
-  Promise.all([getPubKeys, getContract(req.headers.contract)])
-    .then((r) => {
-      if (
-        false
-        //!r[1][0] || //no error
-        //account != r[1][1].fo //or account mismatch
+  if (!req.headers || !req.headers.cid
+    || !req.headers.account || !req.headers.sig || !req.headers.contract) {
+    res.status(400).json({ message: 'Missing data' });
+  } else {
+    let chain = req.headers.chain;
+    let account = req.headers.account;
+    let sig = req.headers.sig;
+    let cid = req.headers.cid;
+    let contract = req.headers.contract;
+    if (!account || !sig) {
+      console.log('first out')
+      res.status(401).send("Access denied. No Valid Signature");
+      return
+    }
+    var getPubKeys = getAccountPubKeys(account)
+    Promise.all([getPubKeys, getContract(req.headers.contract)])
+      .then((r) => {
+        if (
+          false
+          //!r[1][0] || //no error
+          //account != r[1][1].fo //or account mismatch
         ) {
-        
-        res.status(401).send("Access denied. Contract Mismatch");
-      } else if (verifySig(account, sig, r[0][1], cid)) {
-        fs.createWriteStream(
-          getFilePath(req.headers.cid, req.headers.contract), {flags: 'w'}
-        );
-        res.status(200).json({authorized: req.headers.cid}); //bytes and time remaining
-      } else {
-        res.status(401).send("Access denied. Signature Mismatch");
-      }
-    })
- }
+
+          res.status(401).send("Access denied. Contract Mismatch");
+        } else if (verifySig(account, sig, r[0][1], cid)) {
+          fs.createWriteStream(
+            getFilePath(req.headers.cid, req.headers.contract), { flags: 'w' }
+          );
+          res.status(200).json({ authorized: req.headers.cid }); //bytes and time remaining
+        } else {
+          res.status(401).send("Access denied. Signature Mismatch");
+        }
+      })
+  }
 }
 
 // exports.proxy = (req, res) => {
@@ -264,7 +264,7 @@ exports.arrange = (req, res, next) => {
 //           //!r[1][0] || //no error
 //           //account != r[1][1].fo //or account mismatch
 //           ) {
-          
+
 //           res.status(401).send("Access denied. Contract Mismatch");
 //         } else if (verifySig(account, sig, r[0][1], cid)) {
 //           fs.createWriteStream(
@@ -332,7 +332,7 @@ exports.arrange = (req, res, next) => {
 //           //!r[1][0] || //no error
 //           //account == r[1][1].fo //or account mismatch
 //           ) {
-          
+
 //           fs.stat( getFilePath(cid, contract) )
 //           .then( (stats) => {
 //             res.status(200)
@@ -386,7 +386,7 @@ exports.arrange = (req, res, next) => {
 // proxy.on("proxyRes", function (proxyRes, req, res, a) {
 //   proxyRes.on("data", function (chunk) {
 //     var json 
-    
+
 //     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
 //     try{ console.log(chunk.toString()) } catch (e) {console.log(e)}
 //     //get sig and cid as well... use it to build a futures contract for payment
@@ -450,7 +450,7 @@ function sign(msg, key) {
 }
 
 function verifySig(msg, sig, keys, cid) {
-  console.log({msg, sig, keys: keys, cid})
+  console.log({ msg, sig, keys: keys, cid })
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
   const message = sha256(`${msg}:${cid}`);
@@ -480,7 +480,7 @@ function getAccountPubKeys(acc, chain = 'HIVE') {
           console.log(re.result[0].active.key_auths);
           var rez = [...config.active ? re.result[0].active.key_auths : [],
           ...config.posting ? re.result[0].posting.key_auths : []]
-          console.log({rez})
+          console.log({ rez })
           res([0, rez]);
         })
         .catch((e) => {
