@@ -40,15 +40,15 @@ function localIpfsUpload(cid, contract) {
 
 
 exports.upload = (req, res) => {
-  const contract = req.headers['X-Contract'];
+  const contract = req.headers['x-contract'];
   const contentRange = req.headers['content-range'];
-  const fileId = req.headers['X-Cid'];
+  const fileId = req.headers['x-cid'];
 console.log({contract, contentRange, fileId})
   if (!contract) {
     console.log('Missing Contract');
     return res
       .status(400)
-      .json({ message: 'Missing "X-Contract" header' });
+      .json({ message: 'Missing "x-contract" header' });
   }
 
   if (!contentRange) {
@@ -62,7 +62,7 @@ console.log({contract, contentRange, fileId})
     console.log('Missing File Id');
     return res
       .status(400)
-      .json({ message: 'Missing "X-Cid" header' });
+      .json({ message: 'Missing "x-cid" header' });
   }
 
   const match = contentRange
@@ -169,17 +169,17 @@ console.log({contract, contentRange, fileId})
 // }
 
 exports.stats = (req, res, next) => {
-  if (!req.headers || !req.headers['X-Cid'] || !req.headers['X-Files']
-  || !req.headers['X-Account'] || !req.headers['X-Sig'] || !req.headers['X-Contract']) {
+  if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
+  || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
     console.log(req.headers)
     res.status(400).json({ message: 'Missing data' });
   } else {
-    let chain = req.headers['X-Chain'] || 'HIVE'
-    let account = req.headers['X-Account'];
-    let sig = req.headers['X-Sig'];
-    let cid = req.headers['X-Cid'];
-    let contract = req.headers['X-Contract'];
-    let cids = req.headers['X-Files'];
+    let chain = req.headers['x-chain'] || 'HIVE'
+    let account = req.headers['x-account'];
+    let sig = req.headers['x-sig'];
+    let cid = req.headers['x-cid'];
+    let contract = req.headers['x-contract'];
+    let cids = req.headers['x-files'];
     if (!account || !sig || !cids) {
       console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
@@ -206,16 +206,16 @@ exports.stats = (req, res, next) => {
 }
 
 exports.arrange = (req, res, next) => {
-  if (!req.headers || !req.headers['X-Cid'] || !req.headers['X-Files']
-  || !req.headers['X-Account'] || !req.headers['X-Sig'] || !req.headers['X-Contract'])  {
+  if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
+  || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract'])  {
     console.log(req.headers)
     res.status(400).json({ message: 'Missing data' });
   } else {
-    let chain = req.headers['X-Chain'] || 'HIVE';
-    let account = req.headers['X-Account'];
-    let sig = req.headers['X-Sig'];
-    let cids = req.headers['X-Files'];
-    let contract = req.headers['X-Contract'];
+    let chain = req.headers['x-chain'] || 'HIVE';
+    let account = req.headers['x-account'];
+    let sig = req.headers['x-sig'];
+    let cids = req.headers['x-files'];
+    let contract = req.headers['x-contract'];
     if (!account || !sig) {
       console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
