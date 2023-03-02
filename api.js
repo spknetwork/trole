@@ -169,16 +169,17 @@ console.log({contract, contentRange, fileId})
 // }
 
 exports.stats = (req, res, next) => {
-  if (!req.headers || !req.headers.cid
-    || !req.headers.account || !req.headers.sig || !req.headers.contract) {
+  if (!req.headers || !req.headers['X-Cid'] || !req.headers['X-Cids']
+    || !req.headers['X-Account'] || !req.headers['X-Sig'] || !req.headers['X-Contract']) {
     res.status(400).json({ message: 'Missing data' });
   } else {
-    let chain = req.headers.chain;
-    let account = req.headers.account;
-    let sig = req.headers.sig;
-    let cid = req.headers.cid;
-    let contract = req.headers.contract;
-    if (!account || !sig) {
+    let chain = req.headers['X-Chain'] || 'HIVE'
+    let account = req.headers['X-Account'];
+    let sig = req.headers['X-Sig'];
+    let cid = req.headers['X-Cid'];
+    let contract = req.headers['X-Contract'];
+    let cids = req.headers['X-Cids'];
+    if (!account || !sig || !cids) {
       console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
       return
