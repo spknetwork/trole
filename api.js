@@ -218,6 +218,7 @@ exports.arrange = (req, res, next) => {
       res.status(401).send("Access denied. No Valid Signature");
       return
     }
+    console.log({chain, account, sig, cids, contract})
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract(req.headers.contract)])
       .then((r) => {
