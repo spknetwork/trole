@@ -208,11 +208,11 @@ exports.arrange = (req, res, next) => {
     || !req.headers.account || !req.headers.sig || !req.headers.contract) {
     res.status(400).json({ message: 'Missing data' });
   } else {
-    let chain = req.headers['x-chain'];
-    let account = req.headers['x-account'];
-    let sig = req.headers['x-sig'];
-    let cids = req.headers['x-files'];
-    let contract = req.headers['x-contract'];
+    let chain = req.headers['X-Chain'] || 'HIVE';
+    let account = req.headers['X-Account'];
+    let sig = req.headers['X-Sig'];
+    let cids = req.headers['X-Files'];
+    let contract = req.headers['X-Contract'];
     if (!account || !sig) {
       console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
