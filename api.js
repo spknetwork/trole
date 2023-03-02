@@ -180,7 +180,7 @@ exports.stats = (req, res, next) => {
     let contract = req.headers.contract;
     if (!account || !sig) {
       console.log('first out')
-      res.status(401).send("Access denied. Signature Mismatch");
+      res.status(401).send("Access denied. No Valid Signature");
       return
     }
     getAccountPubKeys(account)
@@ -208,11 +208,11 @@ exports.arrange = (req, res, next) => {
     || !req.headers.account || !req.headers.sig || !req.headers.contract) {
     res.status(400).json({ message: 'Missing data' });
   } else {
-    let chain = req.headers.chain;
-    let account = req.headers.account;
-    let sig = req.headers.sig;
-    let cid = req.headers.cid;
-    let contract = req.headers.contract;
+    let chain = req.headers['x-chain'];
+    let account = req.headers['x-account'];
+    let sig = req.headers['x-sig'];
+    let cids = req.headers['x-files'];
+    let contract = req.headers['x-contract'];
     if (!account || !sig) {
       console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
@@ -228,12 +228,15 @@ exports.arrange = (req, res, next) => {
         ) {
 
           res.status(401).send("Access denied. Contract Mismatch");
-        } else if (verifySig(account, sig, r[0][1], cid)) {
-          fs.createWriteStream(
-            getFilePath(req.headers.cid, req.headers.contract), { flags: 'w' }
-          );
-          console.log(`authorized: ${req.headers.cid}`)
-          res.status(200).json({ authorized: req.headers.cid }); //bytes and time remaining
+        } else if (verifySig(`${account}|${contract}${cids}`, sig, r[0][1])) {
+          const CIDs = cids.split(',');
+          for(var i = 1; i < CIDs.length; i++){
+            fs.createWriteStream(
+              getFilePath(CIDs[i], req.headers.contract), { flags: 'w' }
+            );
+          }
+          console.log(`authorized: ${CIDs}`)
+          res.status(200).json({ authorized: CIDs }); //bytes and time remaining
         } else {
           res.status(401).send("Access denied. Signature Mismatch");
         }
@@ -454,10 +457,10 @@ function sign(msg, key) {
   return privateKey.sign(message)
 }
 
-function verifySig(msg, sig, keys, cid) {
+function verifySig(msg, sig, keys) {
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
-  const message = sha256(`${msg}:${cid}`);
+  const message = sha256(msg);
   for (var i = 0; i < keys.length; i++) {
     const publicKey = hiveTx.PublicKey.from(keys[i][0]);
     const verify = publicKey.verify(message, signature);
