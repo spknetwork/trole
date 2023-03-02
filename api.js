@@ -232,7 +232,7 @@ exports.arrange = (req, res, next) => {
           const CIDs = cids.split(',');
           for(var i = 1; i < CIDs.length; i++){
             fs.createWriteStream(
-              getFilePath(CIDs[i], req.headers.contract), { flags: 'w' }
+              getFilePath(CIDs[i], contract), { flags: 'w' }
             );
           }
           console.log(`authorized: ${CIDs}`)
