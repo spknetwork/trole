@@ -40,9 +40,9 @@ function localIpfsUpload(cid, contract) {
 
 
 exports.upload = (req, res) => {
-  const contract = req.headers['contract'];
+  const contract = req.headers['X-Contract'];
   const contentRange = req.headers['content-range'];
-  const fileId = req.headers['x-cid'];
+  const fileId = req.headers['X-Cid'];
 
   if (!contract) {
     console.log('Missing Contract');
