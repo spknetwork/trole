@@ -12,7 +12,7 @@ const Busboy = require('busboy');
 
 function localIpfsUpload(cid, contract) {
 
-  ipfs.files.add(Buffer.from(fs.readFileSync(getFilePath(cid, contract))), function (err, file) {
+  ipfs.files.add(fs.readFileSync(getFilePath(cid, contract)), function (err, file) {
     if (err) {
       console.log(err);
     }
