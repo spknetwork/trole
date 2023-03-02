@@ -178,7 +178,7 @@ exports.stats = (req, res, next) => {
     let sig = req.headers['X-Sig'];
     let cid = req.headers['X-Cid'];
     let contract = req.headers['X-Contract'];
-    let cids = req.headers['X-Cids'];
+    let cids = req.headers['X-Files'];
     if (!account || !sig || !cids) {
       console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
