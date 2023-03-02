@@ -43,12 +43,12 @@ exports.upload = (req, res) => {
   const contract = req.headers['X-Contract'];
   const contentRange = req.headers['content-range'];
   const fileId = req.headers['X-Cid'];
-
+console.log({contract, contentRange, fileId})
   if (!contract) {
     console.log('Missing Contract');
     return res
       .status(400)
-      .json({ message: 'Missing "Content-Range" header' });
+      .json({ message: 'Missing "X-Contract" header' });
   }
 
   if (!contentRange) {
