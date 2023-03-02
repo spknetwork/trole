@@ -170,7 +170,7 @@ console.log({contract, contentRange, fileId})
 
 exports.stats = (req, res, next) => {
   if (!req.headers || !req.headers['X-Cid'] || !req.headers['X-Files']
-    || !req.headers['X-Account'] || !req.headers['X-Sig'] || !req.headers['X-Contract']) {
+  || !req.headers['X-Account'] || !req.headers['X-Sig'] || !req.headers['X-Contract']) {
     res.status(400).json({ message: 'Missing data' });
   } else {
     let chain = req.headers['X-Chain'] || 'HIVE'
@@ -205,8 +205,8 @@ exports.stats = (req, res, next) => {
 }
 
 exports.arrange = (req, res, next) => {
-  if (!req.headers || !req.headers.cid
-    || !req.headers.account || !req.headers.sig || !req.headers.contract) {
+  if (!req.headers || !req.headers['X-Cid'] || !req.headers['X-Files']
+  || !req.headers['X-Account'] || !req.headers['X-Sig'] || !req.headers['X-Contract'])  {
     res.status(400).json({ message: 'Missing data' });
   } else {
     let chain = req.headers['X-Chain'] || 'HIVE';
