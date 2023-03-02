@@ -225,6 +225,7 @@ exports.arrange = (req, res, next) => {
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract(req.headers.contract)])
       .then((r) => {
+        console.log('verify',verifySig(`${account}:${contract}${cids}`, sig, r[0][1]))
         if (
           false
           //!r[1][0] || //no error
@@ -232,7 +233,7 @@ exports.arrange = (req, res, next) => {
         ) {
 
           res.status(401).send("Access denied. Contract Mismatch");
-        } else if (verifySig(`${account}:${contract},${cids}`, sig, r[0][1])) {
+        } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
           const CIDs = cids.split(',');
           for(var i = 1; i < CIDs.length; i++){
             fs.createWriteStream(
