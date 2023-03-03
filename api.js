@@ -10,9 +10,9 @@ const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
-function localIpfsUpload(cid, contract) {
+function localIpfsUpload(cid, contract, res) {
 
-  ipfs.files.add(fs.readFileSync(getFilePath(cid, contract)), function (err, file) {
+  ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
     if (err) {
       console.log(err);
     }
@@ -23,17 +23,42 @@ function localIpfsUpload(cid, contract) {
         ipfs.pin.add(cid, function (err, pin) {
           if (err) {
             console.log(err);
+            res
+          .status(400)
+          .json({
+            message: 'Internal Error'
+          });
           }
           console.log(`pinned ${cid}`)
+          //delete file
+          fs.rmSync(getFilePath(cid, contract.id))
           // sign and update contract
-
+          res
+          .status(200)
+          .json({
+            cid,
+            message: 'File Pinned'
+          });
         })
+      } else {
+        console.log(`Files larger than contract: ${file[0].hash}`)
+        res
+          .status(400)
+          .json({
+            contract,
+            message: 'Contract Space Exceeded: Failed'
+          });
       }
     } else {
       console.log(`mismatch between ${cid} and ${file[0].hash}`)
       //delete file
-      fs.rmSync(getFilePath(cid, contract))
+      fs.rmSync(getFilePath(cid, contract.id))
       //inform user that file was not uploaded
+      res
+          .status(400)
+          .json({
+            message: 'File Credential Mismatch'
+          });
     }
   })
 }
@@ -131,8 +156,11 @@ console.log({contract, contentRange, fileId})
   })
 
   busboy.on('finish', () => {
-    localIpfsUpload(fileId, contract)
-    res.sendStatus(200)
+    pool.query(`SELECT * FROM contracts WHERE id = $1`, [contract], (e, r) => {
+      localIpfsUpload(fileId, r, res)
+    })
+    // localIpfsUpload(fileId, contract)
+    // res.sendStatus(200)
   });
 
   req.pipe(busboy);
