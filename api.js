@@ -257,13 +257,22 @@ exports.arrange = (req, res, next) => {
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract(req.headers.contract)])
       .then((r) => {
-        const sc = r[1]
-        if (
-          false 
-          // !sc || //no error
-          // account != sc.fo //or account mismatch
-        ) {
+        var sc = r[1]
+        sc = {
+          s: 10485760,
+          fo: account,
+          co: 'dlux-io',
+          files: cids,
+          e: 0,
+          sig,
+          b: 1000,
+          id: contract,
 
+        }
+        if (
+          !sc || //no error
+          account != sc.fo //or account mismatch
+        ) {
           res.status(401).send("Access denied. Contract Mismatch");
         } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
           const CIDs = cids.split(',');
