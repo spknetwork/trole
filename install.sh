@@ -158,7 +158,7 @@ then
     fi
     if [ -z "$DATABASE_URL" ];
     then
-        echo "DATABASE_URL=postgres://trole:${SPKPRIV}@127.0.0.1:5432/trole" | tee -a .env 
+        echo "DATABASE_URL=postgres://trole_node:${SPKPRIV}@127.0.0.1:5432/trole" | tee -a .env 
     fi
 else
     echo -e "${YELLOW}No .env found${NC}"
@@ -320,6 +320,7 @@ else
     echo -e "${GREEN}Postgres is running${NC}"
 fi
 
+sudo -u postgres -H -- psql -d trole -c "create user trole_node with password '${SPKPRIV}';" &> /dev/null
 sudo -u postgres createdb trole &> /dev/null
 sudo -u postgres -H -- psql -d trole -c "create table pins (
         id BIGSERIAL PRIMARY KEY,
