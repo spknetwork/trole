@@ -159,7 +159,7 @@ console.log({contract, contentRange, fileId})
   })
 
   busboy.on('finish', () => {
-    pool.query(`SELECT * FROM contracts WHERE contract = $1`, [contract], (e, r) => {
+    pool.query(`SELECT * FROM pins WHERE contract = $1`, [contract], (e, r) => {
       localIpfsUpload(fileId, r, res)
     })
     // localIpfsUpload(fileId, contract)
@@ -257,11 +257,10 @@ exports.arrange = (req, res, next) => {
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract(req.headers.contract)])
       .then((r) => {
-        console.log('verify',verifySig(`${account}:${contract}${cids}`, sig, r[0][1]))
+        const sc = r[1]
         if (
-          false
-          //!r[1][0] || //no error
-          //account != r[1][1].fo //or account mismatch
+          !r[1][0] || //no error
+          account != r[1][1].fo //or account mismatch
         ) {
 
           res.status(401).send("Access denied. Contract Mismatch");
@@ -272,6 +271,22 @@ exports.arrange = (req, res, next) => {
               getFilePath(CIDs[i], contract), { flags: 'w' }
             );
           }
+          updatePins([
+             sc.files, // cids VARCHAR UNIQUE,
+             sc.s, // size INT ,
+             0, // ts BIGINT ,
+             sc.fo, // account VARCHAR ,
+             sc.co, // sponsor VARCHAR ,
+             config.account, // validator VARCHAR ,
+             sig, // fosig VARCHAR ,
+             '', // spsig VARCHAR ,
+             sc.e, // exp BIGINT ,
+             sc.b, // broca INT ,
+             contract, // contract VARCHAR ,
+             0, // pinned INT ,
+             0, // flag INT ,
+             2, // state  INT
+          ])
           console.log(`authorized: ${CIDs}`)
           res.status(200).json({ authorized: CIDs }); //bytes and time remaining
         } else {
@@ -555,14 +570,20 @@ function getContract(contract, chain = 'spk') {
 
 /*
 [
-      data.hash,
-      data.size,
-      data.ts,
-      data.account,
-      data.sig,
-      data.exp,
-      data.contract,
-      data.pinned
+      cids VARCHAR UNIQUE,
+        size INT ,
+        ts BIGINT ,
+        account VARCHAR ,
+        sponsor VARCHAR ,
+        validator VARCHAR ,
+        fosig VARCHAR ,
+        spsig VARCHAR ,
+        exp BIGINT ,
+        broca INT ,
+        contract VARCHAR ,
+        pinned INT ,
+        flag INT ,
+        state  INT
     ]
 */
 

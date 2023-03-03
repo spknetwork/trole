@@ -323,15 +323,17 @@ fi
 sudo -u postgres createdb trole &> /dev/null
 sudo -u postgres -H -- psql -d trole -c "create table pins (
         id BIGSERIAL PRIMARY KEY,
-        cids VARCHAR UNIQUE,
         size INT ,
         ts BIGINT ,
         account VARCHAR ,
+        sponsor VARCHAR ,
+        validator VARCHAR ,
         fosig VARCHAR ,
         spsig VARCHAR ,
         exp BIGINT ,
+        broca INT ,
         contract VARCHAR ,
-        pinned BOOLEAN ,
+        pinned INT ,
         flag INT ,
         state  INT
      );" &> /dev/null
