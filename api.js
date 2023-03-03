@@ -2,6 +2,9 @@ const fetch = require("node-fetch");
 const hiveTx = require("hive-tx")
 const config = require('./config')
 const { Pool } = require("pg");
+const pool = new Pool({
+  connectionString: config.dbcs,
+});
 //var crypto = require("crypto");
 const fs = require('fs-extra')
 const { Blob } = require("buffer");
@@ -11,7 +14,7 @@ var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
 function localIpfsUpload(cid, contract, res) {
-
+  console.log(contract)
   ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
     if (err) {
       console.log(err);
@@ -156,7 +159,7 @@ console.log({contract, contentRange, fileId})
   })
 
   busboy.on('finish', () => {
-    pool.query(`SELECT * FROM contracts WHERE id = $1`, [contract], (e, r) => {
+    pool.query(`SELECT * FROM contracts WHERE contract = $1`, [contract], (e, r) => {
       localIpfsUpload(fileId, r, res)
     })
     // localIpfsUpload(fileId, contract)

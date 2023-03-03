@@ -156,6 +156,10 @@ then
     then
         echo "ENDPOINT=http://127.0.0.1" | tee -a .env 
     fi
+    if [ -z "$DATABASE_URL" ];
+    then
+        echo "DATABASE_URL=postgres://trole:${SPKPRIV}@127.0.0.1:5432/trole" | tee -a .env 
+    fi
 else
     echo -e "${YELLOW}No .env found${NC}"
     echo What is your domain name? -dlux.io
@@ -319,11 +323,12 @@ fi
 sudo -u postgres createdb trole &> /dev/null
 sudo -u postgres -H -- psql -d trole -c "create table pins (
         id BIGSERIAL PRIMARY KEY,
-        hash VARCHAR UNIQUE,
+        cids VARCHAR UNIQUE,
         size INT ,
         ts BIGINT ,
         account VARCHAR ,
-        sig VARCHAR ,
+        fosig VARCHAR ,
+        spsig VARCHAR ,
         exp BIGINT ,
         contract VARCHAR ,
         pinned BOOLEAN ,
