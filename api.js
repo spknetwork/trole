@@ -18,6 +18,7 @@ function localIpfsUpload(cid, contract) {
     }
     //check that file[0].hash == cid and pin the file if true
     if (file[0].hash == cid) {
+      console.log(contract.t , file[0].size , contract.s)
       if (contract.t + file[0].size <= contract.s) { //t total s storage
         ipfs.pin.add(cid, function (err, pin) {
           if (err) {
