@@ -66,7 +66,51 @@ function localIpfsUpload(cid, contract, res) {
   })
 }
 
-
+exports.contract = (req, res) => {
+  const user = req.query.user;
+  fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json =>{
+    if(!json.channels['dlux-io'] && json.pubKey != 'NA'){ //no contract
+      const operations = [
+        [
+          'custom_json',
+          {
+            "required_auths": [
+              config.account
+            ],
+            "required_posting_auths": [],
+            "id": "spkcc_channel_open",
+            "json": `{\"broca\":100,\"broker\":\"dlux-io\",\"to\":\"${user}\",\"contract\":\"1\",\"slots\":\"dlux-io,1000\"}`
+          }
+        ]
+      ]
+      const tx = new hiveTx.Transaction()
+      tx.create(operations).then(() => {
+        const privateKey = hiveTx.PrivateKey.from(config.active_key)
+        tx.sign(privateKey)
+        tx.broadcast().then(r => {
+          console.log({r})
+          res.status(200)
+              .json({
+                message: 'Contract Sent',
+                tx: r
+              });
+        })
+      })
+      .catch(e => {
+        console.log(e)
+        res.status(400)
+              .json({
+                message: 'File Contract Build Failed'
+              });
+      })
+    } else {
+      res.status(400)
+              .json({
+                message: 'Contract Exists or User PubKey Not Found'
+              });
+    }
+  })
+}
 
 exports.upload = (req, res) => {
   const contract = req.headers['x-contract'];
@@ -304,6 +348,12 @@ exports.arrange = (req, res, next) => {
         }
       })
   }
+}
+
+exports.petition = (req, res, next) => {
+  // determine if the requesting account has a high enough reputation to upload
+  // if so, return the number of bytes they can upload
+  
 }
 
 // exports.proxy = (req, res) => {

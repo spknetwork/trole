@@ -7,7 +7,7 @@ const API = require("./api");
 
 api.use(express.json())
 api.use(cors())
-
+api.get('/upload-contract', API.contract)
 api.get("/upload-check", API.stats)
 api.get("/upload-authorize", API.arrange)
 api.post("/upload", API.upload)
