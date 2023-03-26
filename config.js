@@ -10,7 +10,7 @@ const active = ENV.ACTIVE || true;
 const ENDPOINT = ENV.ENDPOINT || "localhost";
 const ENDPORT = ENV.ENDPORT || 5001
 const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
-const SPK_API = ENV.SPK_API || "https://spt-test.dlux.io";
+const SPK_API = ENV.SPK_API || "https://spk-test.dlux.io";
 
 const tables = {
   db:{
