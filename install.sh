@@ -286,7 +286,7 @@ CADDY_CONFIG_EXISTS=$(grep $CADDY_PATTERN $CADDY_FILE 2> /dev/null)
 if [ -z "$CADDY_CONFIG_EXISTS" ];
 then
     echo Building Caddyfile
-    echo -e "ipfs.${DOMAIN} {\n\treverse_proxy /api/* localhost:${API_PORT} {\n\t\t\theader_down Access-Control-Allow-Origin *\n\t\t\theader_down Access-Control-Allow-Methods ”POST”\n\t\t\theader_down Access-Control-Allow-Headers *\n\t\t}\n\t\treverse_proxy /ipfs/* localhost:8080\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
+    echo -e "ipfs.${DOMAIN} {\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
     sudo systemctl restart caddy
 else
     echo Caddy is configured

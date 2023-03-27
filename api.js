@@ -203,11 +203,11 @@ console.log({contract, contentRange, fileId})
   })
 
   busboy.on('finish', () => {
-    pool.query(`SELECT * FROM pins WHERE contract = $1`, [contract], (e, r) => {
-      localIpfsUpload(fileId, r, res)
-    })
-    // localIpfsUpload(fileId, contract)
-    // res.sendStatus(200)
+    // pool.query(`SELECT * FROM pins WHERE contract = $1`, [contract], (e, r) => {
+    //   localIpfsUpload(fileId, r, res)
+    // })
+    localIpfsUpload(fileId, contract)
+    res.sendStatus(200)
   });
 
   req.pipe(busboy);
