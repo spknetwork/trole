@@ -13,63 +13,98 @@ const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
-function localIpfsUpload(cid, contract, res) {
-  console.log(contract)
-  ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
-    if (err) {
-      console.log(err);
-    }
-    //check that file[0].hash == cid and pin the file if true
-    if (file[0].hash == cid) {
-      console.log(contract.t , file[0].size , contract.s)
-      if (contract.t + file[0].size <= contract.s) { //t total s storage
-        ipfs.pin.add(cid, function (err, pin) {
-          if (err) {
-            console.log(err);
+const DB = {
+  read: function (key) {
+    return new Promise((res, rej) => {
+      fetch(`http://localhost:3000/read?key=${key}`)
+        .then(r => r.json())
+        .then(json => res(json))
+        .catch(e => {
+          console.log('Failed to read:', key)
+          rej(e)
+        })
+    })
+  },
+  write: function (key, value) {
+    return new Promise((res, rej) => {
+      fetch(`http://localhost:3000/write?key=${key}&value=${value}`)
+        .then(r => r.json())
+        .then(json => res(json))
+        .catch(e => {
+          console.log('Failed to read:', key)
+          rej(e)
+        })
+    })
+  }
+}
+
+function localIpfsUpload(cid, contractID, res) {
+  DB.read(contractID)
+    .then(str => {
+      var contract = JSON.parse(str)
+      ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
+        if (err) {
+          console.log(err);
+        }
+        //check that file[0].hash == cid and pin the file if true
+        if (str.indexOf(file[0].hash) > 0) {
+          console.log(contract.t, file[0].size, contract.s)
+          if (contract.t + file[0].size <= contract.s) { //t total s storage
+            ipfs.pin.add(cid, function (err, pin) {
+              if (err) {
+                console.log(err);
+                res
+                  .status(400)
+                  .json({
+                    message: 'Internal Error'
+                  });
+              }
+              console.log(`pinned ${cid}`)
+              //delete file
+              fs.rmSync(getFilePath(cid, contract.id))
+              // sign and update contract
+              contract.t += file[0].size
+              contract.u++
+              DB.write(contract.id, JSON.stringify(contract))
+              if (contract.u == contract.n) signNupdate(contract)
+              res
+                .status(200)
+                .json({
+                  cid,
+                  message: 'File Pinned'
+                });
+            })
+          } else {
+            console.log(`Files larger than contract: ${file[0].hash}`)
+            fs.rmSync(getFilePath(cid, contract.id))
+            DB.write(contract.id, "")
             res
-          .status(400)
-          .json({
-            message: 'Internal Error'
-          });
+              .status(400)
+              .json({
+                contract,
+                message: 'Contract Space Exceeded: Failed'
+              });
           }
-          console.log(`pinned ${cid}`)
+        } else {
+          console.log(`mismatch between ${cid} and ${file[0].hash}`)
           //delete file
           fs.rmSync(getFilePath(cid, contract.id))
-          // sign and update contract
+          //inform user that file was not uploaded
+          DB.write(contract.id, "")
           res
-          .status(200)
-          .json({
-            cid,
-            message: 'File Pinned'
-          });
-        })
-      } else {
-        console.log(`Files larger than contract: ${file[0].hash}`)
-        res
-          .status(400)
-          .json({
-            contract,
-            message: 'Contract Space Exceeded: Failed'
-          });
-      }
-    } else {
-      console.log(`mismatch between ${cid} and ${file[0].hash}`)
-      //delete file
-      fs.rmSync(getFilePath(cid, contract.id))
-      //inform user that file was not uploaded
-      res
-          .status(400)
-          .json({
-            message: 'File Credential Mismatch'
-          });
-    }
-  })
+            .status(400)
+            .json({
+              message: 'File Credential Mismatch'
+            });
+        }
+      })
+    })
 }
 
 exports.contract = (req, res) => {
   const user = req.query.user;
-  fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json =>{
-    if(!json.channels['dlux-io'] && json.pubKey != 'NA'){ //no contract
+  fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
+    if (!json.channels['dlux-io'] && json.pubKey != 'NA') { //no contract
       const operations = [
         [
           'custom_json',
@@ -88,26 +123,26 @@ exports.contract = (req, res) => {
         const privateKey = hiveTx.PrivateKey.from(config.active_key)
         tx.sign(privateKey)
         tx.broadcast().then(r => {
-          console.log({r})
+          console.log({ r })
           res.status(200)
-              .json({
-                message: 'Contract Sent',
-                tx: r
-              });
+            .json({
+              message: 'Contract Sent',
+              tx: r
+            });
         })
       })
-      .catch(e => {
-        console.log(e)
-        res.status(400)
-              .json({
-                message: 'File Contract Build Failed'
-              });
-      })
+        .catch(e => {
+          console.log(e)
+          res.status(400)
+            .json({
+              message: 'File Contract Build Failed'
+            });
+        })
     } else {
       res.status(400)
-              .json({
-                message: 'Contract Exists or User PubKey Not Found'
-              });
+        .json({
+          message: 'Contract Exists or User PubKey Not Found'
+        });
     }
   })
 }
@@ -116,7 +151,7 @@ exports.upload = (req, res) => {
   const contract = req.headers['x-contract'];
   const contentRange = req.headers['content-range'];
   const fileId = req.headers['x-cid'];
-console.log({contract, contentRange, fileId})
+  console.log({ contract, contentRange, fileId })
   if (!contract) {
     console.log('Missing Contract');
     return res
@@ -246,7 +281,7 @@ console.log({contract, contentRange, fileId})
 
 exports.stats = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
-  || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
+    || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
     console.log(req.headers)
     res.status(400).json({ message: 'Missing data' });
   } else {
@@ -264,9 +299,9 @@ exports.stats = (req, res, next) => {
     getAccountPubKeys(account)
       .then((r) => {
         if (
-          true
-          //!r[1][0] || //no error
-          //account == r[1][1].fo //or account mismatch
+          //true
+          !r[1][0] || //no error
+          'NA' != r[1][1] //or account mismatch
         ) {
 
           fs.stat(getFilePath(cid, contract))
@@ -283,7 +318,7 @@ exports.stats = (req, res, next) => {
 
 exports.arrange = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
-  || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract'])  {
+    || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
     console.log(req.headers)
     res.status(400).json({ message: 'Missing data' });
   } else {
@@ -297,21 +332,24 @@ exports.arrange = (req, res, next) => {
       res.status(401).send("Access denied. No Valid Signature");
       return
     }
-    console.log({chain, account, sig, cids, contract})
+    console.log({ chain, account, sig, cids, contract })
     var getPubKeys = getAccountPubKeys(account)
-    Promise.all([getPubKeys, getContract(req.headers.contract)])
+    Promise.all([getPubKeys, getContract({ to: account, from: req.headers.contract.split(':')[0], id: req.headers.contract.split(':')[1] })])
       .then((r) => {
-        var sc = r[1]
-        sc = {
-          s: 10485760,
-          fo: account,
-          co: 'dlux-io',
-          files: cids,
-          e: 0,
+        var sc = {
+          s: r[1].a,
+          t: 0,
+          fo: r[1].t,
+          co: r[1].b,
+          f: r[1].f,
+          files: cids.split(','),
+          n: cids.length,
+          u: 0,
+          e: r[1].e.split(':')[0],
           sig,
-          b: 1000,
-          id: contract,
-
+          key: r[0][1],
+          b: r[1].r,
+          id: r[1].i,
         }
         if (
           !sc || //no error
@@ -320,27 +358,12 @@ exports.arrange = (req, res, next) => {
           res.status(401).send("Access denied. Contract Mismatch");
         } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
           const CIDs = cids.split(',');
-          for(var i = 1; i < CIDs.length; i++){
+          for (var i = 1; i < CIDs.length; i++) {
             fs.createWriteStream(
               getFilePath(CIDs[i], contract), { flags: 'w' }
             );
           }
-          updatePins([
-             sc.files, // cids VARCHAR UNIQUE,
-             sc.s, // size INT ,
-             0, // ts BIGINT ,
-             sc.fo, // account VARCHAR ,
-             sc.co, // sponsor VARCHAR ,
-             config.account, // validator VARCHAR ,
-             sig, // fosig VARCHAR ,
-             '', // spsig VARCHAR ,
-             sc.e, // exp BIGINT ,
-             sc.b, // broca INT ,
-             contract, // contract VARCHAR ,
-             0, // pinned INT ,
-             0, // flag INT ,
-             2, // state  INT
-          ])
+          DB.write(sc.id, JSON.stringify(sc))
           console.log(`authorized: ${CIDs}`)
           res.status(200).json({ authorized: CIDs }); //bytes and time remaining
         } else {
@@ -350,10 +373,50 @@ exports.arrange = (req, res, next) => {
   }
 }
 
+function signNupdate(contract) {
+  return new Promise((resolve, reject) => {
+    const data = {
+      t: contract.fo,
+      i: contract.id,
+      ts: contract.sig,
+      b: config.account,
+      f: contract.f,
+      c: contract.files.join(','),
+      s: contract.t,
+    }
+    const operations = [
+      [
+        'custom_json',
+        {
+          "required_auths": [
+            config.account
+          ],
+          "required_posting_auths": [],
+          "id": "spkcc_channel_update",
+          "json": JSON.stringify(contract)
+        }
+      ]
+    ]
+    const tx = new hiveTx.Transaction()
+    tx.create(operations).then(() => {
+      const privateKey = hiveTx.PrivateKey.from(config.active_key)
+      tx.sign(privateKey)
+      tx.broadcast().then(r => {
+        console.log({ r })
+        res.status(200)
+          .json({
+            message: 'Contract Sent',
+            tx: r
+          });
+      })
+    })
+  })
+}
+
 exports.petition = (req, res, next) => {
   // determine if the requesting account has a high enough reputation to upload
   // if so, return the number of bytes they can upload
-  
+
 }
 
 // exports.proxy = (req, res) => {
@@ -584,19 +647,12 @@ function verifySig(msg, sig, keys) {
 function getAccountPubKeys(acc, chain = 'HIVE') {
   return new Promise((res, rej) => {
     if (chain == 'HIVE') {
-      fetch(config.HIVE_API, {
-        body: `{\"jsonrpc\":\"2.0\", \"method\":\"condenser_api.get_accounts\", \"params\":[[\"${acc}\"]], \"id\":1}`,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
-      })
+      fetch(`${config.SPK_API}/@${acc}`)
         .then((r) => {
           return r.json();
         })
         .then((re) => {
-          var rez = [...config.active ? re.result[0].active.key_auths : [],
-          ...config.posting ? re.result[0].posting.key_auths : []]
+          var rez = re.pubKey
           res([0, rez]);
         })
         .catch((e) => {
@@ -611,12 +667,12 @@ function getAccountPubKeys(acc, chain = 'HIVE') {
 function getContract(contract, chain = 'spk') {
   return new Promise((res, rej) => {
     if (chain == 'spk') {
-      fetch(config.SPK_API + `/api/contract/${contract}`)
+      fetch(config.SPK_API + `/api/contract/${contract.to}/${contract.from}/${contract.id}`)
         .then((r) => {
           return r.json();
         })
         .then((re) => {
-          res([0, re.contract]);
+          res([0, re.proffer]);
         })
         .catch((e) => {
           res([1, e]);

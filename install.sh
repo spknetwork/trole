@@ -156,9 +156,9 @@ then
     then
         echo "ENDPOINT=http://127.0.0.1" | tee -a .env 
     fi
-    if [ -z "$DATABASE_URL" ];
+    if [ -z "$POA_URL" ];
     then
-        echo "DATABASE_URL=postgres://trole_node:${SPKPRIV}@127.0.0.1:5432/trole" | tee -a .env 
+        echo "POA_URL=http://localhost:3000" | tee -a .env 
     fi
 else
     echo -e "${YELLOW}No .env found${NC}"
@@ -171,7 +171,6 @@ else
     echo "API_PORT=5050" | tee -a .env 
     echo "ENDPOINT=http://127.0.0.1" | tee -a .env 
     echo "ENDPORT=5001" | tee -a .env 
-
 fi
 source .env
 echo -e "${YELLOW}Ensure ipfs.${DOMAIN} is pointed to this server${NC}"
@@ -238,7 +237,7 @@ then
     echo -e "${GREEN}IPFS service exists${NC}"
 else
     echo -e "Building IPFS Service${NC}"
-    echo -e IPFSSERVICE="[Unit]\nDescription=ipfs daemon\n[Service]\nExecStart=/usr/local/bin/ipfs daemon\nRestart=always\nUser=${whoami}\nGroup=${whoami}\nEnvironment=”IPFS_PATH=/home/${whoami}/data/ipfs”\n[Install]\nWantedBy=multi-user.target" | sudo tee $IPFS_SERVICE_FILE    
+    echo -e IPFSSERVICE="[Unit]\nDescription=ipfs daemon\n[Service]\nExecStart=/usr/local/bin/ipfs daemon --enable-pubsub-experiment\nRestart=always\nUser=${whoami}\nGroup=${whoami}\nEnvironment=”IPFS_PATH=/home/${whoami}/data/ipfs”\n[Install]\nWantedBy=multi-user.target" | sudo tee $IPFS_SERVICE_FILE    
     sudo systemctl daemon-reload 
 fi
 
@@ -301,45 +300,6 @@ else
     echo -e "${GREEN}Caddy is running${NC}"
 fi
 
-# Install Postgres
-
-pg_is_active=$(sudo systemctl is-active postgresql.service)
-if [ $pg_is_active != 'active' ];
-then
-    sudo apt install postgresql postgresql-contrib -y
-    sudo systemctl start postgresql.service
-    pg_is_active=$(sudo systemctl is-active postgresql.service)
-    if [ $pg_is_active != 'active' ];
-    then
-        echo -e "${RED}Postgres failed to install${NC}"
-        exit
-    else
-        echo Postgres is Installed and Running
-    fi
-else
-    echo -e "${GREEN}Postgres is running${NC}"
-fi
-
-sudo -u postgres -H -- psql -d trole -c "create user trole_node with password '${SPKPRIV}';" &> /dev/null
-sudo -u postgres createdb trole &> /dev/null
-sudo -u postgres -H -- psql -d trole -c "create table pins (
-        id BIGSERIAL PRIMARY KEY,
-        size INT ,
-        ts BIGINT ,
-        account VARCHAR ,
-        sponsor VARCHAR ,
-        validator VARCHAR ,
-        fosig VARCHAR ,
-        spsig VARCHAR ,
-        exp BIGINT ,
-        broca INT ,
-        contract VARCHAR ,
-        pinned INT ,
-        flag INT ,
-        state  INT
-     );" &> /dev/null
-
-
 TROLE_SERVICE_FILE=/lib/systemd/system/trole.service
 if test -f "$TROLE_SERVICE_FILE";
 then
@@ -375,6 +335,66 @@ then
     exit
 else
     echo Trole is running
+fi
+
+
+# PoA
+which_go=$(which go)
+if test -f "$which_go";
+then
+    echo -e "${GREEN}Go Installed${NC}"
+else
+    echo -e "Installing Go"
+    which_go=$(which snap)
+    if test -f "$which_snap";
+    then
+        echo -e "${GREEN}Snap Installed${NC}"
+    else
+        echo -e "Installing Snap"
+        
+        sudo apt install snapd 
+    fi
+    sudo snap install go --classic 
+fi
+
+POA_SERVICE_FILE=/lib/systemd/system/poa.service
+if test -f "$POA_SERVICE_FILE";
+then
+    echo -e "${GREEN}PoA service exists${NC}"
+else
+    git clone https://github.com/nathansenn/proofofaccess.git
+    mv proofofaccess /home/${whoami}/proofofaccess
+    rm -rF proofofaccess
+    echo -e "Installing Proof of Access"
+    echo -e POA_SERVICE="[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT}\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
+    sudo systemctl daemon-reload 
+fi
+
+poa_is_active=$(sudo systemctl is-active poa)
+if [ $poa_is_active = 'active' ];
+then
+    echo -e "${GREEN}PoA is running${NC}"
+else
+    echo 'Starting PoA'
+    sudo systemctl start poa
+fi
+
+poa_is_enabled=$(sudo systemctl is-enabled poa)
+if [ $poa_is_enabled = 'enabled' ];
+then
+    echo -e "${GREEN}PoA is set to auto-start${NC}"
+else
+    echo 'Enabling PoA auto-start'
+    sudo systemctl enable poa
+fi
+
+poa_is_active=$(sudo systemctl is-active poa)
+if [ $poa_is_active != 'active' ];
+then
+    echo -e "${RED}PoA failed to start${NC}"
+    exit
+else
+    echo PoA is running
 fi
 
 echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
