@@ -363,8 +363,8 @@ then
     echo -e "${GREEN}PoA service exists${NC}"
 else
     git clone https://github.com/nathansenn/proofofaccess.git
-    mv proofofaccess /home/${whoami}/proofofaccess
-    rm -rF proofofaccess
+    #mv proofofaccess /home/${whoami}/proofofaccess
+    #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
     echo -e POA_SERVICE="[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT}\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
     sudo systemctl daemon-reload 
