@@ -44,7 +44,7 @@ function localIpfsUpload(cid, contractID, res) {
       var contract = JSON.parse(str)
       ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
         if (err) {
-          console.log(err);
+          console.log('File add Error: ', err);
         }
         //check that file[0].hash == cid and pin the file if true
         if (str.indexOf(file[0].hash) > 0) {
@@ -376,13 +376,13 @@ exports.arrange = (req, res, next) => {
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
     const data = {
-      t: contract.fo,
-      i: contract.id,
-      ts: contract.sig,
-      b: config.account,
-      f: contract.f,
-      c: contract.files.join(','),
-      s: contract.t,
+      t: contract.fo, //file owner
+      i: contract.id, //contract id
+      ts: contract.sig, //signature of uploader
+      b: config.account, //broker
+      f: contract.f, //from
+      c: contract.files.join(','), //cids uploaded
+      s: contract.t, //total size
     }
     const operations = [
       [
