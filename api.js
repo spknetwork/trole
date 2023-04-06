@@ -352,6 +352,7 @@ exports.arrange = (req, res, next) => {
           b: r[1][1].r,
           id: r[1][1].i,
         }
+        console.log({sc}, r[0][1])
         if (
           !sc || //no error
           account != sc.fo //or account mismatch
