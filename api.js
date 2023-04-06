@@ -634,15 +634,13 @@ function sign(msg, key) {
   return privateKey.sign(message)
 }
 
-function verifySig(msg, sig, keys) {
+function verifySig(msg, sig, key) {
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
   const message = sha256(msg);
-  for (var i = 0; i < keys.length; i++) {
-    const publicKey = hiveTx.PublicKey.from(keys[i][0]);
+    const publicKey = hiveTx.PublicKey.from(key);
     const verify = publicKey.verify(message, signature);
     if (verify) return true
-  }
   return false
 }
 
