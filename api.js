@@ -338,19 +338,19 @@ exports.arrange = (req, res, next) => {
       .then((r) => {
         console.log({r})
         var sc = {
-          s: r[1].a,
+          s: r[1][1].a,
           t: 0,
-          fo: r[1].t,
-          co: r[1].b,
-          f: r[1].f,
+          fo: r[1][1].t,
+          co: r[1][1].b,
+          f: r[1][1].f,
           files: cids.split(','),
           n: cids.length,
           u: 0,
-          e: r[1].e.split(':')[0],
+          e: r[1][1].e.split(':')[0],
           sig,
           key: r[0][1],
-          b: r[1].r,
-          id: r[1].i,
+          b: r[1][1].r,
+          id: r[1][1].i,
         }
         if (
           !sc || //no error
