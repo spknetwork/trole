@@ -264,11 +264,7 @@ exports.upload = (req, res) => {
   })
 
   busboy.on('finish', () => {
-    // pool.query(`SELECT * FROM pins WHERE contract = $1`, [contract], (e, r) => {
-    //   localIpfsUpload(fileId, r, res)
-    // })
-    localIpfsUpload(fileId, contract)
-    res.sendStatus(200)
+    localIpfsUpload(fileId, contract, res)
   });
 
   req.pipe(busboy);
