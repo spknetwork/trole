@@ -62,8 +62,6 @@ const tables = {
 
 const config = {
   port,
-  posting,
-  active,
   dbcs,
   account,
   active_key,
