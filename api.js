@@ -22,13 +22,6 @@ const DB = {
           console.log('Failed to read:', key)
           rej(e)
         })
-      // fetch(`http://localhost:3000/read?key=${key}`)
-      //   .then(r => r.json())
-      //   .then(json => res(json))
-      //   .catch(e => {
-      //     console.log('Failed to read:', key)
-      //     rej(e)
-      //   })
     })
   },
   write: function (key, value) {
@@ -39,13 +32,6 @@ const DB = {
           console.log('Failed to read:', key)
           rej(e)
         })
-      // fetch(`http://localhost:3000/write?key=${key}&value=${value}`)
-      //   .then(r => r.json())
-      //   .then(json => res(json))
-      //   .catch(e => {
-      //     console.log('Failed to read:', key)
-      //     rej(e)
-      //   })
     })
   },
   delete: function (key) {
@@ -117,7 +103,7 @@ function localIpfsUpload(cid, contractID, res) {
           } else {
             console.log(`Files larger than contract: ${file[0].hash}`)
             fs.rmSync(getFilePath(cid, contract.id))
-            DB.write(contract.id, "")
+            DB.delete(contract.id)
             res
               .status(400)
               .json({
@@ -445,11 +431,9 @@ function signNupdate(contract) {
       tx.sign(privateKey)
       tx.broadcast().then(r => {
         console.log({ r })
-        res.status(200)
-          .json({
-            message: 'Contract Sent',
-            tx: r
-          });
+      })
+      .catch(e => {
+        console.log({ e })
       })
     })
   })
