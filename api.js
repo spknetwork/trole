@@ -369,7 +369,7 @@ exports.arrange = (req, res, next) => {
           co: r[1][1].b,
           f: r[1][1].f,
           files: cids.split(','),
-          n: JSON.parse(cids).length,
+          n: cids.split(',').length - 1,
           u: 0,
           e: r[1][1].e.split(':')[0],
           sig,
