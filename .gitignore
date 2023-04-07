@@ -219,6 +219,6 @@ package-lock.json
 
 uploads/**
 
-#Sdb/
+db/
 .vscode/settings.json
 swarm.key

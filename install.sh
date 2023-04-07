@@ -362,7 +362,7 @@ if test -f "$POA_SERVICE_FILE";
 then
     echo -e "${GREEN}PoA service exists${NC}"
 else
-    git clone https://github.com/nathansenn/proofofaccess.git
+    git clone https://github.com/nathansenn/proofofaccess.git ~/proofofaccess
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
