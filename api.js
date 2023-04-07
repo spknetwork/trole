@@ -361,7 +361,7 @@ exports.arrange = (req, res, next) => {
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
       .then((r) => {
-        console.log({r})
+        console.log({r}, {cids})
         var sc = {
           s: r[1][1].a,
           t: 0,
@@ -369,7 +369,7 @@ exports.arrange = (req, res, next) => {
           co: r[1][1].b,
           f: r[1][1].f,
           files: cids.split(','),
-          n: cids.length,
+          n: JSON.parse(cids).length,
           u: 0,
           e: r[1][1].e.split(':')[0],
           sig,
