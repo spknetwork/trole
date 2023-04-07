@@ -345,7 +345,7 @@ then
     echo -e "${GREEN}Go Installed${NC}"
 else
     echo -e "Installing Go"
-    which_go=$(which snap)
+    which_snap=$(which snap)
     if test -f "$which_snap";
     then
         echo -e "${GREEN}Snap Installed${NC}"
@@ -366,7 +366,7 @@ else
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
-    echo -e POA_SERVICE="[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT}\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT}\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
