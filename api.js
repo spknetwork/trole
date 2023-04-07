@@ -16,22 +16,62 @@ const Busboy = require('busboy');
 const DB = {
   read: function (key) {
     return new Promise((res, rej) => {
-      fetch(`http://localhost:3000/read?key=${key}`)
-        .then(r => r.json())
+      fs.readJSONSync(`./db/${key}.json`)
         .then(json => res(json))
         .catch(e => {
           console.log('Failed to read:', key)
           rej(e)
         })
+      // fetch(`http://localhost:3000/read?key=${key}`)
+      //   .then(r => r.json())
+      //   .then(json => res(json))
+      //   .catch(e => {
+      //     console.log('Failed to read:', key)
+      //     rej(e)
+      //   })
     })
   },
   write: function (key, value) {
     return new Promise((res, rej) => {
-      fetch(`http://localhost:3000/write?key=${key}&value=${value}`)
-        .then(r => r.json())
+      fs.writeJSONSync(`./db/${key}.json`, value)
         .then(json => res(json))
         .catch(e => {
           console.log('Failed to read:', key)
+          rej(e)
+        })
+      // fetch(`http://localhost:3000/write?key=${key}&value=${value}`)
+      //   .then(r => r.json())
+      //   .then(json => res(json))
+      //   .catch(e => {
+      //     console.log('Failed to read:', key)
+      //     rej(e)
+      //   })
+    })
+  },
+  delete: function (key) {
+    return new Promise((res, rej) => {
+      fs.removeSync(`./db/${key}.json`)
+        .then(json => res(json))
+        .catch(e => {
+          console.log('Failed to delete:', key)
+          rej(e)
+        })
+    })
+  },
+  update: function (key, att, value) {
+    return new Promise((res, rej) => {
+      fs.readJSONSync(`./db/${key}.json`)
+        .then(json => {
+          json[att] = value
+          fs.writeJSONSync(`./db/${key}.json`, json)
+            .then(json => res(json))
+            .catch(e => {
+              console.log('Failed to update:', key)
+              rej(e)
+            })
+        })
+        .catch(e => {
+          console.log('Failed to update:', key)
           rej(e)
         })
     })
