@@ -92,7 +92,10 @@ function localIpfsUpload(cid, contractID, res) {
               contract.t += file[0].size
               contract.u++
               DB.write(contract.id, JSON.stringify(contract))
-              if (contract.u == contract.n) signNupdate(contract)
+              console.log('signNupdate', contract)
+              if (contract.u == contract.n){
+                signNupdate(contract)
+              }
               res
                 .status(200)
                 .json({
