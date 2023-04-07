@@ -16,7 +16,7 @@ const Busboy = require('busboy');
 const DB = {
   read: function (key) {
     return new Promise((res, rej) => {
-      fs.readJSONSync(`./db/${key}.json`)
+      fs.readJSON(`./db/${key}.json`)
         .then(json => res(json))
         .catch(e => {
           console.log('Failed to read:', key)
@@ -33,7 +33,7 @@ const DB = {
   },
   write: function (key, value) {
     return new Promise((res, rej) => {
-      fs.writeJSONSync(`./db/${key}.json`, value)
+      fs.writeJSON(`./db/${key}.json`, value)
         .then(json => res(json))
         .catch(e => {
           console.log('Failed to read:', key)
@@ -50,7 +50,7 @@ const DB = {
   },
   delete: function (key) {
     return new Promise((res, rej) => {
-      fs.removeSync(`./db/${key}.json`)
+      fs.remove(`./db/${key}.json`)
         .then(json => res(json))
         .catch(e => {
           console.log('Failed to delete:', key)
@@ -60,7 +60,7 @@ const DB = {
   },
   update: function (key, att, value) {
     return new Promise((res, rej) => {
-      fs.readJSONSync(`./db/${key}.json`)
+      fs.readJSON(`./db/${key}.json`)
         .then(json => {
           json[att] = value
           fs.writeJSONSync(`./db/${key}.json`, json)
