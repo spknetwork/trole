@@ -133,7 +133,7 @@ function localIpfsUpload(cid, contractID, res) {
 exports.contract = (req, res) => {
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
-    if (!json.channels['dlux-io'] && json.pubKey != 'NA') { //no contract
+    if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
       const operations = [
         [
           'custom_json',
@@ -143,7 +143,7 @@ exports.contract = (req, res) => {
             ],
             "required_posting_auths": [],
             "id": "spkcc_channel_open",
-            "json": `{\"broca\":100,\"broker\":\"dlux-io\",\"to\":\"${user}\",\"contract\":\"1\",\"slots\":\"dlux-io,1000\"}`
+            "json": `{\"broca\":100,\"broker\":\"${config.account}\",\"to\":\"${user}\",\"contract\":\"1\",\"slots\":\"dlux-io,1000\"}`
           }
         ]
       ]
