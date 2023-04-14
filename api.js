@@ -13,6 +13,17 @@ const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
+var live_stats = {}
+getStats ()
+var lock = {}
+
+function getStats (){
+  fetch(`${config.SPK_API}/@${config.account}`).then(rz => rz.json()).then(json => {
+    live_stats = json
+  })
+  setTimeout(getStats, 30 * 60 * 1000)
+}
+
 const DB = {
   read: function (key) {
     return new Promise((res, rej) => {
@@ -25,10 +36,21 @@ const DB = {
     })
   },
   write: function (key, value) {
+    if(lock[key]){
+      return new Promise((res, rej) => {
+        setTimeout(() => {
+          DB.write(key, value).then(json => res(json)).catch(e => rej(e))
+        }, 100)
+      })
+    }
     return new Promise((res, rej) => {
+      lock[key] = true
       fs.writeJSON(`./db/${key}.json`, value)
-        .then(json => res(json))
+        .then(json => {
+          delete lock[key]
+          res(json)})
         .catch(e => {
+          delete lock[key]
           console.log('Failed to read:', key)
           rej(e)
         })
@@ -119,7 +141,7 @@ function localIpfsUpload(cid, contractID, res) {
           //delete file
           fs.rmSync(getFilePath(cid, contract.id))
           //inform user that file was not uploaded
-          DB.write(contract.id, "")
+          DB.delete(contract.id)
           res
             .status(400)
             .json({
@@ -134,6 +156,20 @@ exports.contract = (req, res) => {
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
     if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
+      var grant = 1000, multiplier = 1
+      const powder = parseInt(live_stats.broca.split(',')[0])
+      const cap = live_stats.spk_power * 1000
+      if(powder/cap > 0.8){
+        multiplier = 8
+      } else if (powder/cap > 0.6){
+        multiplier = 4
+      } else if (powder/cap > 0.4){
+        multiplier = 2
+      }
+      if(live_stats.granted[user]){
+        grant = parseInt((live_stats.granted[user]/live_stats.granted.t)*multiplier*(.2 * cap))
+      }
+      live_stats.broca = `${powder - grant},${live_stats.broca.split(',')[1]}`
       const operations = [
         [
           'custom_json',
@@ -143,7 +179,7 @@ exports.contract = (req, res) => {
             ],
             "required_posting_auths": [],
             "id": "spkcc_channel_open",
-            "json": `{\"broca\":100,\"broker\":\"${config.account}\",\"to\":\"${user}\",\"contract\":\"1\",\"slots\":\"dlux-io,1000\"}`
+            "json": `{\"broca\":${grant},\"broker\":\"${config.account}\",\"to\":\"${user}\",\"contract\":\"1\",\"slots\":\"dlux-io,1000\"}`
           }
         ]
       ]
