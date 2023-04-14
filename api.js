@@ -110,8 +110,6 @@ function localIpfsUpload(cid, contractID, res) {
                   });
               }
               console.log(`pinned ${cid}`)
-              //delete file
-              fs.rmSync(getFilePath(cid, contract.id))
               // sign and update contract
               DB.read(contractID)
                 .then(str => {
@@ -123,6 +121,10 @@ function localIpfsUpload(cid, contractID, res) {
                       console.log('signNupdate', contract)
                       if (contract.u == contract.n) {
                         signNupdate(contract)
+                        //delete files
+                        for (var i = 0; i < contract.files; i++) {
+                          fs.rmSync(getFilePath(contract.files[i], contract.id))
+                        }
                         res
                           .status(200)
                           .json({
