@@ -115,11 +115,18 @@ function localIpfsUpload(cid, contractID, res) {
                 .then(str => {
                   contract = JSON.parse(str)
                   contract.t += file[0].size
-                  contract.u++
+                  contract[cid] = 1
                   DB.write(contract.id, JSON.stringify(contract))
                     .then(json => {
                       console.log('signNupdate', contract)
-                      if (contract.u == contract.n) {
+                      var allDone = true
+                      for (var i = 0; i < contract.files; i++) {
+                        if (contract[contract.files[i]] && contract[contract.files[i]] == 0) {
+                          allDone = false
+                          break
+                        }
+                      }
+                      if (allDone) {
                         signNupdate(contract)
                         //delete files
                         for (var i = 0; i < contract.files; i++) {
