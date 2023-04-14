@@ -111,19 +111,23 @@ function localIpfsUpload(cid, contractID, res) {
               //delete file
               fs.rmSync(getFilePath(cid, contract.id))
               // sign and update contract
-              contract.t += file[0].size
+              DB.read(contractID)
+              .then(str => {
+                contract = JSON.parse(str)
+                contract.t += file[0].size
               contract.u++
               DB.write(contract.id, JSON.stringify(contract))
               console.log('signNupdate', contract)
               if (contract.u == contract.n){
                 signNupdate(contract)
-              }
-              res
+                res
                 .status(200)
                 .json({
                   cid,
                   message: 'File Pinned'
                 });
+              }
+              })
             })
           } else {
             console.log(`Files larger than contract: ${file[0].hash}`)
