@@ -14,10 +14,10 @@ var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
 var live_stats = {}
-getStats ()
+getStats()
 var lock = {}
 
-function getStats (){
+function getStats() {
   fetch(`${config.SPK_API}/@${config.account}`).then(rz => rz.json()).then(json => {
     live_stats = json
   })
@@ -36,7 +36,7 @@ const DB = {
     })
   },
   write: function (key, value) {
-    if(lock[key]){
+    if (lock[key]) {
       return new Promise((res, rej) => {
         setTimeout(() => {
           DB.write(key, value).then(json => res(json)).catch(e => rej(e))
@@ -48,7 +48,8 @@ const DB = {
       fs.writeJSON(`./db/${key}.json`, value)
         .then(json => {
           delete lock[key]
-          res(json)})
+          res(json)
+        })
         .catch(e => {
           delete lock[key]
           console.log('Failed to read:', key)
@@ -87,6 +88,7 @@ const DB = {
 }
 
 function localIpfsUpload(cid, contractID, res) {
+  console.log('ipfsUpload')
   DB.read(contractID)
     .then(str => {
       var contract = JSON.parse(str)
@@ -112,22 +114,24 @@ function localIpfsUpload(cid, contractID, res) {
               fs.rmSync(getFilePath(cid, contract.id))
               // sign and update contract
               DB.read(contractID)
-              .then(str => {
-                contract = JSON.parse(str)
-                contract.t += file[0].size
-              contract.u++
-              DB.write(contract.id, JSON.stringify(contract))
-              console.log('signNupdate', contract)
-              if (contract.u == contract.n){
-                signNupdate(contract)
-                res
-                .status(200)
-                .json({
-                  cid,
-                  message: 'File Pinned'
-                });
-              }
-              })
+                .then(str => {
+                  contract = JSON.parse(str)
+                  contract.t += file[0].size
+                  contract.u++
+                  DB.write(contract.id, JSON.stringify(contract))
+                    .then(json => {
+                      console.log('signNupdate', contract)
+                      if (contract.u == contract.n) {
+                        signNupdate(contract)
+                        res
+                          .status(200)
+                          .json({
+                            cid,
+                            message: 'File Pinned'
+                          });
+                      }
+                    })
+                })
             })
           } else {
             console.log(`Files larger than contract: ${file[0].hash}`)
@@ -163,15 +167,15 @@ exports.contract = (req, res) => {
       var grant = 1000, multiplier = 1
       const powder = parseInt(live_stats.broca.split(',')[0])
       const cap = live_stats.spk_power * 1000
-      if(powder/cap > 0.8){
+      if (powder / cap > 0.8) {
         multiplier = 8
-      } else if (powder/cap > 0.6){
+      } else if (powder / cap > 0.6) {
         multiplier = 4
-      } else if (powder/cap > 0.4){
+      } else if (powder / cap > 0.4) {
         multiplier = 2
       }
-      if(live_stats.granted[user]){
-        grant = parseInt((live_stats.granted[user]/live_stats.granted.t)*multiplier*(.2 * cap))
+      if (live_stats.granted[user]) {
+        grant = parseInt((live_stats.granted[user] / live_stats.granted.t) * multiplier * (.2 * cap))
       }
       live_stats.broca = `${powder - grant},${live_stats.broca.split(',')[1]}`
       const operations = [
@@ -401,7 +405,7 @@ exports.arrange = (req, res, next) => {
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
       .then((r) => {
-        console.log({r}, {cids})
+        console.log({ r }, { cids })
         var sc = {
           s: r[1][1].a,
           t: 0,
@@ -417,7 +421,7 @@ exports.arrange = (req, res, next) => {
           b: r[1][1].r,
           id: r[1][1].i,
         }
-        console.log({sc}, r[0][1])
+        console.log({ sc }, r[0][1])
         if (
           !sc || //no error
           account != sc.fo //or account mismatch
@@ -471,9 +475,9 @@ function signNupdate(contract) {
       tx.broadcast().then(r => {
         console.log({ r })
       })
-      .catch(e => {
-        console.log({ e })
-      })
+        .catch(e => {
+          console.log({ e })
+        })
     })
   })
 }
@@ -701,9 +705,9 @@ function verifySig(msg, sig, key) {
   const { sha256 } = require("hive-tx/helpers/crypto");
   const signature = hiveTx.Signature.from(sig)
   const message = sha256(msg);
-    const publicKey = hiveTx.PublicKey.from(key);
-    const verify = publicKey.verify(message, signature);
-    if (verify) return true
+  const publicKey = hiveTx.PublicKey.from(key);
+  const verify = publicKey.verify(message, signature);
+  if (verify) return true
   return false
 }
 
