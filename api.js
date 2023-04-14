@@ -224,21 +224,21 @@ exports.upload = (req, res) => {
   if (!contract) {
     console.log('Missing Contract');
     return res
-      .status(400)
+      .status(406)
       .json({ message: 'Missing "x-contract" header' });
   }
 
   if (!contentRange) {
     console.log('Missing Content-Range');
     return res
-      .status(400)
+      .status(405)
       .json({ message: 'Missing "Content-Range" header' });
   }
 
   if (!fileId) {
     console.log('Missing File Id');
     return res
-      .status(400)
+      .status(404)
       .json({ message: 'Missing "x-cid" header' });
   }
 
@@ -248,7 +248,7 @@ exports.upload = (req, res) => {
   if (!match) {
     console.log('Invalid Content-Range Format');
     return res
-      .status(400)
+      .status(403)
       .json({ message: 'Invalid "Content-Range" Format' });
   }
 
@@ -262,7 +262,7 @@ exports.upload = (req, res) => {
     rangeEnd > fileSize
   ) {
     return res
-      .status(400)
+      .status(402)
       .json({ message: 'Invalid "Content-Range" provided' });
   }
 
@@ -294,7 +294,7 @@ exports.upload = (req, res) => {
       .catch(err => {
         console.log('No File Match', err);
         res
-          .status(400)
+          .status(401)
           .json({
             message: 'No file with such credentials'
           });
@@ -303,7 +303,7 @@ exports.upload = (req, res) => {
 
   busboy.on('error', (e) => {
     console.error('failed upload', e);
-    res.sendStatus(500);
+    res.sendStatus(501);
   })
 
   busboy.on('finish', () => {
