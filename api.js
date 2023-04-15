@@ -422,6 +422,7 @@ exports.arrange = (req, res, next) => {
         }
         DB.read(contract)
           .then(j => {
+            j = JSON.parse(j)
             console.log({ j })
             j[s] = r[1][1].a,
               j[t] = 0,
