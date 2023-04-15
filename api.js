@@ -7,7 +7,7 @@ const pool = new Pool({
 });
 const fs = require('fs-extra')
 const { Blob } = require("buffer");
-const getFilePath = (fileCid, contract) => `./uploads/${fileCid.replaceAll('/', '')}-${contract.replaceAll('/', '')}`
+const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
