@@ -418,7 +418,7 @@ exports.arrange = (req, res, next) => {
               const CIDs = cids.split(',');
               for (var i = 1; i < CIDs.length; i++) {
                 fs.createWriteStream(
-                  getFilePath(CIDs[i], contract), { flags: 'r+' }
+                  getFilePath(CIDs[i], contract), { flags: 'w' }
                 );
               }
               DB.write(j.id, JSON.stringify(j))
