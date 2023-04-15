@@ -114,14 +114,13 @@ function localIpfsUpload(cid, contractID, res) {
               DB.read(contractID)
                 .then(str => {
                   contract = JSON.parse(str)
-                  contract.t += file[0].size
-                  contract[cid] = 1
+                  contract[cid] = file[0].size
                   DB.write(contract.id, JSON.stringify(contract))
                     .then(json => {
                       console.log('signNupdate', contract)
                       var allDone = true
                       for (var i = 0; i < contract.files; i++) {
-                        if (contract[contract.files[i]] && contract[contract.files[i]] != 1) {
+                        if (!contract[contract.files[i]]) {
                           allDone = false
                           break
                         }
@@ -292,6 +291,7 @@ exports.upload = (req, res) => {
       .then((stats) => {
 
         if (stats.size !== rangeStart) {
+          console.log(400, stats.size, rangeStart)
           return res
             .status(400)
             .json({ message: 'Bad "chunk" provided' });
@@ -320,6 +320,7 @@ exports.upload = (req, res) => {
   })
 
   busboy.on('finish', () => {
+    console.log('finished upload', fileId, contract)
     localIpfsUpload(fileId, contract, res)
   });
 
@@ -415,13 +416,17 @@ exports.arrange = (req, res, next) => {
     Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
       .then((r) => {
         console.log({ r }, { cids })
+        var files = cids.split(',');
+        for (var i = 0; i < files.length; i++) {
+          if(!files[i]) files.splice(i, 1);
+        }
         var sc = {
           s: r[1][1].a,
           t: 0,
           fo: r[1][1].t,
           co: r[1][1].b,
           f: r[1][1].f,
-          files: cids.split(','),
+          files: files,
           n: cids.split(',').length - 1,
           u: 0,
           e: r[1][1].e.split(':')[0],
@@ -455,14 +460,19 @@ exports.arrange = (req, res, next) => {
 
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
+    var sizes = ''
+    for(var i = 0; i < contract.files.length; i++) {
+      sizes += `${contract[contract.files[i]]},`
+    }
+    sizes = sizes.substring(0, sizes.length - 1)
     const data = {
-      t: contract.fo, //file owner
-      i: contract.id, //contract id
-      ts: contract.sig, //signature of uploader
-      b: config.account, //broker
+      fo: contract.fo, //file owner
+      id: contract.id, //contract id
+      sig: contract.sig, //signature of uploader
+      co: config.account, //broker
       f: contract.f, //from
       c: contract.files.join(','), //cids uploaded
-      s: contract.t, //total size
+      s: sizes
     }
     const operations = [
       [
@@ -473,7 +483,7 @@ function signNupdate(contract) {
           ],
           "required_posting_auths": [],
           "id": "spkcc_channel_update",
-          "json": JSON.stringify(contract)
+          "json": JSON.stringify(data)
         }
       ]
     ]
