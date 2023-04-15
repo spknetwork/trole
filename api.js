@@ -30,7 +30,7 @@ const DB = {
       fs.readJSON(`./db/${key}.json`)
         .then(json => res(json))
         .catch(e => {
-          res({})
+          res(JSON.stringify({}))
         })
     })
   },
@@ -422,6 +422,7 @@ exports.arrange = (req, res, next) => {
         }
         DB.read(contract)
           .then(j => {
+            console.log(j)
             j = JSON.parse(j)
             console.log({ j })
             j[s] = r[1][1].a,
