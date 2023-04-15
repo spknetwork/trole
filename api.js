@@ -425,19 +425,19 @@ exports.arrange = (req, res, next) => {
             console.log(j)
             j = JSON.parse(j)
             console.log({ j })
-            j[s] = r[1][1].a,
-              j[t] = 0,
-              j[fo] = r[1][1].t,
-              j[co] = r[1][1].b,
-              j[f] = r[1][1].f,
-              j[files] = files,
-              j[n] = cids.split(',').length - 1,
-              j[u] = 0,
-              j[e] = r[1][1].e.split(':')[0],
-              j[sig] = sig,
-              j[key] = r[0][1],
-              j[b] = r[1][1].r,
-              j[id] = r[1][1].i
+            j.s = r[1][1].a,
+            j.t = 0,
+            j.fo = r[1][1].t,
+            j.co = r[1][1].b,
+            j.f = r[1][1].f,
+            j.files = files,
+            j.n = cids.split(',').length - 1,
+            j.u = 0,
+            j.e = r[1][1].e.split(':')[0],
+            j.sig = sig,
+            j.key = r[0][1],
+            j.b = r[1][1].r,
+            j.id = r[1][1].i
             console.log({ j }, r[0][1])
             if (
               !j || //no error
