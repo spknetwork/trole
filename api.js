@@ -30,7 +30,7 @@ const DB = {
       fs.readJSON(`./db/${key}.json`)
         .then(json => res(json))
         .catch(e => {
-          res('')
+          res({})
         })
     })
   },
