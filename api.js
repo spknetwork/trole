@@ -157,6 +157,11 @@ function localIpfsUpload(cid, contractID, res) {
           //delete file
           //fs.rmSync(getFilePath(cid, contract.id))
           //inform user that file was not uploaded
+          res
+            .status(400)
+            .json({
+              message: 'File Credential Mismatch'
+            });
         }
       })
     })
