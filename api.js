@@ -117,7 +117,7 @@ function localIpfsUpload(cid, contractID, res) {
                     .then(json => {
                       console.log('signNupdate', contract)
                       var allDone = true
-                      for (var i = 0; i < contract.files; i++) {
+                      for (var i = 0; i < contract.files.length; i++) {
                         console.log(contract.files[i], contract[contract.files[i]], cid, i)
                         if (!contract[contract.files[i]]) {
                           allDone = false
