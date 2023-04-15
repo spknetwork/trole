@@ -5,7 +5,6 @@ const { Pool } = require("pg");
 const pool = new Pool({
   connectionString: config.dbcs,
 });
-//var crypto = require("crypto");
 const fs = require('fs-extra')
 const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
@@ -281,7 +280,7 @@ exports.upload = (req, res) => {
 
   busboy.on('file', (name, file, info) => {
     const filePath = getFilePath(fileId, contract);
-
+    console.log('284:', name, file, info)
     if (!fileId || !contract) {
       req.pause();
     }
@@ -326,36 +325,6 @@ exports.upload = (req, res) => {
   req.pipe(busboy);
 }
 
-// const pool = new Pool({
-//   connectionString: config.dbcs,
-// });
-// for (var table in config.tables.db) {
-//   pool.query(`SELECT * FROM ${table} LIMIT 1`, [], (e, r) => {
-//     if (e) {
-//       console.log(`Building table: ${table}`)
-//       initTable(config.tables.db[table]);
-//     } else {
-//       console.log(`${table} already exists.`);
-//       var columns = Object.keys(config.tables.db[table].table);
-//       for (var i = 0; i < r.fields.length; i++) {
-//         if (columns.indexOf(r.fields[i].name) >= 0) {
-//           columns.splice(columns.indexOf(r.fields[i].name), 1);
-//         }
-//       }
-//       for (var i = 0; i < columns.length; i++) {
-//         pool.query(
-//           `ALTER TABLE ${table} ADD ${columns[i]} ${config.tables.db[table].table[columns[i]].type
-//           };`,
-//           [],
-//           (e, r) => {
-//             if (e) console.log(e)
-//             else console.log(`Added column ${columns[i]} to ${table}`)
-//           }
-//         );
-//       }
-//     }
-//   });
-// }
 
 exports.stats = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
@@ -439,7 +408,6 @@ exports.arrange = (req, res, next) => {
             j.id = r[1][1].i
             console.log({ j }, r[0][1])
             if (
-              !j || //no error
               account != j.fo //or account mismatch
             ) {
               res.status(401).send("Access denied. Contract Mismatch");
