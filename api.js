@@ -130,12 +130,6 @@ function localIpfsUpload(cid, contractID, res) {
                         for (var i = 0; i < contract.files; i++) {
                           fs.rmSync(getFilePath(contract.files[i], contract.id))
                         }
-                        res
-                          .status(200)
-                          .json({
-                            cid,
-                            message: 'File Pinned'
-                          });
                       }
                     })
                 })
