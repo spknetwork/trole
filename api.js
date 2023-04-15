@@ -7,7 +7,7 @@ const pool = new Pool({
 });
 const fs = require('fs-extra')
 const { Blob } = require("buffer");
-const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
+const getFilePath = (fileCid, contract) => `./uploads/${fileCid.replaceAll('/', '')}-${contract.replaceAll('/', '')}`
 const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
@@ -300,7 +300,10 @@ exports.upload = (req, res) => {
           .on('error', (e) => {
             console.error('failed upload', e);
             res.sendStatus(500);
-          });
+          })
+          .on('close', () => {
+            console.log('close')
+          })
       })
       .catch(err => {
         console.log('No File Match', err);
@@ -415,7 +418,7 @@ exports.arrange = (req, res, next) => {
               const CIDs = cids.split(',');
               for (var i = 1; i < CIDs.length; i++) {
                 fs.createWriteStream(
-                  getFilePath(CIDs[i], contract), { flags: 'w' }
+                  getFilePath(CIDs[i], contract), { flags: 'r+' }
                 );
               }
               DB.write(j.id, JSON.stringify(j))
