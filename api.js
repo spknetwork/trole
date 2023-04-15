@@ -155,7 +155,7 @@ function localIpfsUpload(cid, contractID, res) {
         } else {
           console.log(`mismatch between ${cid} and ${file[0].hash}`)
           //delete file
-          fs.rmSync(getFilePath(cid, contract.id))
+          //fs.rmSync(getFilePath(cid, contract.id))
           //inform user that file was not uploaded
           DB.delete(contract.id)
           res
