@@ -281,7 +281,6 @@ exports.upload = (req, res) => {
 
   busboy.on('file', (name, file, info) => {
     const filePath = getFilePath(fileId, contract);
-    console.log('283:', {name}, {file}, {info})
     if (!fileId || !contract) {
       req.pause();
     }
@@ -290,7 +289,6 @@ exports.upload = (req, res) => {
       .then((stats) => {
 
         if (stats.size !== rangeStart) {
-          console.log(400, stats.size, rangeStart)
           return res
             .status(400)
             .json({ message: 'Bad "chunk" provided' });
@@ -322,7 +320,6 @@ exports.upload = (req, res) => {
   })
 
   busboy.on('finish', () => {
-    console.log('finished upload', fileId, contract)
     localIpfsUpload(fileId, contract)
     res.sendStatus(200);
   });
@@ -334,7 +331,6 @@ exports.upload = (req, res) => {
 exports.stats = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
     || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
-    console.log(req.headers)
     res.status(400).json({ message: 'Missing data' });
   } else {
     let chain = req.headers['x-chain'] || 'HIVE'
@@ -344,7 +340,6 @@ exports.stats = (req, res, next) => {
     let contract = req.headers['x-contract'];
     let cids = req.headers['x-files'];
     if (!account || !sig || !cids) {
-      console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
       return
     }
@@ -371,7 +366,6 @@ exports.stats = (req, res, next) => {
 exports.arrange = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
     || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
-    console.log(req.headers)
     res.status(400).json({ message: 'Missing data' });
   } else {
     let chain = req.headers['x-chain'] || 'HIVE';
@@ -380,24 +374,19 @@ exports.arrange = (req, res, next) => {
     let cids = req.headers['x-files'];
     let contract = req.headers['x-contract'];
     if (!account || !sig) {
-      console.log('first out')
       res.status(401).send("Access denied. No Valid Signature");
       return
     }
-    console.log({ chain, account, sig, cids, contract })
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
       .then((r) => {
-        console.log({ r }, { cids })
         var files = cids.split(',');
         for (var i = 0; i < files.length; i++) {
           if (!files[i]) files.splice(i, 1);
         }
         DB.read(contract)
           .then(j => {
-            console.log(j)
             j = JSON.parse(j)
-            console.log({ j })
             j.s = r[1][1].a,
             j.t = 0,
             j.fo = r[1][1].t,
@@ -411,7 +400,6 @@ exports.arrange = (req, res, next) => {
             j.key = r[0][1],
             j.b = r[1][1].r,
             j.id = r[1][1].i
-            console.log({ j }, r[0][1])
             if (
               account != j.fo //or account mismatch
             ) {
@@ -468,7 +456,6 @@ function signNupdate(contract) {
       const privateKey = hiveTx.PrivateKey.from(config.active_key)
       tx.sign(privateKey)
       tx.broadcast().then(r => {
-        console.log({ r })
       })
         .catch(e => {
           console.log({ e })
