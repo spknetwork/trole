@@ -280,7 +280,7 @@ exports.upload = (req, res) => {
 
   busboy.on('file', (name, file, info) => {
     const filePath = getFilePath(fileId, contract);
-    console.log('284:', name, file, info)
+    console.log('283:', {name}, {file}, {info})
     if (!fileId || !contract) {
       req.pause();
     }
