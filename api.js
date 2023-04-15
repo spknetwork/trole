@@ -153,14 +153,15 @@ function localIpfsUpload(cid, contractID, res) {
           }
         } else {
           console.log(`mismatch between ${cid} and ${file[0].hash}`)
-          //delete file
-          //fs.rmSync(getFilePath(cid, contract.id))
-          //inform user that file was not uploaded
-          res
-            .status(400)
-            .json({
-              message: 'File Credential Mismatch'
-            });
+          fs.rmSync(getFilePath(cid, contract.id))
+          fs.createWriteStream(
+            getFilePath(cid, contract.id), { flags: 'w' }
+          );
+          // res
+          //   .status(400)
+          //   .json({
+          //     message: 'File Credential Mismatch'
+          //   });
         }
       })
     })
@@ -322,7 +323,8 @@ exports.upload = (req, res) => {
 
   busboy.on('finish', () => {
     console.log('finished upload', fileId, contract)
-    localIpfsUpload(fileId, contract, res)
+    localIpfsUpload(fileId, contract)
+    res.sendStatus(200);
   });
 
   req.pipe(busboy);
