@@ -88,7 +88,7 @@ const DB = {
 }
 
 function localIpfsUpload(cid, contractID, res) {
-  console.log('ipfsUpload')
+  console.log('ipfsUpload', cid, contractID)
   DB.read(contractID)
     .then(str => {
       var contract = JSON.parse(str)
@@ -104,7 +104,7 @@ function localIpfsUpload(cid, contractID, res) {
               if (err) {
                 console.log(err);
                 res
-                  .status(400)
+                  .status(410)
                   .json({
                     message: 'Internal Error'
                   });
@@ -120,6 +120,7 @@ function localIpfsUpload(cid, contractID, res) {
                       console.log('signNupdate', contract)
                       var allDone = true
                       for (var i = 0; i < contract.files; i++) {
+                        console.log(contract.files[i], contract[contract.files[i]], cid, i)
                         if (!contract[contract.files[i]]) {
                           allDone = false
                           break
@@ -418,42 +419,44 @@ exports.arrange = (req, res, next) => {
         console.log({ r }, { cids })
         var files = cids.split(',');
         for (var i = 0; i < files.length; i++) {
-          if(!files[i]) files.splice(i, 1);
+          if (!files[i]) files.splice(i, 1);
         }
-        var sc = {
-          s: r[1][1].a,
-          t: 0,
-          fo: r[1][1].t,
-          co: r[1][1].b,
-          f: r[1][1].f,
-          files: files,
-          n: cids.split(',').length - 1,
-          u: 0,
-          e: r[1][1].e.split(':')[0],
-          sig,
-          key: r[0][1],
-          b: r[1][1].r,
-          id: r[1][1].i,
-        }
-        console.log({ sc }, r[0][1])
-        if (
-          !sc || //no error
-          account != sc.fo //or account mismatch
-        ) {
-          res.status(401).send("Access denied. Contract Mismatch");
-        } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
-          const CIDs = cids.split(',');
-          for (var i = 1; i < CIDs.length; i++) {
-            fs.createWriteStream(
-              getFilePath(CIDs[i], contract), { flags: 'w' }
-            );
-          }
-          DB.write(sc.id, JSON.stringify(sc))
-          console.log(`authorized: ${CIDs}`)
-          res.status(200).json({ authorized: CIDs }); //bytes and time remaining
-        } else {
-          res.status(401).send("Access denied. Signature Mismatch");
-        }
+        DB.read(contract)
+          .then(j => {
+            console.log({ j })
+            j[s] = r[1][1].a,
+              j[t] = 0,
+              j[fo] = r[1][1].t,
+              j[co] = r[1][1].b,
+              j[f] = r[1][1].f,
+              j[files] = files,
+              j[n] = cids.split(',').length - 1,
+              j[u] = 0,
+              j[e] = r[1][1].e.split(':')[0],
+              j[sig] = sig,
+              j[key] = r[0][1],
+              j[b] = r[1][1].r,
+              j[id] = r[1][1].i
+            console.log({ j }, r[0][1])
+            if (
+              !j || //no error
+              account != j.fo //or account mismatch
+            ) {
+              res.status(401).send("Access denied. Contract Mismatch");
+            } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
+              const CIDs = cids.split(',');
+              for (var i = 1; i < CIDs.length; i++) {
+                fs.createWriteStream(
+                  getFilePath(CIDs[i], contract), { flags: 'w' }
+                );
+              }
+              DB.write(j.id, JSON.stringify(j))
+              console.log(`authorized: ${CIDs}`)
+              res.status(200).json({ authorized: CIDs }); //bytes and time remaining
+            } else {
+              res.status(401).send("Access denied. Signature Mismatch");
+            }
+          })
       })
   }
 }
@@ -461,7 +464,7 @@ exports.arrange = (req, res, next) => {
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
     var sizes = ''
-    for(var i = 0; i < contract.files.length; i++) {
+    for (var i = 0; i < contract.files.length; i++) {
       sizes += `${contract[contract.files[i]]},`
     }
     sizes = sizes.substring(0, sizes.length - 1)
