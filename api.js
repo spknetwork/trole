@@ -130,6 +130,11 @@ function localIpfsUpload(cid, contractID, res) {
                         for (var i = 0; i < contract.files; i++) {
                           fs.rmSync(getFilePath(contract.files[i], contract.id))
                         }
+                        res.status(200)
+                          .json({
+                            contract,
+                            message: 'Success'
+                          });
                       }
                     })
                 })
@@ -151,11 +156,11 @@ function localIpfsUpload(cid, contractID, res) {
           fs.createWriteStream(
             getFilePath(cid, contract.id), { flags: 'w' }
           );
-          // res
-          //   .status(400)
-          //   .json({
-          //     message: 'File Credential Mismatch'
-          //   });
+          res
+            .status(400)
+            .json({
+              message: 'File Credential Mismatch'
+            });
         }
       })
     })
@@ -416,7 +421,6 @@ exports.arrange = (req, res, next) => {
 
 function checkThenBuild(path){
   fs.stat(path).then(stats => {
-    console.log(stats)
   })
   .catch(err => {
     fs.createWriteStream(
