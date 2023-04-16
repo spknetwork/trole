@@ -130,7 +130,7 @@ function localIpfsUpload(cid, contractID, res) {
                         for (var i = 0; i < contract.files; i++) {
                           fs.rmSync(getFilePath(contract.files[i], contract.id))
                         }
-                        res.status(200)
+                        res.sendStatus(200)
                           .json({
                             contract,
                             message: 'Success'
