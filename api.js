@@ -401,9 +401,7 @@ exports.arrange = (req, res, next) => {
             } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
               const CIDs = cids.split(',');
               for (var i = 1; i < CIDs.length; i++) {
-                fs.createWriteStream(
-                  getFilePath(CIDs[i], contract), { flags: 'w' }
-                );
+                checkThenBuild( getFilePath(CIDs[i], contract) );
               }
               DB.write(j.id, JSON.stringify(j))
               console.log(`authorized: ${CIDs}`)
@@ -414,6 +412,17 @@ exports.arrange = (req, res, next) => {
           })
       })
   }
+}
+
+function checkThenBuild(path){
+  fs.stat(path).then(stats => {
+    console.log(stats)
+  })
+  .catch(err => {
+    fs.createWriteStream(
+      path, { flags: 'w' }
+    );
+  })
 }
 
 function signNupdate(contract) {
