@@ -85,6 +85,8 @@ const DB = {
   }
 }
 
+
+
 function localIpfsUpload(cid, contractID, res) {
   console.log('ipfsUpload', cid, contractID)
   DB.read(contractID)
@@ -421,6 +423,7 @@ exports.arrange = (req, res, next) => {
 
 function checkThenBuild(path){
   fs.stat(path).then(stats => {
+
   })
   .catch(err => {
     fs.createWriteStream(
