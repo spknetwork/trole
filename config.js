@@ -4,11 +4,14 @@ const dbcs = ENV.DATABASE_URL || "";
 const port = ENV.PORT || 5050;
 const account = ENV.ACCOUNT || '';
 const posting_key = ENV.POSTING || ''
+const ipfsid = ENV.IPFSID || ''
 const active_key = ENV.ACTIVE || ''
 const ENDPOINT = ENV.ENDPOINT || "localhost";
 const ENDPORT = ENV.ENDPORT || 5001
 const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
 const SPK_API = ENV.SPK_API || "https://spktest.dlux.io";
+const flex = ENV.FLEX || 10000000 //upload temp space limit
+
 
 const tables = {
   db:{
@@ -70,7 +73,8 @@ const config = {
   ENDPORT,
   HIVE_API,
   SPK_API,
-  tables
+  tables,
+  ipfsid
 };
 
 module.exports = config

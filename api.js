@@ -6,21 +6,130 @@ const pool = new Pool({
   connectionString: config.dbcs,
 });
 const fs = require('fs-extra')
+var { exec } = require('child_process');
 const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
 const Busboy = require('busboy');
 
-var live_stats = {}
+var live_stats = {
+  i: parseInt(Math.random() * 10),
+  feed: 0
+}
 getStats()
 var lock = {}
 
 function getStats() {
-  fetch(`${config.SPK_API}/@${config.account}`).then(rz => rz.json()).then(json => {
-    live_stats = json
+  live_stats.i = (live_stats.i + 1 ) % 10
+  console.log('Clean: ' + live_stats.i)
+  fetch(`${config.SPK_API}/feed${live_stats.feed ? '/' + live_stats.feed : ''}`).then(rz => rz.json()).then(json => {
+    const feed = json.feed
+    const keys = Object.keys(json.feed)
+    const stored = `@${config.account} Stored`
+    const deleted = `@${config.account} Removed`
+    for (var i = 0; i < keys.length; i++) {
+      if(parseInt(keys[i].split(':')[0]) > live_stats.feed) live_stats.feed = parseInt(keys[i].split(':')[0])
+      if (feed[keys[i]].search(stored) > -1) {
+        storeByContract(feed[keys[i]].split('|')[1])
+      } else if (feed[keys[i]].search(deleted) > -1){
+        deleteByContract(feed[keys[i]].split('|')[1])
+      }
+    }
   })
-  setTimeout(getStats, 30 * 60 * 1000)
+  fetch(`${config.SPK_API}/@${config.account}`).then(rz => rz.json()).then(json => {
+    const keys = Object.keys(json)
+    for (var i = 0; i < keys.length; i++) {
+      live_stats[keys[i]] = json[keys[i]]
+    }
+  })
+  exec("ipfs stats repo", (error, stdout, stderr) => {
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    const keys = stdout.split('\n')
+    for (var i = 0; i < keys.length; i++) {
+      const key = keys[i].split(':')
+      if(key != 'RepoPath' || key != 'Version') live_stats[key[0]] = parseInt(key[1])
+    }
+  });
+  if(!live_stats.head_block) return setTimeout(getStats, 3 * 1000)
+  fs.readdir(`./uploads/`, (err, files) => {
+    files.forEach(file => {
+      const keys = file.split(':')
+      const block = parseInt(keys[keys.length - 1])
+      if (live_stats['head_block'] > block + 28800) {
+        fs.remove(`./uploads/${file}`)
+      }
+    });
+  });
+  fs.readdir(`./db/`, (err, files) => {
+    files.forEach(file => {
+      const key = file.replace('.json', "")
+      // return final char in key
+      const block = parseInt(key[key.length - 1])
+      if(live_stats.i == block){
+        DB.read(key).then(json => {
+          try {
+            json = JSON.parse(json)
+          } catch(e){
+            DB.delete(key)
+          }
+          getActiveContract(key).then(contract => {
+            const behind = contract[1].behind
+            contract = contract[1].result
+            if(contract == 'Contract Not Found'){
+              if (behind < 100){
+                DB.delete(key)
+                for(var i = 0; i < json.files.length; i++){
+                  fs.remove(getFilePath(json.files[i], key))
+                  ipfsUnpin(json.files[i])
+                  console.log('unpinning', json.files[i])
+                }
+              }
+            } else {
+              var isMine = 0
+              const nodes = contract.n ? Object.keys(contract.n) : []
+              for(var j = 1; j <= nodes.length; i++){
+                if(contract.n[`${j}`] == config.account){
+                  isMine = j
+                  break
+                }
+              }
+              if(isMine == 0){ //or j > p + threshold
+                for(var i = 0; i < json.files.length; i++){
+                  fs.remove(getFilePath(json.files[i], key))
+                  ipfsUnpin(json.files[i])
+                  console.log('unpinning', json.files[i])
+                }
+                DB.delete(key).then(d=>{
+                  console.log('deleted', key + '.json')
+                })
+              }
+            }
+          }).catch(e => {
+            console.log(e)
+          })
+        })
+      }
+    });
+  });
+  setTimeout(getStats, 10 * 60 * 1000) // 10 minutes
+}
+
+function ipfsUnpin(cid) {
+  return new Promise((res, rej) => {
+    if(cid)ipfs.pin.rm(cid, (err, pinset) => {
+      if (err) return rej(err)
+      res(pinset)
+    })
+    else res('Not Pinned')
+  })
 }
 
 const DB = {
@@ -58,7 +167,10 @@ const DB = {
   delete: function (key) {
     return new Promise((res, rej) => {
       fs.remove(`./db/${key}.json`)
-        .then(json => res(json))
+        .then(json => {
+          console.log('deleted', key)
+          res(json)
+        })
         .catch(e => {
           console.log('Failed to delete:', key)
           rej(e)
@@ -172,9 +284,9 @@ exports.contract = (req, res) => {
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
     if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
-      var grant = 1000, multiplier = 1
+      var grant = 3000, multiplier = 1
       const powder = parseInt(live_stats.broca.split(',')[0])
-      const cap = live_stats.spk_power * 1000
+      const cap = live_stats.spk_power * 3000
       if (powder / cap > 0.8) {
         multiplier = 8
       } else if (powder / cap > 0.6) {
@@ -328,6 +440,17 @@ exports.upload = (req, res) => {
   req.pipe(busboy);
 }
 
+exports.live = (req, res, next) => {
+  res.status(200).json({
+    ipfsid: config.ipfsid,
+    pubKey: live_stats.pubKey,
+    head_block: live_stats.head_block,
+    node: config.account,
+    api: live_stats.node,
+    free: live_stats.StorageMax - live_stats.RepoSize,
+  })
+}
+
 
 exports.stats = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
@@ -474,217 +597,6 @@ function signNupdate(contract) {
   })
 }
 
-exports.petition = (req, res, next) => {
-  // determine if the requesting account has a high enough reputation to upload
-  // if so, return the number of bytes they can upload
-
-}
-
-// exports.proxy = (req, res) => {
-//   console.log('Somebody wants me.')
-//   if (req.url.split("?")[0] == "/api/v0/add") {
-//     console.log("authed and proxied");
-//     proxy.web(req, res);
-//   } else if (req.url.split("?")[0] == "/upload-authorize") {
-//     if (!req.headers || !req.headers.cid 
-//       || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
-//       res.status(400).json({message: 'Missing data'});
-//    } else {
-//     let chain = req.headers.chain;
-//     let account = req.headers.account;
-//     let sig = req.headers.sig;
-//     let cid = req.headers.cid;
-//     let contract = req.headers.contract;
-//     if (!account || !sig) {
-//       console.log('first out')
-//       res.status(401).send("Access denied. No Valid Signature");
-//       return
-//     }
-//     var getPubKeys = getAccountPubKeys(account)
-//     Promise.all([getPubKeys, getContract(req.headers.contract)])
-//       .then((r) => {
-//         if (
-//           false
-//           //!r[1][0] || //no error
-//           //account != r[1][1].fo //or account mismatch
-//           ) {
-
-//           res.status(401).send("Access denied. Contract Mismatch");
-//         } else if (verifySig(account, sig, r[0][1], cid)) {
-//           fs.createWriteStream(
-//             getFilePath(req.headers.cid, req.headers.contract), {flags: 'w'}
-//           );
-//           res.status(200).json({authorized: req.headers.cid}); //bytes and time remaining
-//         } else {
-//           res.status(401).send("Access denied. Signature Mismatch");
-//         }
-//       })
-//    }
-//   } else if (req.url.split("?")[0] == "/upload-cancel") {
-//     if (!req.headers || !req.headers.cid 
-//       || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
-//       res.status(400).json({message: 'Missing data'});
-//    } else {
-//     let chain = req.headers.chain;
-//     let account = req.headers.account;
-//     let sig = req.headers.sig;
-//     let cid = req.headers.cid;
-//     let contract = req.headers.contract;
-//     if (!account || !sig) {
-//       console.log('first out')
-//       res.status(401).send("Access denied. No Valid Signature");
-//       return
-//     }
-//     var getPubKeys = getAccountPubKeys(account)
-//     Promise.all([getPubKeys, getContract(req.headers.contract)])
-//       .then((r) => {
-//         if (
-//           false
-//           //!r[1][0] || //no error
-//           //account != r[1][1].fo //or account mismatch
-//           ) {
-//           res.status(401).send("Access denied. Contract Mismatch");
-//         } else if (verifySig(account, sig, r[0][1], cid)) {
-//           fs.createWriteStream(
-//             getFilePath(req.headers.cid, req.headers.contract), {flags: 'w'}
-//           );
-//           res.status(200).json({fileId: req.headers.cid});
-//         } else {
-//           res.status(401).send("Access denied. Signature Mismatch");
-//         }
-//       })
-//    }
-//   } else if (req.url.split("?")[0] == "/upload-check") {
-//     if (!req.headers || !req.headers.cid 
-//       || ! req.headers.account|| ! req.headers.sig || !req.headers.contract) {
-//       res.status(400).json({message: 'Missing data'});
-//    } else {
-//     let chain = req.headers.chain;
-//     let account = req.headers.account;
-//     let sig = req.headers.sig;
-//     let cid = req.headers.cid;
-//     let contract = req.headers.contract;
-//     if (!account || !sig) {
-//       console.log('first out')
-//       res.status(401).send("Access denied. Signature Mismatch");
-//       return
-//     }
-//     getAccountPubKeys(account)
-//       .then((r) => {
-//         if (
-//           true
-//           //!r[1][0] || //no error
-//           //account == r[1][1].fo //or account mismatch
-//           ) {
-
-//           fs.stat( getFilePath(cid, contract) )
-//           .then( (stats) => {
-//             res.status(200)
-//                .json({totalChunkUploaded: stats.size});
-//           })
-//         } else {
-//           res.status(400).send("Storage Mismatch: " + cid);
-//         }
-//       })
-//    }
-//   } else if (req.url.split("?")[0] == "/api/auth") {
-//     res.setHeader("Content-Type", "application/json");
-//     res.send(
-//       JSON.stringify(
-//         {
-//           hive_account: config.account,
-//         },
-//         null,
-//         3
-//       )
-//     );
-//     console.log("huh?");
-//   } else {
-//     console.log('else')
-//     res.sendStatus(200);
-//   }
-// };
-
-// proxy.on("proxyReq", function (proxyReq, req, res, options) {
-//   var hash = crypto.createHash("md5"), i = 0
-//   hash.setEncoding("hex");
-//   proxyReq.on("data", function(chunk){
-//     console.log(i, chunk)
-//     i++
-//     hash.update(chunk)
-//   });
-//   proxyReq.on('end', function(){
-//     hash.end()
-//     console.log('end',hash.read())
-//   });
-// });
-
-// function buildHash(rawBody, account, expectedHash = 'nothing'){
-//   return new Promise((r,e)=>{
-//     var hash = crypto.createHash("md5");
-//     hash.setEncoding("hex");
-//     console.log({ rawBody, account, expectedHash });
-//   })
-// }
-
-// proxy.on("proxyRes", function (proxyRes, req, res, a) {
-//   proxyRes.on("data", function (chunk) {
-//     var json 
-
-//     try{ json = JSON.parse(chunk); } catch (e) {console.log(e)}
-//     try{ console.log(chunk.toString()) } catch (e) {console.log(e)}
-//     //get sig and cid as well... use it to build a futures contract for payment
-//     if (json && json.Size){
-//       const data = [
-//         json.Hash,
-//         parseInt(json.Size),
-//         req.headers.cid,
-//         req.headers.account,
-//         req.headers.sig,
-//         Date.now() + 86400000,
-//         "",
-//         true,
-//         0,
-//         0,
-//       ];
-
-//       console.log(data)
-//       //updatePins(data)
-//     }
-//   });
-// });
-
-
-// exports.auth = (req, res, next) => {
-//   console.log('Authing')
-//   let chain = req.headers.chain;
-//   let account = req.headers.account;
-//   let sig = req.headers.sig;
-//   let cid = req.headers.cid;
-//   if (!account || !sig) {
-//     console.log('first out')
-//     res.status(401).send("Access denied. Signature Mismatch");
-//     return
-//   }
-//   getAccountPubKeys(account)
-//     .then((r) => {
-//       if (r[0]) {
-//         console.log('second out')
-//         res.status(401).send(`Access denied. ${r[1]}`);
-//         return
-//       }
-//       const challenge = verifySig(account, sig, r[1], cid);
-//       if (!challenge){
-//         console.log('third out')
-//         res.status(401).send("Access denied. Invalid Signature");
-//         return
-//       } else next();
-//     })
-//     .catch((e) => {
-//       console.log('Error out')
-//       res.status(401).send(`Access denied. ERROR: ${e}`);
-//     });
-// };
 
 function sign(msg, key) {
   const { sha256 } = require('hive-tx/helpers/crypto')
@@ -723,6 +635,25 @@ function getAccountPubKeys(acc, chain = 'HIVE') {
   });
 }
 
+function getActiveContract(contract, chain = 'spk') {
+  return new Promise((res, rej) => {
+    if (chain == 'spk') {
+      fetch(config.SPK_API + `/api/fileContract/${contract}`)
+        .then((r) => {
+          return r.json();
+        })
+        .then((re) => {
+          res([0, re]);
+        })
+        .catch((e) => {
+          res([1, e]);
+        });
+    } else {
+      res([1, "Not Found"]);
+    }
+  });
+}
+
 function getContract(contract, chain = 'spk') {
   return new Promise((res, rej) => {
     if (chain == 'spk') {
@@ -741,26 +672,6 @@ function getContract(contract, chain = 'spk') {
     }
   });
 }
-
-
-/*
-[
-      cids VARCHAR UNIQUE,
-        size INT ,
-        ts BIGINT ,
-        account VARCHAR ,
-        sponsor VARCHAR ,
-        validator VARCHAR ,
-        fosig VARCHAR ,
-        spsig VARCHAR ,
-        exp BIGINT ,
-        broca INT ,
-        contract VARCHAR ,
-        pinned INT ,
-        flag INT ,
-        state  INT
-    ]
-*/
 
 function updatePins(data) {
   return new Promise((r, e) => {
@@ -806,11 +717,37 @@ function initTable(struct) {
   })
 }
 
-// var HiveMirror = require('hive-tx')
-// HiveMirror.config.node = "https://api.fake.openhive.network";
-// HiveMirror.config.chain_id =
-//   "42";
-// HiveMirror.config.address_prefix = "STM";
-// HiveMirror.call("condenser_api.get_accounts", [["mahdiyari"]]).then((res) =>
-//   console.log(res)
-// );
+function storeByContract(str){
+  const contracts = str.split(',')
+  for(var i = 0; i < contracts.length; i++){
+    getActiveContract(contracts[i]).then(contract => {
+      contract = contract[1].result
+      DB.write(contract.i, contract)
+      for(var cid in contract.df){
+        ipfs.pin.add(cid, function (err, data) {
+          console.log(err, data)
+          if (err) {
+            console.log(err)
+          }
+        })
+      }
+    })
+  }
+}
+
+function deleteByContract(str){
+  console.log("deleteByContract ",  str)
+  const contracts = str.split(',')
+  console.log(contracts)
+  for(var i = 0; i < contracts.length; i++){
+    console.log(contracts[i])
+    getActiveContract(contracts[i]).then(contract => {
+      contract = contract[1].result
+      DB.delete(contract.i)
+      for(var cid in contract.df){
+        console.log(cid)
+        ipfsUnpin(cid)
+      }
+    })
+  }
+}
