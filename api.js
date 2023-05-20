@@ -78,7 +78,7 @@ function getStats() {
           try {
             json = JSON.parse(json)
           } catch(e){
-            DB.delete(key)
+            console.log('Parse Error')
           }
           getActiveContract(key).then(contract => {
             const behind = contract[1].behind
@@ -722,7 +722,7 @@ function storeByContract(str){
   for(var i = 0; i < contracts.length; i++){
     getActiveContract(contracts[i]).then(contract => {
       contract = contract[1].result
-      DB.write(contract.i, contract)
+      DB.write(contract.i, JSON.stringify(contract))
       for(var cid in contract.df){
         ipfs.pin.add(cid, function (err, data) {
           console.log(err, data)
