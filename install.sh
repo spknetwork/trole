@@ -158,7 +158,7 @@ then
     fi
     if [ -z "$POA_URL" ];
     then
-        echo "POA_URL=http://localhost:3000" | tee -a .env 
+        echo "POA_URL=ws://localhost:8000" | tee -a .env 
     fi
 else
     echo -e "${YELLOW}No .env found${NC}"
@@ -366,7 +366,7 @@ else
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 2 -username ${ACCOUNT} -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 2 -username ${ACCOUNT} -WS_PORT=8001 -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
@@ -379,7 +379,7 @@ else
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     #echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT} -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT} -WS_PORT=8000 -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
