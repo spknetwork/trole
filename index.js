@@ -7,10 +7,10 @@ const API = require("./api");
 
 api.use(express.json())
 api.use(cors())
+api.post("/upload", API.upload)
 api.get('/upload-contract', API.contract)
 api.get("/upload-check", API.stats)
 api.get("/upload-authorize", API.arrange)
-api.post("/upload", API.upload)
 api.get("/upload-stats", API.live)
 
 http.listen(config.port, function () {

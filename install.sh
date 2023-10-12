@@ -362,11 +362,24 @@ if test -f "$POA_SERVICE_FILE";
 then
     echo -e "${GREEN}PoA service exists${NC}"
 else
-    git clone https://github.com/nathansenn/proofofaccess.git ~/proofofaccess
+    git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT}\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 2 -username ${ACCOUNT} -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
+    sudo systemctl daemon-reload 
+fi
+
+POAV_SERVICE_FILE=/lib/systemd/system/poav.service
+if test -f "$POAV_SERVICE_FILE";
+then
+    echo -e "${GREEN}PoA Validator service exists${NC}"
+else
+    #git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
+    #mv proofofaccess /home/${whoami}/proofofaccess
+    #rm -rf proofofaccess
+    #echo -e "Installing Proof of Access"
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT} -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
@@ -395,6 +408,33 @@ then
     exit
 else
     echo PoA is running
+fi
+
+poav_is_active=$(sudo systemctl is-active poav)
+if [ $poav_is_active = 'active' ];
+then
+    echo -e "${GREEN}PoAV is running${NC}"
+else
+    echo 'Starting PoAV'
+    sudo systemctl start poav
+fi
+
+poav_is_enabled=$(sudo systemctl is-enabled poav)
+if [ $poav_is_enabled = 'enabled' ];
+then
+    echo -e "${GREEN}PoAV is set to auto-start${NC}"
+else
+    echo 'Enabling PoAV auto-start'
+    sudo systemctl enable poav
+fi
+
+poav_is_active=$(sudo systemctl is-active poav)
+if [ $poav_is_active != 'active' ];
+then
+    echo -e "${RED}PoAV failed to start${NC}"
+    exit
+else
+    echo PoAV is running
 fi
 
 echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
