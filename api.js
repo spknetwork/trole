@@ -451,6 +451,45 @@ exports.live = (req, res, next) => {
   })
 }
 
+exports.flags = (req, res, next) => {
+  var flag = false
+  fs.readJSON(`./db/${req.params.cid}.flag`)
+    .then(json => {
+      res.status(200).json({
+        flag: true
+      })
+    })
+    .catch(e => {
+      res.status(200).json({
+        flag: false
+      })
+    })
+}
+
+exports.flag = (req, res, next) => {
+  const CID = req.query.cid
+  const sig = req.query.sig
+  const unflag = req.query.unflag || false
+  const signed = verifySig(`${CID}`, sig, config.posting_pub)
+  if (signed && !unflag) {
+    fs.write(`./db/${CID}.flag`, 1)
+        .then(json => {
+          console.log('flagged', CID)
+        })
+        .catch(e => {
+        })
+  } else if (signed && unflag) {
+    fs.remove(`./db/${CID}.flag`)
+        .then(json => {
+          console.log('unflagged', CID)
+        })
+        .catch(e => {
+        })
+  }
+  res.status(200).json({
+    msg: `${CID} has been ${signed ? 'flagged' : 'unflagged'}`,
+  })
+}
 
 exports.stats = (req, res, next) => {
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']

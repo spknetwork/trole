@@ -6,6 +6,7 @@ const account = ENV.ACCOUNT || '';
 const posting_key = ENV.POSTING || ''
 const ipfsid = ENV.IPFSID || ''
 const active_key = ENV.ACTIVE || ''
+const posting_pub = ENV.POSTING_PUB || ''
 const ENDPOINT = ENV.ENDPOINT || "localhost";
 const ENDPORT = ENV.ENDPORT || 5001
 const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
@@ -74,7 +75,8 @@ const config = {
   HIVE_API,
   SPK_API,
   tables,
-  ipfsid
+  ipfsid,
+  posting_pub
 };
 
 module.exports = config

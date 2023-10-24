@@ -285,7 +285,7 @@ CADDY_CONFIG_EXISTS=$(grep $CADDY_PATTERN $CADDY_FILE 2> /dev/null)
 if [ -z "$CADDY_CONFIG_EXISTS" ];
 then
     echo Building Caddyfile
-    echo -e "ipfs.${DOMAIN} {\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
+    echo -e "ipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
     sudo systemctl restart caddy
 else
     echo Caddy is configured
@@ -366,7 +366,7 @@ else
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 2 -username ${ACCOUNT} -WS_PORT=8001 -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 2 -username ${ACCOUNT} -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
@@ -379,7 +379,7 @@ else
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     #echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nExecStart=${which_go} run /home/${whoami}/proofofaccess/main.go -node 1 -username ${ACCOUNT} -WS_PORT=8000 -useWS=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
+    echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
