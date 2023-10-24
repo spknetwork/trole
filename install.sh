@@ -362,7 +362,8 @@ if test -f "$POA_SERVICE_FILE";
 then
     echo -e "${GREEN}PoA service exists${NC}"
 else
-    git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
+    git clone https://github.com/spknetwork/proofofaccess.git ~/proofofaccess
+    /snap/bin/go build -o ~/proofofaccess/main ~/proofofaccess/main.go
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
     echo -e "Installing Proof of Access"
@@ -370,18 +371,18 @@ else
     sudo systemctl daemon-reload 
 fi
 
-POAV_SERVICE_FILE=/lib/systemd/system/poav.service
-if test -f "$POAV_SERVICE_FILE";
-then
-    echo -e "${GREEN}PoA Validator service exists${NC}"
-else
-    #git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
-    #mv proofofaccess /home/${whoami}/proofofaccess
-    #rm -rf proofofaccess
-    #echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
-    sudo systemctl daemon-reload 
-fi
+# POAV_SERVICE_FILE=/lib/systemd/system/poav.service
+# if test -f "$POAV_SERVICE_FILE";
+# then
+#     echo -e "${GREEN}PoA Validator service exists${NC}"
+# else
+#     #git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
+#     #mv proofofaccess /home/${whoami}/proofofaccess
+#     #rm -rf proofofaccess
+#     #echo -e "Installing Proof of Access"
+#     echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
+#     sudo systemctl daemon-reload 
+# fi
 
 poa_is_active=$(sudo systemctl is-active poa)
 if [ $poa_is_active = 'active' ];
@@ -410,35 +411,75 @@ else
     echo PoA is running
 fi
 
-poav_is_active=$(sudo systemctl is-active poav)
-if [ $poav_is_active = 'active' ];
+# poav_is_active=$(sudo systemctl is-active poav)
+# if [ $poav_is_active = 'active' ];
+# then
+#     echo -e "${GREEN}PoAV is running${NC}"
+# else
+#     echo 'Starting PoAV'
+#     sudo systemctl start poav
+# fi
+
+# poav_is_enabled=$(sudo systemctl is-enabled poav)
+# if [ $poav_is_enabled = 'enabled' ];
+# then
+#     echo -e "${GREEN}PoAV is set to auto-start${NC}"
+# else
+#     echo 'Enabling PoAV auto-start'
+#     sudo systemctl enable poav
+# fi
+
+# poav_is_active=$(sudo systemctl is-active poav)
+# if [ $poav_is_active != 'active' ];
+# then
+#     echo -e "${RED}PoAV failed to start${NC}"
+#     exit
+# else
+#     echo PoAV is running
+# fi
+
+SPK_SERVICE_FILE=/lib/systemd/system/spk.service
+if test -f "$SPK_SERVICE_FILE";
 then
-    echo -e "${GREEN}PoAV is running${NC}"
+    echo -e "${GREEN}SPK service exists${NC}"
 else
-    echo 'Starting PoAV'
-    sudo systemctl start poav
+    git clone https://github.com/spknetwork/honeycomb-spkcc.git ~/honeycomb
+    #install npm packages
+    cd ~/honeycomb
+    npm i
+    cp ~/trole/.env ~/honeycomb/.env
+    echo -e "Installing HoneyComb"
+    echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/homeycomb/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
+    sudo systemctl daemon-reload 
 fi
 
-poav_is_enabled=$(sudo systemctl is-enabled poav)
-if [ $poav_is_enabled = 'enabled' ];
+spk_is_active=$(sudo systemctl is-active spk)
+if [ $spk_is_active = 'active' ];
 then
-    echo -e "${GREEN}PoAV is set to auto-start${NC}"
+    echo -e "${GREEN}SPK is running${NC}"
 else
-    echo 'Enabling PoAV auto-start'
-    sudo systemctl enable poav
+    echo 'Starting SPK'
+    sudo systemctl start spk
 fi
 
-poav_is_active=$(sudo systemctl is-active poav)
-if [ $poav_is_active != 'active' ];
+spk_is_enabled=$(sudo systemctl is-enabled spk)
+if [ $spk_is_enabled = 'enabled' ];
 then
-    echo -e "${RED}PoAV failed to start${NC}"
+    echo -e "${GREEN}SPK is set to auto-start${NC}"
+else
+    echo 'Enabling SPK auto-start'
+    sudo systemctl enable spk
+fi
+
+spk_is_active=$(sudo systemctl is-active spk)
+if [ $spk_is_active != 'active' ];
+then
+    echo -e "${RED}SPK failed to start${NC}"
     exit
 else
-    echo PoAV is running
+    echo SPK is running
 fi
 
 echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
-
-# install spk node?
 
 exit
