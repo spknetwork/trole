@@ -444,12 +444,13 @@ then
     echo -e "${GREEN}SPK service exists${NC}"
 else
     git clone https://github.com/spknetwork/honeycomb-spkcc.git ~/honeycomb
+    git checkout 1.2-poa
     #install npm packages
     cd ~/honeycomb
     npm i
     cp ~/trole/.env ~/honeycomb/.env
     echo -e "Installing HoneyComb"
-    echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/homeycomb/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
+    echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/honeycomb/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
 
