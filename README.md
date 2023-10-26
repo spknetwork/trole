@@ -4,91 +4,34 @@ Trolls control the bridges. Trole does that based on hive role.
 
 Trole is a reverse proxy that verifies a structed message is signed by a valid Hive `posting` or `active` key before bridging to a service. 
 
-Trole uses no secrets. It verifies a valid message was signed, this message is `account_name:timecode` the account name is used to query a Hive API to find the public keys to verify the signature, while the timecode expires old signatures. 
+Trole uses no secrets. It verifies a valid message was signed.
+
+This implemtation of Trole controls upload access to decentralized IPFS nodes on the SPK Network and a few other things. It has an install script that will help you install all compoent software of SPK Network based on your account. 
 
 ## Setup
 
 Place between your IPFS gateway and the internet.
 
-### Simple
+### Simple Full
+
+Requires:
+* non-root account on Debian/Ubuntu
+* a domain name pointed to this server
 
 Clone Repo:
 
 `git clone https://github.com/spknetwork/trole`
 
 Change Directory `cd trole`
-Install Dependancies `npm i`
-Configure environment
 
-#### Sample `.env`
+Run Install Script `./install.sh`
 
-```
-PORT=5050
-posting=true
-active=true
-ENDPOINT="http://127.0.0.1:5001"
-HIVE_API="https://anyx.io"
-```
+Follow instructions
 
-Default values shown
+### Standalone
 
-#### Sample nginx config
+For SPK Network testing the simple full is the only officially supported install. But any contributions you'd like to make in documentation or testing are always welcome.
 
-```
-server {
-    listen       80;
-    listen  [::]:80;
-    server_name  ipfs.dlux.io;
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
-    }
-    location /api {
-        proxy_http_version 1.1;
-        proxy_pass   http://localhost:5050/api;
-        proxy_set_header Host               $http_host;
-        proxy_set_header X-Real-IP          $remote_addr;
-        proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
-        add_header Cache-Control no-cache;
-    }
+### Feedback
 
-    location / {
-        proxy_http_version 1.1;
-        proxy_pass   http://localhost:8080;
-        proxy_set_header Host               $http_host;
-        proxy_set_header X-Real-IP          $remote_addr;
-        proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
-        add_header Cache-Control no-cache;
-    }
-}
-```
-Run with `pm2`
-
-###
-
-Client Side append the following headers
-
-* `account`:`valid-hive-account`
-* `nonce`: `Date.now()`
-* `sig`:`0123456789abcdef...`
-* `chain`: `HIVE` //default value
-
-#### With HiveKeychain
-`window.hive_keychain.requestSignBuffer("disregardfiat","disregardfiat:1000","posting",sig=>{console.log(sig)})`
-
-#### With Key
-Client side signing:
-`https://www.npmjs.com/package/hive-tx`
-```
-const hiveTx = require("hive-tx") || 
-<script src="https://cdn.jsdelivr.net/npm/hive-tx/dist/hive-tx.min.js"></script>
-
-const sig = sign(`${account}:${nonce}`, key)
-
-function sign (msg, key){
-    const { sha256 } = require( 'hive-tx/helpers/crypto' )
-    const privateKey = hiveTx.PrivateKey.from(key)
-    const message = sha256(msg)
-    return privateKey.sign(message)
-}
-```
+Feel free to use Github's feedback mechanisms or join our discord https://discord.gg/JbhQ7dREsP
