@@ -14,7 +14,7 @@ Place between your IPFS gateway and the internet.
 
 Clone Repo:
 
-`git clone https://github.com/disregardfiat/trole`
+`git clone https://github.com/spknetwork/trole`
 
 Change Directory `cd trole`
 Install Dependancies `npm i`
