@@ -15,7 +15,7 @@ Place between your IPFS gateway and the internet.
 ### Simple Full
 
 Requires:
-* non-root account on Debian/Ubuntu
+* non-root account on Debian/Ubuntu(20.04 or higher) with snap support.
 * a domain name pointed to this server
 
 Clone Repo:
