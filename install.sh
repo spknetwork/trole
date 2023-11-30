@@ -378,7 +378,7 @@ then
     sudo systemctl restart caddy
 else
     echo Caddy config exists: Ensure
-    echo -e "spk.${DOMAIN} reverse_proxy localhost:3001\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}"
+    echo -e "spk.${DOMAIN} {\n\treverse_proxy localhost:3001\n}\n\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}"
     echo -e "${YELLOW}Ensure Caddyfile contains the above configuration${NC}"
 fi
 
