@@ -7,6 +7,9 @@ const domain = ENV.DOMAIN || ''
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
 var registered = true, vcode = ENV.VALIDATOR, vreg = true, balance = 0, amount = 0
+var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
+var key = dhive.PrivateKey.fromLogin("username", "password", "posting");
+
 const RegisterService = (amount, type, id, api) => {
     return new Promise((resolve, reject)=>{
         client.broadcast.json({
@@ -45,8 +48,6 @@ const RegisterVal = (amount) => {
         })
     })
 }
-var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
-var key = dhive.PrivateKey.fromLogin("username", "password", "posting");
 
 const Paccount = (acc) => {
     return new Promise((resolve, reject)=>{
