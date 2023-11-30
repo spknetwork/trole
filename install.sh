@@ -319,6 +319,8 @@ then
         cd ~/honeycomb
         npm i
         cp ~/trole/.env ~/honeycomb/.env
+        # append spk to DOMAIN
+        echo "DOMAIN=spk.${DOMAIN}" | tee -a .env
         echo -e "Installing HoneyComb"
         echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/honeycomb/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
         sudo systemctl daemon-reload 
