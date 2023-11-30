@@ -40,10 +40,8 @@ const RegisterVal = (amount) => {
                 amount
             })
         }, key).then(r=>{
-            process.exit()
             resolve(r)
         }).catch(e=>{
-            process.exit()
             reject(e)
         })
     })
@@ -115,7 +113,11 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets()]).then(r => {
                 })
             } else {
                 if(vcode)process.exit()
-                else RegisterVal(r[1].result.IPFSRate)
+                else RegisterVal(r[1].result.IPFSRate). then(r=>{
+                    console.log('VAL registered')
+                    process.exit()
+                
+                })
             }
         }).catch(e=>{
             console.log(e)
