@@ -314,9 +314,9 @@ then
         echo -e "${GREEN}SPK service exists${NC}"
     else
         git clone https://github.com/spknetwork/honeycomb-spkcc.git ~/honeycomb
-        git checkout 1.2-poa
         #install npm packages
         cd ~/honeycomb
+        git checkout 1.2-poa
         npm i
         cp ~/trole/.env ~/honeycomb/.env
         # append spk to DOMAIN
