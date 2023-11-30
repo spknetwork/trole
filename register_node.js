@@ -6,7 +6,7 @@ const active_key = ENV.ACTIVE || ''
 const domain = ENV.DOMAIN || ''
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
-var registered = true, vreg = ENV.VALIDATOR, balance = 0, amount = 0
+var registered = true, vcode = ENV.VALIDATOR, vreg = true, balance = 0, amount = 0
 const RegisterService = (amount, type, id, api) => {
     return new Promise((resolve, reject)=>{
         client.broadcast.json({
@@ -23,6 +23,24 @@ const RegisterService = (amount, type, id, api) => {
         }).then(r=>{
             resolve(r)
         }).catch(e=>{
+            reject(e)
+        })
+    })
+}
+const RegisterVal = (amount) => {
+    return new Promise((resolve, reject)=>{
+        client.broadcast.json({
+            required_auths: [account],
+            required_posting_auths: [],
+            id: "spkcc_validator_burn",
+            json: JSON.stringify({
+                amount
+            })
+        }).then(r=>{
+            process.exit()
+            resolve(r)
+        }).catch(e=>{
+            process.exit()
             reject(e)
         })
     })
@@ -45,7 +63,12 @@ const Pservices = () => {
         fetch(`https://spktest.dlux.io/services/VAL`).then(r => r.json()).then(r=>{resolve(r)})
     })
 }
-Promise.all([Paccount(account), Pstats(), Pservices()]).then(r => {
+const Pmarkets= () => {
+    return new Promise((resolve, reject)=>{
+        fetch(`https://spktest.dlux.io/markets`).then(r => r.json()).then(r=>{resolve(r)})
+    })
+}
+Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets()]).then(r => {
     if(r[0].storage[id]){
         console.log('storage already registered')
     } else if (r[0].pubKey == 'NA'){
@@ -58,9 +81,15 @@ Promise.all([Paccount(account), Pstats(), Pservices()]).then(r => {
         console.log('Registering VAL')
         vreg = false
     }
+    if(vcode && !r[3].markets.node[account]?.val_code){
+        vcode = true
+    } else {
+        vcode = false
+    }
     var fees = 0
     if(!vreg)fees++
     if(!registered)fees++
+    if(!vcode)fees++
     balance = r[0].balance
     amount = r[1].result.IPFSRate * fees
     if(!fees){
@@ -77,13 +106,15 @@ Promise.all([Paccount(account), Pstats(), Pservices()]).then(r => {
             if(!vreg){
                 RegisterService(r[1].result.IPFSRate, 'VAL', id, `https://poa.${domain}`).then(r=>{
                     console.log('VAL registered')
-                    process.exit()
+                    if(vcode)process.exit()
+                    else RegisterVal(r[1].result.IPFSRate)
                 }).catch(e=>{
                     console.log(e)
                     process.exit()
                 })
             } else {
-                process.exit()
+                if(vcode)process.exit()
+                else RegisterVal(r[1].result.IPFSRate)
             }
         }).catch(e=>{
             console.log(e)
@@ -93,13 +124,15 @@ Promise.all([Paccount(account), Pstats(), Pservices()]).then(r => {
         if(!vreg){
             RegisterService(r[1].result.IPFSRate, 'VAL', id, `https://poa.${domain}`).then(r=>{
                 console.log('VAL registered')
-                process.exit()
+                if(vcode)process.exit()
+                else RegisterVal(r[1].result.IPFSRate)
             }).catch(e=>{
                 console.log(e)
                 process.exit()
             })
         } else {
-            process.exit()
+            if(vcode)process.exit()
+            else RegisterVal(r[1].result.IPFSRate)
         }
     }
 })
