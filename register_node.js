@@ -9,7 +9,7 @@ const dhive = require('@hiveio/dhive');
 var registered = true, vcode = ENV.VALIDATOR, vreg = true, balance = 0, amount = 0
 var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
 var key = dhive.PrivateKey.fromString(active_key);
-
+var price = 2000
 const RegisterService = (amount, type, id, api) => {
     return new Promise((resolve, reject)=>{
         client.broadcast.json({
@@ -68,6 +68,7 @@ const Pmarkets= () => {
     })
 }
 Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets()]).then(r => {
+    cprice = r[1].result.IPFSRate
     if(r[0].storage[id]){
         console.log('storage already registered')
     } else if (r[0].pubKey == 'NA'){
@@ -90,7 +91,7 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets()]).then(r => {
     if(!registered)fees++
     if(!vcode)fees++
     balance = r[0].balance
-    amount = r[1].result.IPFSRate * fees
+    amount = price * fees
     if(!fees){
         console.log('nothing to do')
         process.exit()
@@ -100,20 +101,20 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets()]).then(r => {
         process.exit()
     }
     if(!registered){
-        RegisterService(r[1].result.IPFSRate, 'IPFS', id, `https://ipfs.${domain}`).then(r=>{
+        RegisterService(price, 'IPFS', id, `https://ipfs.${domain}`).then(r=>{
             console.log('IPFS registered')
             if(!vreg){
-                RegisterService(r[1].result.IPFSRate, 'VAL', id, `https://poa.${domain}`).then(r=>{
+                RegisterService(price, 'VAL', id, `https://poa.${domain}`).then(r=>{
                     console.log('VAL registered')
                     if(vcode)process.exit()
-                    else RegisterVal(r[1].result.IPFSRate)
+                    else RegisterVal(price)
                 }).catch(e=>{
                     console.log(e)
                     process.exit()
                 })
             } else {
                 if(vcode)process.exit()
-                else RegisterVal(r[1].result.IPFSRate). then(r=>{
+                else RegisterVal(price). then(r=>{
                     console.log('VAL registered')
                     process.exit()
                 
@@ -125,17 +126,17 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets()]).then(r => {
         })
     } else {
         if(!vreg){
-            RegisterService(r[1].result.IPFSRate, 'VAL', id, `https://poa.${domain}`).then(r=>{
+            RegisterService(price, 'VAL', id, `https://poa.${domain}`).then(r=>{
                 console.log('VAL registered')
                 if(vcode)process.exit()
-                else RegisterVal(r[1].result.IPFSRate)
+                else RegisterVal(price)
             }).catch(e=>{
                 console.log(e)
                 process.exit()
             })
         } else {
             if(vcode)process.exit()
-            else RegisterVal(r[1].result.IPFSRate)
+            else RegisterVal(price)
         }
     }
 })
