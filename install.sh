@@ -24,7 +24,7 @@ fi
 echo -e "${YELLOW}This script may ask some questions after it installs it's first set of dependencies. Stay tuned.${NC}"
 
 sudo apt update &> /dev/null
-
+echo -e "${YELLOW}Ensure ipfs.${DOMAIN} DNS records point to this server.${NC}"
 echo "Install options:"
 while true; do
     read -p "File Storage only?(No SPK Node and No Validator) " yn
@@ -34,7 +34,23 @@ while true; do
         * ) echo "Please answer yes or no.";;
     esac
 done
+if [ $BUILDSPK = "true" ];
+then
+    echo -e "${YELLOW}Ensure spk.${DOMAIN} DNS records point to this server.${NC}"
+fi
 
+while true; do
+    read -p "Register a Validator? " yn
+    case $yn in
+        [Yy]* ) BUILDVAL=true ; break;;
+        [Nn]* ) BUILDVAL=false ; break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+if [ $BUILDVAL = "true" ];
+then
+    echo -e "${YELLOW}Ensure poa.${DOMAIN} DNS records point to this server.${NC}"
+fi
 # install node
 
 if ! command -v node > /dev/null
@@ -183,7 +199,8 @@ else
     echo "ACCOUNT=${ACCOUNT}" | tee -a .env
     echo "API_PORT=5050" | tee -a .env 
     echo "ENDPOINT=http://127.0.0.1" | tee -a .env 
-    echo "ENDPORT=5001" | tee -a .env 
+    echo "ENDPORT=5001" | tee -a .env
+    echo "VALIDATOR=${BUILDVAL}" | tee -a .env
 fi
 source .env
 echo -e "${YELLOW}Ensure ipfs.${DOMAIN} is pointed to this server${NC}"
@@ -279,6 +296,52 @@ then
     exit
 fi
 
+if [ $BUILDSPK = "true" ];
+then
+    SPK_SERVICE_FILE=/lib/systemd/system/spk.service
+    if test -f "$SPK_SERVICE_FILE";
+    then
+        echo -e "${GREEN}SPK service exists${NC}"
+    else
+        git clone https://github.com/spknetwork/honeycomb-spkcc.git ~/honeycomb
+        git checkout 1.2-poa
+        #install npm packages
+        cd ~/honeycomb
+        npm i
+        cp ~/trole/.env ~/honeycomb/.env
+        echo -e "Installing HoneyComb"
+        echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/honeycomb/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
+        sudo systemctl daemon-reload 
+    fi
+
+    spk_is_active=$(sudo systemctl is-active spk)
+    if [ $spk_is_active = 'active' ];
+    then
+        echo -e "${GREEN}SPK is running${NC}"
+    else
+        echo 'Starting SPK'
+        sudo systemctl start spk
+    fi
+
+    spk_is_enabled=$(sudo systemctl is-enabled spk)
+    if [ $spk_is_enabled = 'enabled' ];
+    then
+        echo -e "${GREEN}SPK is set to auto-start${NC}"
+    else
+        echo 'Enabling SPK auto-start'
+        sudo systemctl enable spk
+    fi
+
+    spk_is_active=$(sudo systemctl is-active spk)
+    if [ $spk_is_active != 'active' ];
+    then
+        echo -e "${RED}SPK failed to start${NC}"
+        exit
+    else
+        echo SPK is running
+    fi
+fi
+
 # install caddy
 
 CADDY_FILE=/etc/caddy/Caddyfile
@@ -299,7 +362,7 @@ CADDY_CONFIG_EXISTS=$(grep $CADDY_PATTERN $CADDY_FILE 2> /dev/null)
 if [ -z "$CADDY_CONFIG_EXISTS" ];
 then
     echo Building Caddyfile
-    echo -e "poa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\t\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
+    echo -e "spk.${DOMAIN} reverse_proxy localhost:3001\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\t\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
     sudo systemctl restart caddy
 else
     echo Caddy config exists: Ensure
@@ -389,22 +452,6 @@ else
     sudo systemctl daemon-reload 
 fi
 
-if [ $BUILDSPK = "true" ];
-then
-    POAV_SERVICE_FILE=/lib/systemd/system/poav.service
-    if test -f "$POAV_SERVICE_FILE";
-    then
-        echo -e "${GREEN}PoA Validator service exists${NC}"
-    else
-        #git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
-        #mv proofofaccess /home/${whoami}/proofofaccess
-        #rm -rf proofofaccess
-        #echo -e "Installing Proof of Access"
-        echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
-        sudo systemctl daemon-reload 
-    fi
-fi
-
 poa_is_active=$(sudo systemctl is-active poa)
 if [ $poa_is_active = 'active' ];
 then
@@ -434,6 +481,20 @@ fi
 
 if [ $BUILDSPK = "true" ];
 then
+
+    POAV_SERVICE_FILE=/lib/systemd/system/poav.service
+    if test -f "$POAV_SERVICE_FILE";
+    then
+        echo -e "${GREEN}PoA Validator service exists${NC}"
+    else
+        #git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
+        #mv proofofaccess /home/${whoami}/proofofaccess
+        #rm -rf proofofaccess
+        #echo -e "Installing Proof of Access"
+        echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
+        sudo systemctl daemon-reload 
+    fi
+    
     poav_is_active=$(sudo systemctl is-active poav)
     if [ $poav_is_active = 'active' ];
     then
@@ -443,68 +504,31 @@ then
         sudo systemctl start poav
     fi
 
-    poav_is_enabled=$(sudo systemctl is-enabled poav)
-    if [ $poav_is_enabled = 'enabled' ];
+    if [ $BUILDVAL = "true" ];
     then
-        echo -e "${GREEN}PoAV is set to auto-start${NC}"
-    else
-        echo 'Enabling PoAV auto-start'
-        sudo systemctl enable poav
-    fi
+        poav_is_enabled=$(sudo systemctl is-enabled poav)
+        if [ $poav_is_enabled = 'enabled' ];
+        then
+            echo -e "${GREEN}PoAV is set to auto-start${NC}"
+        else
+            echo 'Enabling PoAV auto-start'
+            sudo systemctl enable poav
+        fi
 
-    poav_is_active=$(sudo systemctl is-active poav)
-    if [ $poav_is_active != 'active' ];
-    then
-        echo -e "${RED}PoAV failed to start${NC}"
-        exit
-    else
-        echo PoAV is running
-    fi
-
-
-    SPK_SERVICE_FILE=/lib/systemd/system/spk.service
-    if test -f "$SPK_SERVICE_FILE";
-    then
-        echo -e "${GREEN}SPK service exists${NC}"
-    else
-        git clone https://github.com/spknetwork/honeycomb-spkcc.git ~/honeycomb
-        git checkout 1.2-poa
-        #install npm packages
-        cd ~/honeycomb
-        npm i
-        cp ~/trole/.env ~/honeycomb/.env
-        echo -e "Installing HoneyComb"
-        echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/honeycomb/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
-        sudo systemctl daemon-reload 
-    fi
-
-    spk_is_active=$(sudo systemctl is-active spk)
-    if [ $spk_is_active = 'active' ];
-    then
-        echo -e "${GREEN}SPK is running${NC}"
-    else
-        echo 'Starting SPK'
-        sudo systemctl start spk
-    fi
-
-    spk_is_enabled=$(sudo systemctl is-enabled spk)
-    if [ $spk_is_enabled = 'enabled' ];
-    then
-        echo -e "${GREEN}SPK is set to auto-start${NC}"
-    else
-        echo 'Enabling SPK auto-start'
-        sudo systemctl enable spk
-    fi
-
-    spk_is_active=$(sudo systemctl is-active spk)
-    if [ $spk_is_active != 'active' ];
-    then
-        echo -e "${RED}SPK failed to start${NC}"
-        exit
-    else
-        echo SPK is running
+        poav_is_active=$(sudo systemctl is-active poav)
+        if [ $poav_is_active != 'active' ];
+        then
+            echo -e "${RED}PoAV failed to start${NC}"
+            exit
+        else
+            echo PoAV is running
+        fi
     fi
 fi
+
+echo -e "${GREEN}Registering Services${NC}"
+
+node register_node.js
 
 echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
 
