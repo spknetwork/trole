@@ -8,7 +8,7 @@ const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
 var registered = true, vcode = ENV.VALIDATOR, vreg = true, balance = 0, amount = 0
 var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
-var key = dhive.PrivateKey.fromLogin("username", "password", "posting");
+var key = dhive.PrivateKey.fromString(active_key);
 
 const RegisterService = (amount, type, id, api) => {
     return new Promise((resolve, reject)=>{
