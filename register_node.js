@@ -23,7 +23,7 @@ const RegisterService = (amount, type, id, api) => {
                 api,
 
             })
-        }).then(r=>{
+        }, key).then(r=>{
             resolve(r)
         }).catch(e=>{
             reject(e)
@@ -39,7 +39,7 @@ const RegisterVal = (amount) => {
             json: JSON.stringify({
                 amount
             })
-        }).then(r=>{
+        }, key).then(r=>{
             process.exit()
             resolve(r)
         }).catch(e=>{
