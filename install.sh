@@ -23,6 +23,16 @@ then
 fi
 echo -e "${YELLOW}This script may ask some questions after it installs it's first set of dependencies. Stay tuned.${NC}"
 
+source .env
+if [ -z "$DOMAIN" ];
+then
+    echo What is your domain name? -dlux.io
+    read DOMAIN
+    echo "DOMAIN=${DOMAIN}" | tee -a .env
+else
+    echo "DOMAIN=${DOMAIN}"
+fi
+
 sudo apt update &> /dev/null
 echo -e "${YELLOW}Ensure ipfs.${DOMAIN} DNS records point to this server.${NC}"
 echo "Install options:"
@@ -362,11 +372,11 @@ CADDY_CONFIG_EXISTS=$(grep $CADDY_PATTERN $CADDY_FILE 2> /dev/null)
 if [ -z "$CADDY_CONFIG_EXISTS" ];
 then
     echo Building Caddyfile
-    echo -e "spk.${DOMAIN} reverse_proxy localhost:3001\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\t\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
+    echo -e "spk.${DOMAIN} reverse_proxy localhost:3001\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
     sudo systemctl restart caddy
 else
     echo Caddy config exists: Ensure
-    echo -e "poa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\t\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}"
+    echo -e "spk.${DOMAIN} reverse_proxy localhost:3001\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}"
     echo -e "${YELLOW}Ensure Caddyfile contains the above configuration${NC}"
 fi
 
