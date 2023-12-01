@@ -540,6 +540,7 @@ fi
 
 echo -e "${GREEN}Registering Services${NC}"
 
+cd ~/trole
 node register_node.js
 
 echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
