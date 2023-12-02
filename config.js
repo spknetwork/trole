@@ -77,7 +77,8 @@ const config = {
   SPK_API,
   tables,
   ipfsid,
-  posting_pub
+  posting_pub,
+  base_grant
 };
 
 module.exports = config
