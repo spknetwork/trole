@@ -284,9 +284,9 @@ exports.contract = (req, res) => {
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
     if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
-      var grant = 3000, multiplier = 1
+      var grant = config.base_grant, multiplier = 1
       const powder = parseInt(live_stats.broca.split(',')[0])
-      const cap = live_stats.spk_power * 3000
+      const cap = live_stats.spk_power * config.base_grant
       if (powder / cap > 0.8) {
         multiplier = 8
       } else if (powder / cap > 0.6) {

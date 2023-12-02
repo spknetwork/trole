@@ -1,6 +1,7 @@
 require("dotenv").config();
 const ENV = process.env;
 const dbcs = ENV.DATABASE_URL || "";
+const base_grant = ENV.BASE_GRANT || 30000;
 const port = ENV.PORT || 5050;
 const account = ENV.ACCOUNT || '';
 const posting_key = ENV.POSTING || ''
