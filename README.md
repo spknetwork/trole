@@ -4,8 +4,6 @@ Trolls control the bridges. Trole does that based on hive role.
 
 Trole is a reverse proxy that verifies a structed message is signed by a valid Hive `posting` or `active` key before bridging to a service. 
 
-Trole uses no secrets. It verifies a valid message was signed.
-
 This implemtation of Trole controls upload access to decentralized IPFS nodes on the SPK Network and a few other things. It has an install script that will help you install all compoent software of SPK Network based on your account. 
 
 ## Setup
