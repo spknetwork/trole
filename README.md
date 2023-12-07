@@ -12,6 +12,20 @@ This implemtation of Trole controls upload access to decentralized IPFS nodes on
 
 Place between your IPFS gateway and the internet.
 
+### Simple SPK Storage Node
+
+You'll need Docker - [Get Docker](https://docs.docker.com/get-docker/)
+
+Next, copy `env.sample` to .env and write your spknetwork hive account and active key in the coppied file.
+
+Now run the build and up
+
+`docker-compose build`
+
+`docker-compose up`
+
+More documentation will follow. Follow spknetwork, disregardfiat, and nathansenn on hive.
+
 ### Simple Full
 
 Requires:
