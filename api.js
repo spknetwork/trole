@@ -11,6 +11,11 @@ const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
+ipfs.id().then(r => {
+  exec(`node register_node.js`, (error, stdout, stderr) => {
+    console.log({error, stdout, stderr})
+  })
+})
 const Busboy = require('busboy');
 
 var live_stats = {
@@ -43,21 +48,29 @@ function getStats() {
       live_stats[keys[i]] = json[keys[i]]
     }
   })
-  exec("ipfs stats repo", (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-    const keys = stdout.split('\n')
-    for (var i = 0; i < keys.length; i++) {
-      const key = keys[i].split(':')
-      if(key != 'RepoPath' || key != 'Version') live_stats[key[0]] = parseInt(key[1])
-    }
-  });
+  if(!config.docker){
+    exec(`ipfs stats repo`, (error, stdout, stderr) => {
+      if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+      }
+      if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+      }
+      const keys = stdout.split('\n')
+      for (var i = 0; i < keys.length; i++) {
+        const key = keys[i].split(':')
+        if(key != 'RepoPath' || key != 'Version') live_stats[key[0]] = BigInt(key[1])
+      }
+    });
+  } else {
+    ipfs.repo.stat((err, stats) => {
+      live_stats.storageMax = BigInt(stats.storageMax)
+      live_stats.repoSize = BigInt(stats.repoSize)
+      live_stats.numObjects = BigInt(stats.numObjects)
+    })
+  }
   if(!live_stats.head_block) return setTimeout(getStats, 3 * 1000)
   fs.readdir(`./uploads/`, (err, files) => {
     files.forEach(file => {

@@ -1,37 +1,49 @@
-version: '3.3'
+version: '2.1'
 services:
-  db:
-    image: postgres:14.1-alpine
+  ipfs:
+    image: ipfs/kubo:latest
     restart: always
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - IPFS_PATH=/data/ipfs
     network_mode: "host"
-    # ports:
-    #   - '5432:5432'
-    volumes: 
-      - db:/var/lib/postgresql/data
+    volumes:
+      - ipfs:/data/ipfs
+      - ./ipfs-init.sh:/container-init.d/ipfs-init.sh
+    container_name: ipfs
+    healthcheck:
+        test: ["CMD", "wget", "http://localhost:8080/ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"]
+        interval: 5s
+        timeout: 4s
+        retries: 5
+  poa:
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    image: disregardfiat/poa:0.0.2
+    restart: on-failure
+    command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8000", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001"]
+    network_mode: "host"
+    container_name: poa
   api:
     depends_on:
-      - db
+      ipfs:
+        condition: service_healthy
     build: .
     restart: unless-stopped
     environment:
-      - PORT=${API_PORT}
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/postgres?sslmode=disable
-      - ENDPOINT=${ENDPOINT}
-      - ENDPORT=${ENDPORT}
+      - PORT=5050
+      - ENDPOINT=http://127.0.0.1
+      - ENDPORT=5001
+      - DOCKER=true
     network_mode: "host"
-    # ports:
-    #   - '5050:5050'
+    volumes:
+      - ./.env:/.env
     logging:
       options:
         max-size: "2m"
         max-file: "3"
-    # stdin_open: true
-    # tty: true
     stdin_open: true
     tty: true
 volumes:
-  db:
+  ipfs:
     driver: local

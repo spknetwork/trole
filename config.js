@@ -13,7 +13,7 @@ const ENDPORT = ENV.ENDPORT || 5001
 const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
 const SPK_API = ENV.SPK_API || "https://spktest.dlux.io";
 const flex = ENV.FLEX || 10000000 //upload temp space limit
-
+const docker = ENV.DOCKER || false
 
 const tables = {
   db:{
@@ -78,7 +78,8 @@ const config = {
   tables,
   ipfsid,
   posting_pub,
-  base_grant
+  base_grant,
+  docker
 };
 
 module.exports = config
