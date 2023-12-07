@@ -13,8 +13,8 @@ services:
     healthcheck:
         test: ["CMD", "wget", "http://localhost:8080/ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"]
         interval: 5s
-        timeout: 4s
-        retries: 5
+        timeout: 1s
+        retries: 10000
   poa:
     depends_on:
       ipfs:

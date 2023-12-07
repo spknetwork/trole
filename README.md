@@ -16,7 +16,7 @@ Place between your IPFS gateway and the internet.
 
 You'll need Docker - [Get Docker](https://docs.docker.com/get-docker/)
 
-Next, copy `env.sample` to .env and write your spknetwork hive account and active key in the coppied file.
+Next, copy `env.sample` to `.env` and write your spknetwork hive account and active key in the coppied file.
 
 Now run the build and up
 
