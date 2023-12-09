@@ -11,17 +11,21 @@ const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
-ipfs.id().then(r => {
-  exec(`node register_node.js`, (error, stdout, stderr) => {
-    console.log({error, stdout, stderr})
-  })
-})
 const Busboy = require('busboy');
 
 var live_stats = {
   i: parseInt(Math.random() * 10),
   feed: 0
 }
+ipfs.id().then(r => {
+  live_stats.ipfsid = r.id
+  exec(`node register_node.js`, (error, stdout, stderr) => {
+    if (error) {
+      console.log(`error: ${error.message}`);
+      return;
+    }
+  })
+})
 getStats()
 var lock = {}
 
@@ -48,29 +52,11 @@ function getStats() {
       live_stats[keys[i]] = json[keys[i]]
     }
   })
-  if(!config.docker){
-    exec(`ipfs stats repo`, (error, stdout, stderr) => {
-      if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-      }
-      if (stderr) {
-          console.log(`stderr: ${stderr}`);
-          return;
-      }
-      const keys = stdout.split('\n')
-      for (var i = 0; i < keys.length; i++) {
-        const key = keys[i].split(':')
-        if(key != 'RepoPath' || key != 'Version') live_stats[key[0]] = BigInt(key[1])
-      }
-    });
-  } else {
-    ipfs.repo.stat((err, stats) => {
-      live_stats.storageMax = BigInt(stats.storageMax)
-      live_stats.repoSize = BigInt(stats.repoSize)
-      live_stats.numObjects = BigInt(stats.numObjects)
-    })
-  }
+  ipfs.repo.stat((err, stats) => {
+    live_stats.storageMax = BigInt(stats.storageMax)
+    live_stats.repoSize = BigInt(stats.repoSize)
+    live_stats.numObjects = BigInt(stats.numObjects)
+  })
   if(!live_stats.head_block) return setTimeout(getStats, 3 * 1000)
   fs.readdir(`./uploads/`, (err, files) => {
     files.forEach(file => {
@@ -146,6 +132,40 @@ function ipfsUnpin(cid) {
 }
 
 const DB = {
+  getKeys: function (type = 'contracts') {
+    return new Promise((res, rej) => {
+      fs.readdir(`./db/`, (err, files) => {
+        if (err) {
+          console.log('Failed to read:', type)
+          rej(err)
+        } else {
+          switch (type) {
+            case 'contracts':
+              for (var i = 0; i < files.length; i++) {
+                if (files[i].indexOf('.json') < 0) {
+                  files.splice(i, 1)
+                  i--
+                } else {
+                  files[i] = files[i].replace('.json', '')
+                }
+              }
+              break;
+            case 'flags':
+              for (var i = 0; i < files.length; i++) {
+                if (files[i].indexOf('.flag') < 0) {
+                  files.splice(i, 1)
+                  i--
+                }
+              }
+              break;
+            default:
+              break;
+          }
+          res(files)
+        }
+      });
+    })
+  },
   read: function (key) {
     return new Promise((res, rej) => {
       fs.readJSON(`./db/${key}.json`)
@@ -454,13 +474,16 @@ exports.upload = (req, res) => {
 }
 
 exports.live = (req, res, next) => {
+  console.log('live')
   res.status(200).json({
-    ipfsid: config.ipfsid,
+    ipfsid: live_stats.ipfsid,
     pubKey: live_stats.pubKey,
     head_block: live_stats.head_block,
     node: config.account,
     api: live_stats.node,
-    free: live_stats.StorageMax - live_stats.RepoSize,
+    StorageMax: BigInt(live_stats.storageMax).toString(),
+    RepoSize: BigInt(live_stats.repoSize).toString(),
+    NumObjects: BigInt(live_stats.numObjects).toString(),
   })
 }
 
@@ -502,6 +525,46 @@ exports.flag = (req, res, next) => {
   res.status(200).json({
     msg: `${CID} has been ${signed ? 'flagged' : 'unflagged'}`,
   })
+}
+
+exports.contractIDs = (req, res, next) => {
+  console.log('contractIDs')
+  DB.getKeys('contracts')
+    .then(keys => {
+      res.status(200).json({
+        contracts: keys
+      })
+    })
+    .catch(e => {
+      res.status(200).json({
+        contracts: []
+      })
+    })
+}
+
+exports.contracts = (req, res, next) => {
+  console.log('contracts')
+  DB.getKeys('contracts')
+    .then(keys => {
+      // read the db and return all the contracts
+      var contracts = []
+      for (var i = 0; i < keys.length; i++) {
+        contracts.push(DB.read(keys[i]))
+      }
+      Promise.all(contracts).then(contracts => {
+        for (var i = 0; i < contracts.length; i++) {
+          contracts[i] = JSON.parse(contracts[i])
+        }
+        res.status(200).json({
+          contracts
+        })
+      })
+    })
+    .catch(e => {
+      res.status(200).json({
+        contracts: []
+      })
+    })
 }
 
 exports.stats = (req, res, next) => {

@@ -14,6 +14,8 @@ api.get("/upload-authorize", API.arrange)
 api.get("/upload-stats", API.live)
 api.get("/flag-qry/:cid", API.flags)
 api.get("/flag", API.flag)
+api.get("/contracts", API.contracts)
+api.use(express.static("www"));
 
 http.listen(config.port, function () {
   console.log(`API listening on port ${config.port}`);
