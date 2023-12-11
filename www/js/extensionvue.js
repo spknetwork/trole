@@ -135,7 +135,7 @@ export default {
                     <span class="ms-2 fs-6 border-bottom border-2 border-white">BROCA<i class="fa-solid fa-atom ms-1"></i></span></div>
 
                     <button type="button" class="btn btn-sm btn-primary mx-auto mt-1" type="button"
-                    :disabled="extendcost > broca_calc(saccountapi.broca)" @click="extend(contract, extendcost[name])">
+                    :disabled="extendcost > broca_calc(saccountapi.broca)" @click="extend(contract)">
                     <i class="fa-solid fa-clock-rotate-left fa-fw me-1"></i>Extend</button>
 
             </div>
@@ -149,7 +149,7 @@ export default {
                     @click="cancel_contract(contract)">
                     <i class="fa-solid fa-file-circle-xmark fa-fw me-1"></i>Sever</button>
                 <button type="button" class="btn btn-sm btn-primary mt-1"
-                    :disabled="extendcost > broca_calc(saccountapi.broca)" @click="extend(contract, extendcost[name])">
+                    :disabled="extendcost > broca_calc(saccountapi.broca)" @click="extend(contract)">
                     <i class="fa-solid fa-clock-rotate-left fa-fw me-1"></i>Extend</button>
 
 
@@ -296,7 +296,7 @@ export default {
           expIn(con){
             if(con.e)return `Expires in ${parseInt((parseInt(con.e.split(':')[0]) - this.sstats.head_block) / 20 / 60) < 24 ? parseInt((parseInt(con.e.split(':')[0]) - this.saccountapi.head_block) / 20 / 60) + ' hours' : parseInt((parseInt(con.e.split(':')[0]) - this.saccountapi.head_block) / 20 / 60 / 24) + ' days'}`
           },
-          extend(contract, amount){
+          extend(contract, amount = this.extendcost){
             if(amount > this.broca_calc(this.broca))return
             const toSign = {
                 type: "cja",
