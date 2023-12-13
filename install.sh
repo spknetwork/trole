@@ -214,6 +214,8 @@ else
     echo "ipfshost=127.0.0.1" | tee -a .env
     echo "ipfsprotocol=http" | tee -a .env
     echo "ipfsport=5001" | tee -a .env
+    echo "STARTURL=https://rpc.ecency.com/" | tee -a .env
+    echo "APIURL=https://rpc.ecency.com/" | tee -a .env
 fi
 source .env
 echo -e "${YELLOW}Ensure ipfs.${DOMAIN} is pointed to this server${NC}"
