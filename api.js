@@ -314,13 +314,6 @@ function localIpfsUpload(cid, contractID, res) {
 }
 
 exports.contract = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('CONTRACT TIMEOUT')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
     if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
@@ -483,34 +476,23 @@ exports.upload = (req, res, next) => {
 }
 
 exports.live = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('LIVE BROKEN')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   console.log('live')
-  res.status(200).json({
+  const StorageMax =  BigInt(live_stats.storageMax).toString()
+  const RepoSize = BigInt(live_stats.repoSize).toString()
+  const NumObjects = BigInt(live_stats.numObjects).toString()
+  return res.status(200).json({
     ipfsid: live_stats.ipfsid,
     pubKey: live_stats.pubKey,
     head_block: live_stats.head_block,
     node: config.account,
     api: live_stats.node,
-    StorageMax: BigInt(live_stats.storageMax).toString(),
-    RepoSize: BigInt(live_stats.repoSize).toString(),
-    NumObjects: BigInt(live_stats.numObjects).toString(),
+    StorageMax,
+    RepoSize,
+    NumObjects,
   })
 }
 
 exports.flags = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('FLAGS BROKEN')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   var flag = false
   fs.readJSON(`./db/${req.params.cid}.flag`)
     .then(json => {
@@ -526,13 +508,6 @@ exports.flags = (req, res, next) => {
 }
 
 exports.flag = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('FLAG BROKEN')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   const CID = req.query.cid
   const sig = req.query.sig
   const unflag = req.query.unflag || false
@@ -558,13 +533,6 @@ exports.flag = (req, res, next) => {
 }
 
 exports.contractIDs = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('CONTRACTIDS BROKEN')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   console.log('contractIDs')
   DB.getKeys('contracts')
     .then(keys => {
@@ -580,13 +548,6 @@ exports.contractIDs = (req, res, next) => {
 }
 
 exports.contracts = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('CONTRACTS BROKEN')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   console.log('contracts')
   DB.getKeys('contracts')
     .then(keys => {
@@ -599,7 +560,7 @@ exports.contracts = (req, res, next) => {
         for (var i = 0; i < contracts.length; i++) {
           contracts[i] = JSON.parse(contracts[i])
         }
-        res.status(200).json({
+        return res.status(200).json({
           contracts
         })
       })
@@ -612,13 +573,6 @@ exports.contracts = (req, res, next) => {
 }
 
 exports.stats = (req, res, next) => {
-  setTimeout(() => {
-    try {
-      throw new Error('STATS BROKEN')
-    } catch (err) {
-      next(err)
-    }
-  }, 100)
   if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
     || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
     res.status(400).json({ message: 'Missing data' });
