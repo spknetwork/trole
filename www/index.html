@@ -22,8 +22,7 @@
 <body class="d-flex flex-column h-100 text-white pt-5" id="explore">
     <div id="app">
         <div>
-            <nav-vue @login="account = $event"
-                @logout="account = ''" @ack="removeOp($event)" :op="toSign" />
+            <nav-vue @login="account = $event" @logout="account = ''" @ack="removeOp($event)" :op="toSign" />
         </div>
         <main role="main" class="flex-shrink-0" v-cloak>
             <div>
@@ -31,13 +30,18 @@
                     <h2>@{{ stats.node }}</h2>
                 </div>
                 <div class="container">
-                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseContracts"
-                        aria-expanded="false" aria-controls="collapseExample" @click="showContracts = !showContracts">
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                                                data-bs-target="#spkWalletModal">
+                                                <span class=""></span><i class="fa-solid fa-wallet"></i>
+                                            </button>
+                    <button class="btn btn-primary" type="button" data-toggle="collapse"
+                        data-target="#collapseContracts" aria-expanded="false" aria-controls="collapseExample"
+                        @click="showContracts = !showContracts">
                         Display Contracts
                     </button>
                     <div v-if="showContracts">
-                        <contract-vue node-view="true" :contracts="contracts"
-                            :account="account" @tosign="toSign=$event" />
+                        <contract-vue node-view="true" :contracts="contracts" :account="account"
+                            @tosign="toSign=$event" />
                     </div>
                 </div>
                 <div class="container">
@@ -46,41 +50,59 @@
                         Storage Stats
                     </button>
                     <div v-if="showDetails">
-                            <table>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Value</th>
-                                </tr>
-                                <tr>
-                                    <td>Head Block</td>
-                                    <td>{{stats.head_block}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Public Key</td>
-                                    <td>{{stats.pubKey}}</td>
-                                </tr>
-                                <tr>
-                                    <td>IPFS ID</td>
-                                    <td>{{stats.ipfsid}}</td>
-                                </tr>
-                                <tr>
-                                    <td>SPK API</td>
-                                    <td>{{stats.api}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Max Storage</td>
-                                    <td>{{stats.StorageMax}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Current Storage</td>
-                                    <td>{{stats.RepoSize}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Objects</td>
-                                    <td>{{stats.NumObjects}}</td>
-                                </tr>
-                            </table>
-                        
+                        <table>
+                            <tr>
+                                <th>Name</th>
+                                <th>Value</th>
+                            </tr>
+                            <tr>
+                                <td>Head Block</td>
+                                <td>{{stats.head_block}}</td>
+                            </tr>
+                            <tr>
+                                <td>Public Key</td>
+                                <td>{{stats.pubKey}}</td>
+                            </tr>
+                            <tr>
+                                <td>IPFS ID</td>
+                                <td>{{stats.ipfsid}}</td>
+                            </tr>
+                            <tr>
+                                <td>SPK API</td>
+                                <td>{{stats.api}}</td>
+                            </tr>
+                            <tr>
+                                <td>Max Storage</td>
+                                <td>{{stats.StorageMax}}</td>
+                            </tr>
+                            <tr>
+                                <td>Current Storage</td>
+                                <td>{{stats.RepoSize}}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Objects</td>
+                                <td>{{stats.NumObjects}}</td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+            <!-- SPK Wallet Modal -->
+            <div class="modal fade" id="spkWalletModal" tabindex="-1" aria-labelledby="spkWalletModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="spkWalletModalLabel">SPK Testnet Wallet</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <spk-vue :account="account" @tosign="toSign=$event;log($event)" />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>

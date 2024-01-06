@@ -14,7 +14,8 @@ services:
         test: ["CMD", "wget", "http://localhost:8080/ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"]
         interval: 5s
         timeout: 1s
-        retries: 10000
+        retries: 5
+        start_period: 15s
   poa:
     depends_on:
       ipfs:
@@ -24,26 +25,26 @@ services:
     command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8000", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001"]
     network_mode: "host"
     container_name: poa
-  # api:
-  #   depends_on:
-  #     ipfs:
-  #       condition: service_healthy
-  #   build: .
-  #   restart: unless-stopped
-  #   environment:
-  #     - PORT=5050
-  #     - ENDPOINT=http://127.0.0.1
-  #     - ENDPORT=5001
-  #     - DOCKER=true
-  #   network_mode: "host"
-  #   volumes:
-  #     - ./.env:/.env
-  #   logging:
-  #     options:
-  #       max-size: "2m"
-  #       max-file: "3"
-  #   stdin_open: true
-  #   tty: true
+  api:
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    build: .
+    restart: unless-stopped
+    environment:
+      - PORT=5050
+      - ENDPOINT=http://127.0.0.1
+      - ENDPORT=5001
+      - DOCKER=true
+    network_mode: "host"
+    volumes:
+      - ./.env:/.env
+    logging:
+      options:
+        max-size: "2m"
+        max-file: "3"
+    stdin_open: true
+    tty: true
 volumes:
   ipfs:
     driver: local
