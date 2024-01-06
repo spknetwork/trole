@@ -40,7 +40,13 @@
                         Display Contracts
                     </button>
                     <div v-if="showContracts">
+                        <h3>Stored Contracts</h3>
                         <contract-vue node-view="true" :contracts="contracts" :account="account"
+                            @tosign="toSign=$event" />
+                    </div>
+                    <div v-if="showContracts">
+                        <h3>New Contracts</h3>
+                        <contract-vue node-view="true" :contracts="newContracts" :account="account"
                             @tosign="toSign=$event" />
                     </div>
                 </div>

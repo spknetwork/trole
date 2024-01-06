@@ -921,13 +921,14 @@ export default {
             this.$emit('tosign', event)
         },
         getTokenUser(user = this.account) {
-            fetch(this.sapi + "/@" + user)
+            if(user)fetch(this.sapi + "/@" + user)
                 .then((response) => response.json())
                 .then((data) => {
                     data.tick = data.tick || 0.01;
                     this.larynxbehind = data.behind;
                     this.saccountapi = data
                 });
+            else setTimeout(this.getTokenUser, 1000)
         },
         getSNodes() {
             // fetch(this.sapi + "/runners")

@@ -79,7 +79,7 @@ export default {
                         @click="" >
                         <i class="fa-solid fa-flag fa-fw me-1"></i>Flag</button>
                 </div>
-                <button type="button" class="mx-auto mt-auto btn btn-sm btn-danger mt-1" v-if="contract.t == account" type="button"
+                <button type="button" class="mx-auto mt-auto btn btn-sm btn-danger mt-1" v-if="contract.t == account"
                     @click="cancel_contract(contract)">
                     <i class="fa-solid fa-file-circle-xmark fa-fw me-1"></i>Sever</button>
             </div>
@@ -134,7 +134,7 @@ export default {
                 <div class="ms-auto d-flex align-items-center my-2 text-white fw-bold display-6">{{formatNumber(extendcost, 0, '.',',')}}
                     <span class="ms-2 fs-6 border-bottom border-2 border-white">BROCA<i class="fa-solid fa-atom ms-1"></i></span></div>
 
-                    <button type="button" class="btn btn-sm btn-primary mx-auto mt-1" type="button"
+                    <button type="button" class="btn btn-sm btn-primary mx-auto mt-1"
                     :disabled="extendcost > broca_calc(saccountapi.broca)" @click="extend(contract)">
                     <i class="fa-solid fa-clock-rotate-left fa-fw me-1"></i>Extend</button>
 
@@ -142,7 +142,7 @@ export default {
 </div>
             <!-- action buttons -->
             <div class="px-2 mb-2 d-none d-flex justify-content-between flex-wrap text-wrap align-items-center text-white-50">
-                <button type="button" class="d-none btn btn-sm btn-secondary mt-1" data-bs-toggle="collapse" type="button"
+                <button type="button" class="d-none btn btn-sm btn-secondary mt-1" data-bs-toggle="collapse"
                     :data-bs-target="'#contract-' + contract.id">
                     <i class="fa-solid fa-xmark fa-fw me-1"></i>Cancel</button>
                 <button type="button" class="btn btn-sm btn-danger mt-1" v-if="contract.t != account"

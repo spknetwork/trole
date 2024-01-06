@@ -13,6 +13,9 @@ createApp({
       contracts: [],
       showDetails: true,
       showContracts: true,
+      newContracts: [],
+      feed: {},
+      lastFeed: 0,
     };
   },
   components: {
@@ -28,6 +31,24 @@ createApp({
     },
     log(msg) {
       console.log(msg);
+    },
+    getFeed(since = 0) {
+      fetch(`https://spktest.dlux.io/feed/${since}`).then(res => res.json()).then(r => {
+        var feedKeys = Object.keys(r.feed)
+        for (let i = 0; i < feedKeys.length; i++) {
+          const key = feedKeys[i].split(":")[0]
+          if (this.feed[key] > since) {
+            this.feed[feedKeys[i]] = r.feed[feedKeys[i]]
+            if(r.feed[feedKeys[i]].indexOf(" bundled") > -1){
+              this.newContracts.push(r.feed[feedKeys[i]].split(" bundled")[0])
+            }
+          }
+          if (i == feedKeys.length - 1) {
+            this.lastFeed = parseInt(key)
+          }
+        }
+        this.newContracts = [... new Set(this.newContracts)]
+      })
     },
     getState() {
       fetch('/upload-stats').then(res => res.json()).then(state => {
@@ -57,8 +78,10 @@ createApp({
   mounted() {
     this.getState()
     this.getContracts()
+    this.getFeed()
     setInterval(() => {
       this.getState()
+      this.getFeed(this.lastFeed)
     }, 60000)
   },
   unmounted() {
