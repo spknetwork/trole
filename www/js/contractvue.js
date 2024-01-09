@@ -2,8 +2,6 @@ import Pop from "/js/pop.js";
 import ExtensionVue from "/js/extensionvue.js";
 import FilesVue from "/js/filesvue.js";
 
-/*  */
-
 export default {
     components: {
         "pop-vue": Pop,
@@ -133,16 +131,16 @@ export default {
                                         </a>
                                         <!-- message -->
                                         <div v-if="contract.c == 1">
-                                            <span class="d-md-none">Upload</span>
-                                            <span class="d-none d-md-flex">Ready for upload</span>
+                                            <span class="d-lg-none">Upload</span>
+                                            <span class="d-none d-lg-flex">Ready for upload</span>
                                         </div>
                                         <div v-if="contract.c == 2">
-                                            <span class="d-md-none">Post</span>
-                                            <span class="d-none d-md-flex">Post {{split(contract.s, ',', 1)/100}}% to @{{split(contract.s, ',', 0)}}</span>
+                                            <span class="d-lg-none">Post</span>
+                                            <span class="d-none d-lg-flex">Post {{split(contract.s, ',', 1)/100}}% to @{{split(contract.s, ',', 0)}}</span>
                                         </div>
                                         <div v-if="contract.c == 3">
-                                            <span class="d-md-none">Extend</span>
-                                            <span class="d-none d-md-flex align-items-center">Extend<span class="mx-2">—</span>{{contract.nt}} / {{contract.p}} <i class="fa-solid fa-tower-broadcast ms-1 fa-fw"></i></span>
+                                            <span class="d-lg-none">Extend</span>
+                                            <span class="d-none d-lg-flex align-items-center">Extend<span class="mx-2">—</span>{{contract.nt}} / {{contract.p}} <i class="fa-solid fa-tower-broadcast ms-1 fa-fw"></i></span>
                                         </div>
                                     </div>
                                 </td>
@@ -196,48 +194,58 @@ export default {
 
                             <tr class="collapse" :id="replace(contract.i)">
                                 <td class="border-0" colspan="4">
-                                    <ul class="text-start">
-                                        <li>Contract ID: {{contract.i}}
-                                        </li>
-                                        <li>Size
-                                            Allowed:
-                                            {{contract.a}} bytes</li>
-                                        <li v-if="contract.c == 2">Size:
-                                            {{contract.u}} bytes
-                                        </li>
-                                        <li>File Owner: @{{contract.t}}
-                                        </li>
-                                        <li>Service Provider:
-                                            @{{contract.b}}
-                                        </li>
-                                        <li>Sponsor: @{{contract.f}}</li>
-                                        <li>Expiration:
-                                            {{exp_to_time(contract.e)}}
-                                        </li>
-                                        <li>Price: {{contract.r}} Broca
-                                        </li>
-                                        <li>Redundancy: {{contract.p}}
-                                        </li>
-                                        <li v-if="contract.s">Terms:
-                                            {{slotDecode(contract.s,
-                                            1)}}%
-                                            Beneficiary to
-                                            @{{slotDecode(contract.s,
-                                            0)}}</li>
-                                        <li>Status: {{contract.c == 1 ?
-                                            'Waiting For Upload' :
-                                            'Uploaded'}}
-                                        </li>
-                                        <li v-if="contract.df">Files:<p v-for="file in contract.df">
-                                                {{file}}
-                                            </p>
-                                        </li>
-                                        <li v-if="contract.n">Stored by:
-                                            <p v-for="acc in contract.n">
-                                                @{{acc}}
-                                            </p>
-                                        </li>
-                                    </ul>
+                                    <div class="d-flex flex-wrap justify-content-between border border-white rounded text-start">
+                                        <div class="m-1">
+                                            Contract ID: {{contract.i}}
+                                        </div>
+                                        <div class="m-1">
+                                            Size Allowed: {{contract.a}} bytes
+                                        </div>
+                                        <div v-if="contract.c == 2" class="m-1">
+                                            Size: {{contract.u}} bytes
+                                        </div>
+                                        <div class="m-1">
+                                            File Owner:  <a :href="'/@' + contract.t" class="no-decoration text-primary">@{{contract.t}}</a>
+                                        </div>
+                                        <div class="m-1">
+                                            Service Provider: <a :href="'/@' + contract.b" class="no-decoration text-primary">@{{contract.b}}</a>
+                                        </div>
+                                        <div class="m-1">
+                                            Sponsor: <a :href="'/@' + contract.f" class="no-decoration text-primary">@{{contract.f}}</a>
+                                        </div>
+                                        <div class="m-1">
+                                            Expiration: {{exp_to_time(contract.e)}}
+                                        </div>
+                                        <div class="m-1">
+                                            Price: {{formatNumber(contract.r,'3','.',',')}} Broca
+                                        </div>
+                                        <div class="m-1">
+                                            Redundancy: {{contract.p}}
+                                        </div>
+                                        <div v-if="contract.s" class="m-1">
+                                            Terms: {{slotDecode(contract.s, 1)}}%
+                                            Beneficiary to @{{slotDecode(contract.s, 0)}}
+                                        </div>
+                                        <div class="m-1">
+                                            Status: {{contract.c == 1 ? 'Waiting For Upload' : 'Uploaded'}}
+                                        </div>
+                                        <div v-if="contract.df" class="m-1 text-center">
+                                            <u>Files</u>
+                                            <ol class="text-start">
+                                            <li class="mb-0" v-for="(size, cid, index) in contract.df">
+                                            <a :href="'https://ipfs.dlux.io/ipfs/' + cid" target="_blank" class="no-decoration text-break text-primary">{{cid}}</a><span class="small ms-1">({{size > 1 ? size/1000000 : size/1000000}} MB)</span>
+                                            </li>
+                                            </ol>
+                                        </div>
+                                        <div v-if="contract.n" class="m-1 ms-auto text-center">
+                                            <u>Stored by</u>
+                                            <ol class="text-start">
+                                            <li v-for="acc in contract.n">
+                                               <a :href="'/@' + acc" class="no-decoration text-primary">@{{acc}}</a>
+                                            </li>
+                                            </ol>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -405,7 +413,7 @@ export default {
         exp_to_time(exp = '0:0') {
             return this.when([parseInt(exp.split(':')[0])])
         },
-        replace(string, char = ':') {
+        replace(string = "", char = ':') {
         return string.replaceAll(char, '_')
         },
         split(string, del, index) {

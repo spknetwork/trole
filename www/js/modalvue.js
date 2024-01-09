@@ -1023,10 +1023,10 @@ export default {
   mounted() {
     var options = this.$props;
     if(!this.$slots["trigger"]){
-      console.log({options})
-    }
-    else {
-      var trigger = this.$slots["trigger"][0].elm;
+      console.log(options)
+    } else {
+      //sellect the trigger class
+      var trigger = this.$el.getElementsByClassName("trigger")[0];
       var target = this.$el.children[options.type];
       document.getElementById("app").appendChild(target);
       trigger.addEventListener("click", () => {
