@@ -6,6 +6,9 @@ export default {
     return {
       spkprefix: "spkcc",
       valid: false,
+      d: {
+
+      },
     };
   },
   template: `
@@ -30,12 +33,12 @@ export default {
                 </div> 
                 <div class="mb-3"> 
                   <label class="small" for="sendhiveto">Increase Decentralization</label>
-                  <input class="form-check-input" type="checkbox" role="switch" v-model="up"> 
+                  <input class="form-check-input" type="checkbox" role="switch" v-model="d.up"> 
                 </div> 
                 <label class="small mb-1 d-flex" for="sendAmount">Amount
                   <span class="ms-auto">Balance: <a class="text-info" role="button" @click="amount = balance">{{formatNumber(balance, 0, '', ',')}}</a> {{token}}</span></label>
                 <div class="position-relative">
-                  <input class="pe-5 form-control text-white bg-dark border-dark" id="sendAmount" type="number" step="1" :min="contract.r" placeholder="Enter amount" v-model="amount"> 
+                  <input class="pe-5 form-control text-white bg-dark border-dark" id="sendAmount" type="number" step="1" :min="contract.r" placeholder="Enter amount" v-model="d.amount"> 
                   <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                     {{token}}
                   </span>
@@ -71,7 +74,7 @@ export default {
                         <span class="position-absolute top-50 translate-middle-y ps-2">
                           <i class="fa-solid fa-at fa-fw"></i>
                         </span>
-                        <input @blur="accountCheck" class="ps-4 form-control text-white bg-dark border-dark" type="text" placeholder="Payment recipient" v-model="to">
+                        <input @blur="accountCheck" class="ps-4 form-control text-white bg-dark border-dark" type="text" placeholder="Payment recipient" v-model="d.to">
                       </div>
                       <label class="small mb-1 d-flex" for="sendAmount">Amount 
                         <span class="ms-auto">
@@ -79,19 +82,19 @@ export default {
                         </span>
                       </label>
                       <div class="position-relative mb-3">
-                        <input class="pe-5 form-control text-white bg-dark border-dark" id="sendAmount" type="number" step="0.001" min="0.001" placeholder="Enter amount" v-model="amount">
+                        <input class="pe-5 form-control text-white bg-dark border-dark" id="sendAmount" type="number" step="0.001" min="0.001" placeholder="Enter amount" v-model="d.amount">
                         <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                           {{token}}
                         </span>
                       </div>
                       <label class="small mb-1" for="sendhivememo">Memo</label>
                       <div class="input-group">
-                        <input class="form-control text-white bg-dark border-dark" type="text" placeholder="Include a memo (optional)" v-model="memo">
+                        <input class="form-control text-white bg-dark border-dark" type="text" placeholder="Include a memo (optional)" v-model="d.memo">
                       </div>
                   </div>
                   <div class="modal-footer"> 
                     <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Mirror Network Only" v-if="token == 'SPK' || token == 'LARYNX'">
-                      <input id="sendmirror" type="checkbox" v-model="test" class="me-2">
+                      <input id="sendmirror" type="checkbox" v-model="d.test" class="me-2">
                       <label for="sendmirror">Mirror Network Only</label>
                     </div>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> 
@@ -124,7 +127,7 @@ export default {
                     <span class="position-absolute top-50 translate-middle-y ps-2">
                       <i class="fa-solid fa-at fa-fw"></i>
                     </span> 
-                    <select class="ps-4 form-select text-white bg-dark border-dark" id="datalistOptions" v-model="to">
+                    <select class="ps-4 form-select text-white bg-dark border-dark" id="datalistOptions" v-model="d.to">
                       <option value="" disabled selected>Select node operator</option>
                       <option v-for="node in smarkets" :value="node.self">{{node.lastGood >= stats.head_block - 1200 ? '🟩': node.lastGood > stats.head_block - 28800  ? '🟨' : '🟥'}} {{node.self}}</option>
                     </select> 
@@ -133,7 +136,7 @@ export default {
                     <span class="position-absolute top-50 translate-middle-y ps-2">
                       <i class="fa-solid fa-at fa-fw"></i>
                     </span>  
-                    <input @blur="accountCheck" class="ps-4 form-control bg-dark border-dark text-white" type="text" placeholder="Recipient" v-model="to"> 
+                    <input @blur="accountCheck" class="ps-4 form-control bg-dark border-dark text-white" type="text" placeholder="Recipient" v-model="d.to"> 
                   </div>
                   <label for="delAmount" class="small mb-1 d-flex">Amount
                     <span class="ms-auto">
@@ -141,7 +144,7 @@ export default {
                     </span>
                   </label>
                   <div class="position-relative">
-                    <input class="pe-5 form-control bg-dark border-dark text-white" type="number" step="0.001" id="delAmount" min="0.001" placeholder="Enter amount" v-model="amount"> 
+                    <input class="pe-5 form-control bg-dark border-dark text-white" type="number" step="0.001" id="delAmount" min="0.001" placeholder="Enter amount" v-model="d.amount"> 
                     <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                       {{token}}
                     </span> 
@@ -149,7 +152,7 @@ export default {
                 </div>
                 <div class="modal-footer">
                   <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Mirror Network Only" v-if="token == 'SPK' || token == 'LARYNX'">
-                    <input id="delegatemirror" type="checkbox" v-model="test" class="me-2">
+                    <input id="delegatemirror" type="checkbox" v-model="d.test" class="me-2">
                     <label for="delegatemirror">Mirror Network Only</label>
                   </div>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> 
@@ -175,7 +178,7 @@ export default {
                         <div class="modal-body">
                         <label for="poweramount" class="small mb-1 d-flex">Amount<span class="ms-auto">Balance: <a role="button" class="text-info" @click="amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}</span></label>
                         <div class="position-relative">
-                          <input class="pe-5 form-control text-white border-dark bg-dark" type="number" step="0.001" :min="min" :max="formatNumber((balance)/1000, 3, '.', ',')" placeholder="1.000" v-model="amount"> 
+                          <input class="pe-5 form-control text-white border-dark bg-dark" type="number" step="0.001" :min="min" :max="formatNumber((balance)/1000, 3, '.', ',')" placeholder="1.000" v-model="d.amount"> 
                           <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                             {{token}}
                           </span>
@@ -183,7 +186,7 @@ export default {
                         </div>
                         <div class="modal-footer">
                           <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Mirror Network Only" v-if="token == 'LARYNX'">
-                            <input id="pwrupmirror" type="checkbox" v-model="test" class="me-2">
+                            <input id="pwrupmirror" type="checkbox" v-model="d.test" class="me-2">
                             <label for="pwrupmirror">Mirror Network Only</label>
                           </div>
                           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -196,19 +199,19 @@ export default {
                           <div class="modal-body text-start">
                             <label for="api" class="small mb-1">Location (ex: https://ipfs.dlux.io)</label>
                             <div class="input-group mb-3" id="api"> 
-                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="api"> 
+                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="d.api"> 
                             </div>
                             <label for="peerid" class="small mb-1">Unique ID</label>
                             <div class="input-group mb-3" id="peerid"> 
-                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="id"> 
+                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="d.id"> 
                             </div>
                             <label for="peerid" class="small mb-1">Service Type</label>
                             <div class="input-group" id="type"> 
-                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="to"> 
+                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="d.to"> 
                             </div>
                             <label for="json" class="small mb-1">Memo</label>
                             <div class="input-group mb-3" id="json"> 
-                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="memo"> 
+                              <input class="form-control text-white border-dark bg-dark" type="text" v-model="d.memo"> 
                             </div>
                           </div>
                           <div class="modal-footer">
@@ -222,11 +225,11 @@ export default {
                         <div class="modal-body text-start">
                           <label for="type" class="small mb-1">Short Name for Service (ex: IPFS)</label>
                           <div class="input-group mb-3" id="api"> 
-                            <input class="form-control text-white border-dark bg-dark" type="text" v-model="api"> 
+                            <input class="form-control text-white border-dark bg-dark" type="text" v-model="d.api"> 
                           </div>
                           <label for="peerid" class="small mb-1">Full Name for Service (ex: InterPlanetary File System)</label>
                           <div class="input-group" id="peerid"> 
-                            <input class="form-control text-white border-dark bg-dark" type="text" v-model="id"> 
+                            <input class="form-control text-white border-dark bg-dark" type="text" v-model="d.id"> 
                           </div>
                         </div>
                         <div class="modal-footer">
@@ -289,7 +292,7 @@ export default {
                       <label for="broca" class="small mb-1 d-flex">Amount
                       <span class="ms-auto">Balance: <a role="button" class="text-info" @click="amount = balance / 1000">{{formatNumber((balance)/1000, 0, '', ',')}}</a> {{token}}</span></label>
                       <div class="position-relative mb-1">
-                        <input id="broca" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="1" :min="1" :max="balance" placeholder="1" v-model="amount"> 
+                        <input id="broca" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="1" :min="1" :max="balance" placeholder="1" v-model="d.amount"> 
                         <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                           {{token}}
                         </span>  
@@ -300,14 +303,14 @@ export default {
                         <span class="position-absolute top-50 translate-middle-y ps-2">
                           <i class="fa-solid fa-at fa-fw"></i>
                         </span>  
-                        <input class="ps-4 form-control text-white border-dark bg-dark" type="text" v-model="to"> 
+                        <input class="ps-4 form-control text-white border-dark bg-dark" type="text" v-model="d.to"> 
                       </div>
                       <label for="broker" class="small mb-1">IPFS Service Provider</label>
                       <div class="position-relative mb-3" id="broker">
                         <span class="position-absolute top-50 translate-middle-y ps-2">
                           <i class="fa-solid fa-at fa-fw"></i>
                         </span> 
-                        <select class="ps-4 form-select text-white bg-dark border-dark" id="sponsoredContracts" v-model="broker">
+                        <select class="ps-4 form-select text-white bg-dark border-dark" id="sponsoredContracts" v-model="d.broker">
                           <option value="" disabled selected>Select provider</option>
                           <option v-for="(account, key) in ipfsproviders" :value="key">{{key}}</option>
                         </select>
@@ -317,11 +320,11 @@ export default {
                         <span class="position-absolute top-50 translate-middle-y ps-2">
                           <i class="fa-solid fa-at fa-fw"></i>
                         </span>   
-                        <input class="ps-4 form-control text-white border-dark bg-dark" type="text" v-model="ben_to"> 
+                        <input class="ps-4 form-control text-white border-dark bg-dark" type="text" v-model="d.ben_to"> 
                       </div>
                       <label for="ben" class="small mb-1">Requested Benificary Amount</label>
                       <div class="position-relative">
-                      <input id="ben" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="0.01" :min="0" :max="100" v-model="ben_amount"> 
+                      <input id="ben" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="0.01" :min="0" :max="100" v-model="d.ben_amount"> 
                         <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                           <i class="fa-solid fa-percent fa-fw"></i>
                         </span>
@@ -372,12 +375,12 @@ export default {
     },
     valVote(){
       var op 
-      if(this.difVote)op = {
+      if(this.d.difVote)op = {
         type: "cja",
         cj: {
-          votes: this.voteString,
+          votes: this.d.voteString,
         },
-        id: `${this.spkprefix}_val_vote`,
+        id: `${this.d.spkprefix}_val_vote`,
         msg: `Voting for Validators...`,
         ops: ["getSapi"],
         api: "https://spkinstant.hivehoneycomb.com",
@@ -389,7 +392,7 @@ export default {
     },
     accountCheck() {
       fetch("https://anyx.io", {
-        body: `{\"jsonrpc\":\"2.0\", \"method\":\"condenser_api.get_accounts\", \"params\":[[\"${this.to}\"]], \"id\":1}`,
+        body: `{\"jsonrpc\":\"2.0\", \"method\":\"condenser_api.get_accounts\", \"params\":[[\"${this.d.to}\"]], \"id\":1}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
@@ -399,20 +402,20 @@ export default {
           return r.json();
         })
         .then((re) => {
-          if (re.result.length) this.valid = true;
-          else this.valid = false;
+          if (re.result.length) this.d.valid = true;
+          else this.d.valid = false;
         });
     },
     isVal(node){
       return typeof node.val_code == 'string' ? true : false
     },
     add(node){
-      if (this.valWorkable.indexOf(node) == -1)this.valWorkable.push(node)
+      if (this.d.valWorkable.indexOf(node) == -1)this.d.valWorkable.push(node)
     },
     sub(node){
-      for(var i = 0; i < this.valWorkable.length; i++){
-        if(this.valWorkable[i].self == node.self){
-          this.valWorkable.splice(i, 1)
+      for(var i = 0; i < this.d.valWorkable.length; i++){
+        if(this.d.valWorkable[i].self == node.self){
+          this.d.valWorkable.splice(i, 1)
         }
       }
     },
@@ -422,17 +425,17 @@ export default {
       evt.dataTransfer.setData('itemID', index)
     },
     move(evt, node, index){
-      this.valWorkable.splice(index, 0, this.valWorkable.splice(evt.dataTransfer.getData('itemID'), 1)[0])
+      this.d.valWorkable.splice(index, 0, this.d.valWorkable.splice(evt.dataTransfer.getData('itemID'), 1)[0])
     },
     buildWorkVotes(){
-      const arr = this.valvotes.split('')
+      const arr = this.d.valvotes.split('')
       for(var i = 0; i < arr.length; i++){
-        this.workVotes.push(`${arr[i]}${arr[i+1]}`)
+        this.d.workVotes.push(`${arr[i]}${arr[i+1]}`)
         i++
       }
     },
     packageWorkVotes(){
-      this.valvotes = this.workVotes.join('')
+      this.d.valvotes = this.d.workVotes.join('')
     },
     formatNumber(t, n, r, e) {
       if (typeof t != "number") t = parseFloat(t);
@@ -451,28 +454,28 @@ export default {
     },
     confirm() {
       var op
-      if (this.func == "powercancel") {
-        if (this.token == "LARYNX")
+      if (this.d.func == "powercancel") {
+        if (this.d.token == "LARYNX")
           op = {
             type: "cja",
             cj: {
               amount: 0,
             },
-            id: `${this.spkprefix}_${this.test ? 'T' : ''}power_down`,
+            id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_down`,
             msg: `Canceling Power Down...`,
             ops: ["getSapi"],
             api: "https://spkinstant.hivehoneycomb.com",
             txid: "cancel power down",
           };
-      } else if (this.func == "powercancel") {
-        if (this.token == "LARYNX")
+      } else if (this.d.func == "powercancel") {
+        if (this.d.token == "LARYNX")
           op = {
             type: "cja",
             cj: {
-              to: this.account,
+              to: this.d.account,
               amount: 0,
             },
-            id: `${this.spkprefix}_${this.test ? 'T' : ''}power_grant`,
+            id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_grant`,
             msg: `Canceling Power Down...`,
             ops: ["getSapi"],
             api: "https://spkinstant.hivehoneycomb.com",
@@ -485,15 +488,15 @@ export default {
     },
     build() {
       var op;
-        if (this.ben_amount){
+        if (this.d.ben_amount){
 
         }
         op = {
           type: "cja",
           cj: {
-            broca: this.amount,
-            broker: this.broker,
-            to: this.to,
+            broca: this.d.amount,
+            broker: this.d.broker,
+            to: this.d.to,
             contract: "0",
           },
           id: `spkcc_channel_open`,
@@ -502,9 +505,9 @@ export default {
           api: "https://spktest.dlux.io",
           txid: "build_contract",
         };
-        if (this.ben_amount > 0 && this.ben_to){
+        if (this.d.ben_amount > 0 && this.d.ben_to){
           op.cj.contract = "1"
-          op.cj.slots = `${this.ben_to},${parseInt(this.ben_amount * 100)}`
+          op.cj.slots = `${this.d.ben_to},${parseInt(this.d.ben_amount * 100)}`
         }
       if (op) {
         this.$emit("modalsign", op);
@@ -512,70 +515,70 @@ export default {
     },
     send() {
       var op;
-      if (this.token == "DLUX")
+      if (this.d.token == "DLUX")
         op = {
           type: "cja",
           cj: {
-            to: this.to,
-            amount: parseInt(this.amount * 1000),
-            memo: this.memo,
+            to: this.d.to,
+            amount: parseInt(this.d.amount * 1000),
+            memo: this.d.memo,
           },
-          id: `${this.token.toLowerCase()}_send`,
-          msg: `Trying to send ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_send`,
+          msg: `Trying to send ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
         };
-      else if (this.token == "SPK")
+      else if (this.d.token == "SPK")
         op = {
           type: "cja",
           cj: {
-            to: this.to,
-            amount: parseInt(this.amount * 1000),
-            memo: this.memo,
+            to: this.d.to,
+            amount: parseInt(this.d.amount * 1000),
+            memo: this.d.memo,
           },
-          id: `${this.spkprefix}_${this.test ? 'T' : ''}spk_send`,
-          msg: `Trying to send ${this.token}...`,
+          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}spk_send`,
+          msg: `Trying to send ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "send",
         };
-      else if (this.token == "LARYNX")
+      else if (this.d.token == "LARYNX")
         op = {
           type: "cja",
           cj: {
-            to: this.to,
-            amount: parseInt(this.amount * 1000),
-            memo: this.memo,
+            to: this.d.to,
+            amount: parseInt(this.d.amount * 1000),
+            memo: this.d.memo,
           },
-          id: `${this.spkprefix}_${this.test ? 'T' : ''}send`,
-          msg: `Trying to send ${this.token}...`,
+          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}send`,
+          msg: `Trying to send ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "send",
         };
-      else if (this.token == "HIVE")
+      else if (this.d.token == "HIVE")
         op = {
           type: "xfr",
           cj: {
-            to: this.to,
-            hive: this.amount * 1000,
-            memo: this.memo,
+            to: this.d.to,
+            hive: this.d.amount * 1000,
+            memo: this.d.memo,
           },
           txid: "sendhive",
-          msg: `Trying to send ${this.token}...`,
+          msg: `Trying to send ${this.d.token}...`,
           ops: ["getHiveUser"],
         };
-      else if (this.token == "HBD")
+      else if (this.d.token == "HBD")
         op = {
           type: "xfr",
           cj: {
-            to: this.to,
-            hbd: this.amount * 1000,
-            memo: this.memo,
+            to: this.d.to,
+            hbd: this.d.amount * 1000,
+            memo: this.d.memo,
           },
           txid: "sendhbd",
-          msg: `Trying to send ${this.token}...`,
+          msg: `Trying to send ${this.d.token}...`,
           ops: ["getHiveUser"],
         };
       if (op) {
@@ -597,71 +600,33 @@ export default {
           api: "https://token.dlux.io",
           txid: "delegate",
         };
-      // else if (this.token == "SPK")
-      //   op = {
-      //     type: "cja",
-      //     cj: {
-      //       to: this.to,
-      //       amount: parseInt(this.amount * 1000),
-      //       memo: this.memo,
-      //     },
-      //     id: `${this.spkprefix}_spk_send`,
-      //     msg: `Trying to send ${this.token}...`,
-      //     ops: ["getSapi"],
-      //     api: "https://spkinstant.hivehoneycomb.com",
-      //     txid: "delegate",
-      //   };
-      else if (this.token == "LARYNX")
+      else if (this.d.token == "LARYNX")
         op = {
           type: "cja",
           cj: {
-            to: this.to,
-            amount: parseInt(this.amount * 1000),
+            to: this.d.to,
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.spkprefix}_${this.test ? 'T' : ''}power_grant`,
-          msg: `Trying to delegate ${this.token}...`,
+          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_grant`,
+          msg: `Trying to delegate ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "delegate",
         };
-      // else if (this.token == "HIVE")
-      //   op = {
-      //     type: "xfr",
-      //     cj: {
-      //       to: this.to,
-      //       hive: this.amount * 1000,
-      //       memo: this.memo,
-      //     },
-      //     txid: "delegate",
-      //     msg: `Trying to send ${this.token}...`,
-      //     ops: ["getHiveUser"],
-      //   };
-      // else if (this.token == "HBD")
-      //   op = {
-      //     type: "xfr",
-      //     cj: {
-      //       to: this.to,
-      //       hbd: this.amount * 1000,
-      //       memo: this.memo,
-      //     },
-      //     txid: "delegate",
-      //     msg: `Trying to send ${this.token}...`,
-      //     ops: ["getHiveUser"],
-      //   };
       if (op) {
         this.$emit("modalsign", op);
       }
     },
     elect(){
       var op
-      if (this.token == "SPK" && this.func == "Election")
+      if (this.d.token == "SPK" && this.d.func == "Election")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000), //TODO
+            amount: parseInt(this.d.amount * 1000), //TODO
           },
-          id: `${this.token.toLowerCase()}_val_vote`,
-          msg: `Trying to unlock ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_val_vote`,
+          msg: `Trying to unlock ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
@@ -672,14 +637,14 @@ export default {
     },
     vote(){
       var op
-      if (this.token == "SPK" && this.func == "Election")
+      if (this.d.token == "SPK" && this.d.func == "Election")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000), //TODO
+            amount: parseInt(this.d.amount * 1000), //TODO
           },
-          id: `${this.token.toLowerCase()}_val_vote`,
-          msg: `Trying to unlock ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_val_vote`,
+          msg: `Trying to unlock ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
@@ -690,17 +655,17 @@ export default {
     },
     extend(){
       var op
-      if (this.token == "BROCA")
+      if (this.d.token == "BROCA")
         op = {
           type: "cja",
           cj: {
-            broca: this.amount,
-            id: this.contract.i,
-            file_owner: this.contract.t,
-            power: this.up ? 1 : 0,
+            broca: this.d.amount,
+            id: this.d.contract.i,
+            file_owner: this.d.contract.t,
+            power: this.d.up ? 1 : 0,
           },
           id: `spkcc_extend`,
-          msg: `Trying to unlock ${this.token}...`,
+          msg: `Trying to unlock ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
@@ -711,51 +676,51 @@ export default {
     },
     power() {
       var op;
-      if (this.token == "DLUX" && this.func == "Power Up")
+      if (this.d.token == "DLUX" && this.d.func == "Power Up")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.token.toLowerCase()}_power_up`,
-          msg: `Trying to power up ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_power_up`,
+          msg: `Trying to power up ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
         };
-      else if (this.token == "DLUX" && this.func == "Power Down")
+      else if (this.d.token == "DLUX" && this.d.func == "Power Down")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.token.toLowerCase()}_power_down`,
-          msg: `Trying to power down ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_power_down`,
+          msg: `Trying to power down ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
         };
-      else if (this.token == "LARYNX" && this.func == "Power Down")
+      else if (this.d.token == "LARYNX" && this.d.func == "Power Down")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `spkcc_${this.test ? 'T' : ''}power_down`,
-          msg: `Trying to power down ${this.token}...`,
+          id: `spkcc_${this.d.test ? 'T' : ''}power_down`,
+          msg: `Trying to power down ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "send",
         };
-      else if (this.token == "LARYNX" && this.func == "Register a Service")
+      else if (this.d.token == "LARYNX" && this.d.func == "Register a Service")
         op = {
           type: "cja",
           cj: {
             amount: 2000,
-            type: this.to,
-            memo: this.memo,
-            id: this.id,
-            api: this.api,
+            type: this.d.to,
+            memo: this.d.memo,
+            id: this.d.id,
+            api: this.d.api,
           },
           id: `spkcc_register_service`,
           msg: `Trying to register a service...`,
@@ -763,13 +728,13 @@ export default {
           api: "https://spktest.dlux.io",
           txid: "register_service",
         }
-        else if (this.token == "LARYNX" && this.func == "Register a Service Type")
+        else if (this.d.token == "LARYNX" && this.d.func == "Register a Service Type")
         op = {
           type: "cja",
           cj: {
             amount: 200000,
-            type: this.api,
-            Long_Name: this.id,
+            type: this.d.api,
+            Long_Name: this.d.id,
           },
           id: `spkcc_register_service_type`,
           msg: `Trying to register a service...`,
@@ -777,11 +742,11 @@ export default {
           api: "https://spktest.dlux.io",
           txid: "register_service_type",
         }
-        else if (this.token == "LARYNX" && this.func == "Register a Validator")
+        else if (this.d.token == "LARYNX" && this.d.func == "Register a Validator")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
           id: `spkcc_validator_burn`,
           msg: `Trying to build validator brand...`,
@@ -789,102 +754,78 @@ export default {
           api: "https://spktest.dlux.io",
           txid: "validator_burn",
         }
-        else if (this.token == "DLUX" && this.func == "Unlock")
+        else if (this.d.token == "DLUX" && this.d.func == "Unlock")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.token.toLowerCase()}_gov_down`,
-          msg: `Trying to unlock ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_gov_down`,
+          msg: `Trying to unlock ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
         };
-      else if (this.token == "DLUX" && this.func == "Lock")
+      else if (this.d.token == "DLUX" && this.d.func == "Lock")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.token.toLowerCase()}_gov_down`,
-          msg: `Trying to lock ${this.token}...`,
+          id: `${this.d.token.toLowerCase()}_gov_down`,
+          msg: `Trying to lock ${this.d.token}...`,
           ops: ["getTokenUser"],
           api: "https://token.dlux.io",
           txid: "send",
         };
-      else if (this.token == "SPK" && this.func == "Power Up")
+      else if (this.d.token == "SPK" && this.d.func == "Power Up")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000)
+            amount: parseInt(this.d.amount * 1000)
           },
           id: `spkcc_spk_up`,
-          msg: `Trying to power up ${this.token}...`,
+          msg: `Trying to power up ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spktest.dlux.io",
           txid: "spk_power",
         };
-      else if (this.token == "LARYNX" && this.func == "Power Up")
+      else if (this.d.token == "LARYNX" && this.d.func == "Power Up")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.spkprefix}_${this.test ? 'T' : ''}power_up`,
-          msg: `Trying to power up ${this.token}...`,
+          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_up`,
+          msg: `Trying to power up ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "send",
         };
-      else if (this.token == "LARYNX" && this.func == "Unlock")
+      else if (this.d.token == "LARYNX" && this.d.func == "Unlock")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.spkprefix}_${this.test ? 'T' : ''}gov_down`,
-          msg: `Trying to unlock ${this.token}...`,
+          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}gov_down`,
+          msg: `Trying to unlock ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "send",
         };
-      else if (this.token == "LARYNX" && this.func == "Lock Liquidity")
+      else if (this.d.token == "LARYNX" && this.d.func == "Lock Liquidity")
         op = {
           type: "cja",
           cj: {
-            amount: parseInt(this.amount * 1000),
+            amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.spkprefix}_${this.test ? 'T' : ''}gov_up`,
-          msg: `Trying to lock ${this.token}...`,
+          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}gov_up`,
+          msg: `Trying to lock ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
           txid: "send",
         };
-      // else if (this.token == "HIVE")
-      //   op = {
-      //     type: "xfr",
-      //     cj: {
-      //       to: this.to,
-      //       hive: this.amount * 1000,
-      //       memo: this.memo,
-      //     },
-      //     txid: "sendhive",
-      //     msg: `Trying to send ${this.token}...`,
-      //     ops: ["getHiveUser"],
-      //   };
-      // else if (this.token == "HBD")
-      //   op = {
-      //     type: "xfr",
-      //     cj: {
-      //       to: this.to,
-      //       hbd: this.amount * 1000,
-      //       memo: this.memo,
-      //     },
-      //     txid: "sendhbd",
-      //     msg: `Trying to send ${this.token}...`,
-      //     ops: ["getHiveUser"],
-      //   };
       if (op) {
         this.$emit("modalsign", op);
       }
@@ -1011,19 +952,23 @@ export default {
   computed:{
     difVote: {
       get() {
-        return typeof this.current == 'string' ? this.current.split(',')[0] : '' == this.voteString ? false : true
+        return typeof this.d.current == 'string' ? this.d.current.split(',')[0] : '' == this.d.voteString ? false : true
       }
     },
     voteString: {
       get() {
-        return this.valWorkable.length > 0 ? this.valWorkable.map(v => v.val_code).join('') : ''
+        return this.d.valWorkable.length > 0 ? this.d.valWorkable.map(v => v.val_code).join('') : ''
       }
     }
   },
   mounted() {
     var options = this.$props;
+    const props = Object.keys(options);
+    for (var i = 0; i < props.length; i++) {
+      this.d[props[i]] = options[props[i]];
+    }
     if(!this.$slots["trigger"]){
-      console.log(options)
+      //console.log(options)
     } else {
       //sellect the trigger class
       var trigger = this.$el.getElementsByClassName("trigger")[0];

@@ -7,6 +7,32 @@ export default {
     template: `
     <div>
       <div>
+        <div class="flex-column m-1">
+            <div class="btn-group">
+                <button type="button" v-if="saccountapi.pubKey != 'NA'"
+                    class="btn btn-dark ms-0 me-0 ps-0 pe-0" disabled></button>
+                <button v-if="saccountapi.pubKey != 'NA'" type="button"
+                    class="btn btn-info">
+                    <modal-vue type="build" token="BROCA"
+                        :balance="broca_calc(saccountapi.broca)" :account="account"
+                        @modalsign="sendIt($event)" :ipfsproviders="ipfsProviders" v-slot:trigger>
+                        <span class="p-2 trigger"><i
+                                class="fa-solid fa-file-contract fa-fw me-2"></i>Contract</span>
+                    </modal-vue>
+                </button>
+                <button type="button" class="btn btn-dark ms-0 me-0 ps-0 pe-0"
+                    disabled></button>
+                <button v-if="saccountapi.pubKey == 'NA'" type="button"
+                    class="btn btn-info" @click="updatePubkey">
+                    <i class="fas fa-plus fa-fw me-2"></i>Register Account
+                </button>
+                <button v-if="saccountapi.pubKey != 'NA'" type="button"
+                    class="btn btn-info" @click="petitionForContract">
+                    <i
+                        class="fa-solid fa-wand-magic-sparkles fa-fw me-2"></i>{{petitionStatus ? petitionStatus : "Ask for Contract"}}
+                </button>
+            </div>
+        </div>
         <div v-show="!numChannels" class="p-3">
             <p class="m-0">You have no available SPK Network
                 contracts for file hosting. <span v-if="saccountapi.pubKey == 'NA'">After your account is registered, create a
@@ -37,28 +63,28 @@ export default {
                                 <div class="table-responsive">
                                     <table class="table text-white align-middle mb-0">
                                         <tbody>
-                                            <tr>
+                                            <tr v-for="channel in sponsor">
                                                 <th class="border-0"
-                                                    v-for="channel in sponsor"
+                                                    
                                                     v-if="channel.c == 1">
                                                     {{channel.a/1000000}}
                                                     MB</th>
                                                 <td class="border-0"
-                                                    v-for="channel in sponsor"
+                                                    
                                                     v-if="channel.c == 1">
                                                     {{exp_to_time(channel.e)}}
                                                 </td>
                                                 <td class="border-0" scope="row"
-                                                    v-for="channel in sponsor"
+                                                    
                                                     v-if="channel.c == 1 && channel.s">
                                                     @{{slotDecode(channel.s, 0)}}
                                                     ({{slotDecode(channel.s, 1)}}%)</td>
                                                 <td class="border-0" scope="row"
-                                                    v-for="channel in sponsor"
+                                                    
                                                     v-if="channel.c == 1 && !channel.s">
                                                 </td>
                                                 <td class="border-0 text-end"
-                                                    v-for="channel in sponsor"
+                                                    
                                                     v-if="channel.c == 1">
 
                                                     <button type="button"
@@ -91,10 +117,9 @@ export default {
 
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <tr v-for="channel in sponsor">
                                                 <td class="collapse border-0"
                                                     colspan="4" :id="replace(channel.i)"
-                                                    v-for="channel in sponsor"
                                                     v-if="channel.c == 1">
                                                     <ul class="text-start">
                                                         <li>Contract ID: {{channel.i}}
@@ -1003,6 +1028,12 @@ export default {
             default: true,
             required: false
         },
+        node: {
+            type: String,
+            default: "dlux-io",
+            required: true
+        
+        },
         sapi: {
             type: String,
             default: 'https://spktest.dlux.io',
@@ -1039,6 +1070,7 @@ export default {
                 api: "",
             },
             larynxbehind: 999,
+            petitionStatus: 'Ask for Contract',
             saccountapi: {
                 granting: {
                     t: 0
@@ -1047,7 +1079,19 @@ export default {
                     t: 0
                 },
                 powerDowns: {},
-                channels: [],
+                channels: {
+                    na: [{
+                        a: 0,
+                        b: "na",
+                        c: 0,
+                        e:"0:0",
+                        f: "na",
+                        i: "::",
+                        p: 0,
+                        r: 0,
+                        t: "na"
+                    }]
+                },
             },
             spkStats: {
 
@@ -1190,6 +1234,24 @@ export default {
                     this.validators = validators
                 });
         },
+        petitionForContract(provider = this.node) {
+            this.petitionStatus = 'Preparing'
+            // fetch(`https://spktest.dlux.io/user_services/${provider}`)
+            // .then(r=>r.json())
+            // .then(json =>{
+            //   console.log(json)
+            // })
+            fetch(`/upload-contract?user=${this.account}`)
+              .then(r => r.json())
+              .then(json => {
+                this.petitionStatus = 'Sending'
+                console.log(json)
+                setTimeout(() => {
+                  this.getSapi()
+                  this.petitionStatus = 'Recieved'
+                }, 7000)
+              })
+          },
         getIPFSproviders() {
             fetch(this.sapi + "/services/IPFS")
               .then((response) => response.json())
@@ -1214,6 +1276,18 @@ export default {
             if (total > (this.saccountapi.spk_power * 1000)) total = (this.saccountapi.spk_power * 1000)
             return total
         },
+        replace(string, char = ':') {
+            return string.replaceAll(char, '_')
+        },
+        selectContract(id, broker) {  //needs PeerID of broker
+            this.contract.id = id
+            fetch(`${this.sapi}/user_services/${broker}`)
+              .then(r => r.json())
+              .then(res => {
+                console.log(res)
+                this.contract.api = res.services.IPFS[Object.keys(res.services.IPFS)[0]].a
+              })
+        },
         precision(num, precision) {
             return parseFloat(num / Math.pow(10, precision)).toFixed(precision);
         },
@@ -1234,6 +1308,9 @@ export default {
                 for (var c = /(\d+)(\d{3})/; c.test(i);)
                     i = i.replace(c, "$1" + e + "$2");
             return (u ? "-" : "") + i + o;
+        },
+        exp_to_time(exp = '0:0') {
+            return this.when([parseInt(exp.split(':')[0])])
         },
         when(ip = {}, num = false) {
             const arr = Object.keys(ip)

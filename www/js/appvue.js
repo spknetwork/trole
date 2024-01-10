@@ -36,21 +36,21 @@ createApp({
       console.log(msg);
     },
     getFeed(since = 0) {
-      fetch(`${this.spkapi}/feed/${since}`).then(res => res.json()).then(r => {
+      console.log({ since })
+      fetch(`${this.spkapi}/feed`).then(res => res.json()).then(r => {
         var feedKeys = Object.keys(r.feed)
         for (let i = 0; i < feedKeys.length; i++) {
           const key = feedKeys[i].split(":")[0]
-          if (this.feed[key] > since) {
+          if (key > since) {
             this.feed[feedKeys[i]] = r.feed[feedKeys[i]]
             if(r.feed[feedKeys[i]].indexOf(" bundled") > -1){
-              this.newContracts.push(r.feed[feedKeys[i]].split(" bundled")[0])
+              this.getNewContract(r.feed[feedKeys[i]].split(" bundled")[0])
             }
           }
           if (i == feedKeys.length - 1) {
             this.lastFeed = parseInt(key)
           }
         }
-        this.newContracts = [... new Set(this.newContracts)]
       })
     },
     getState() {
@@ -73,6 +73,17 @@ createApp({
       console.log(`${this.spkapi}/api/fileContract/${contract.i}`)
       fetch(`${this.spkapi}/api/fileContract/${contract.i}`).then(res => res.json()).then(r => {
         if(i > -1)this.contracts.splice(i, 1, r.result)
+      })
+    },
+    getNewContract(contract, i = -1) {
+      console.log('Feed Contract',`${this.spkapi}/api/fileContract/${contract}`)
+      fetch(`${this.spkapi}/api/fileContract/${contract}`).then(res => res.json()).then(r => {
+        if(i > -1)this.newContracts.splice(i, 1, r.result)
+        else {
+          this.newContracts.push(r.result)
+          this.newContracts = [...new Set(this.newContracts)]
+        }
+
       })
     },
     get_dynamic_global_properties(key){
