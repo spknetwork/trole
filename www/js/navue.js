@@ -1092,7 +1092,7 @@ export default {
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black mt-2" aria-labelledby="userDropdown" >
               <li class=""><a class="dropdown-item" :href="'https://3speak.tv/'" >3Speak</a></li>
 			        <li class=""><a class="dropdown-item" :href="'https://vue.dlux.io/@' + user + '#files/'" @click="showTab('blog')">DLUX</a></li>
-              <li class=""><a class="dropdown-item" :href="'https://d.buzz/" @click="showTab('blog')">DBUZZ</a></li>
+              <li class=""><a class="dropdown-item" :href="'https://d.buzz/'" @click="showTab('blog')">DBUZZ</a></li>
 			        <li class=""><a class="dropdown-item" :href="'https://hive.blog'" >Hive.Blog</a></li>
 			        <li class=""><a class="dropdown-item" :href="'https://ecency.com'" >Ecency</a></li>
               <li class=""><a class="dropdown-item" :href="'https://peakd.com'" >PeakD</a></li>
