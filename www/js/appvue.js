@@ -1,7 +1,7 @@
 import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
 import Navue from "/js/navue.js";
 import ContractVue from "/js/contractvue.js";
-import SpkVue from "/js/spk-wallet-comp.js";
+import SpkVue from "/js/spk-wallet.js";
 import UploadVue from "/js/uploadvue.js";
 import FileVue from "/js/filesvue.js";
 
