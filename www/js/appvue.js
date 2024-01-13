@@ -1,9 +1,9 @@
 import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
 import Navue from "/js/navue.js";
-import ContractVue from "https://vue.dlux.io/js/contractvue.js";
-import SpkVue from "https://vue.dlux.io//js/spk-wallet-comp.js";
-import UploadVue from "https://vue.dlux.io/js/uploadvue.js";
-import FileVue from "https://vue.dlux.io/js/filevue.js";
+import ContractVue from "/js/contractvue.js";
+import SpkVue from "/js/spk-wallet-comp.js";
+import UploadVue from "/js/uploadvue.js";
+import FileVue from "/js/filevue.js";
 
 createApp({
   directives: {

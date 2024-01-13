@@ -5,264 +5,6 @@ export default {
         "modal-vue": ModalVue
     },
     template: `
-    <div>
-      <div>
-        <div class="flex-column m-1">
-            <div class="btn-group">
-                <button type="button" v-if="saccountapi.pubKey != 'NA'"
-                    class="btn btn-dark ms-0 me-0 ps-0 pe-0" disabled></button>
-                <button v-if="saccountapi.pubKey != 'NA'" type="button"
-                    class="btn btn-info">
-                    <modal-vue type="build" token="BROCA"
-                        :balance="broca_calc(saccountapi.broca)" :account="account"
-                        @modalsign="sendIt($event)" :ipfsproviders="ipfsProviders" v-slot:trigger>
-                        <span class="p-2 trigger"><i
-                                class="fa-solid fa-file-contract fa-fw me-2"></i>Contract</span>
-                    </modal-vue>
-                </button>
-                <button type="button" class="btn btn-dark ms-0 me-0 ps-0 pe-0"
-                    disabled></button>
-                <button v-if="saccountapi.pubKey == 'NA'" type="button"
-                    class="btn btn-info" @click="updatePubkey">
-                    <i class="fas fa-plus fa-fw me-2"></i>Register Account
-                </button>
-                <button v-if="saccountapi.pubKey != 'NA'" type="button"
-                    class="btn btn-info" @click="petitionForContract">
-                    <i
-                        class="fa-solid fa-wand-magic-sparkles fa-fw me-2"></i>{{petitionStatus ? petitionStatus : "Ask for Contract"}}
-                </button>
-            </div>
-        </div>
-        <div v-show="!numChannels" class="p-3">
-            <p class="m-0">You have no available SPK Network
-                contracts for file hosting. <span v-if="saccountapi.pubKey == 'NA'">After your account is registered, create a
-                hosting contract to
-                upload files.</span><span v-if="saccountapi.pubKey != 'NA'">Create a hosting contract to upload files.</span></p>
-        </div>
-        
-        <div v-show="numChannels" class="">
-            <table
-                class="table table-dark table-striped table-hover text-center align-middle mb-0">
-                <thead>
-                    <tr>
-
-                        <th scope="col"><i
-                                class="fa-solid fa-database fa-fw me-2"></i>Storage</th>
-                        <th scope="col"><i
-                                class="fa-solid fa-clock fa-fw me-2"></i>Expiration</th>
-                        <th scope="col"><i
-                                class="fa-solid fa-hand-holding-dollar fa-fw me-2"></i>Benificiary
-                        </th>
-                        <th scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    
-                        <tr v-for="(sponsor, key, index) in saccountapi.channels">
-                            <td colspan="4" class="p-0">
-                                <div class="table-responsive">
-                                    <table class="table text-white align-middle mb-0">
-                                        <tbody>
-                                            <tr v-for="channel in sponsor">
-                                                <th class="border-0"
-                                                    
-                                                    v-if="channel.c == 1">
-                                                    {{channel.a/1000000}}
-                                                    MB</th>
-                                                <td class="border-0"
-                                                    
-                                                    v-if="channel.c == 1">
-                                                    {{exp_to_time(channel.e)}}
-                                                </td>
-                                                <td class="border-0" scope="row"
-                                                    
-                                                    v-if="channel.c == 1 && channel.s">
-                                                    @{{slotDecode(channel.s, 0)}}
-                                                    ({{slotDecode(channel.s, 1)}}%)</td>
-                                                <td class="border-0" scope="row"
-                                                    
-                                                    v-if="channel.c == 1 && !channel.s">
-                                                </td>
-                                                <td class="border-0 text-end"
-                                                    
-                                                    v-if="channel.c == 1">
-
-                                                    <button type="button"
-                                                        class="btn btn-outline-success m-1"
-                                                        v-bind:class="{'invisible': contract.id}"
-                                                        @click="selectContract(channel.i, channel.b)"><i
-                                                            class="fa-solid fa-file-import fa-fw"></i></button>
-
-                                                    <button type="button"
-                                                        class="btn btn-success m-1"
-                                                        v-bind:class="{'d-none': !contract.id || contract.id != channel.i}"
-                                                        @click="contract.id = ''; contract.api = ''"><i
-                                                            class="fa-solid fa-file-import fa-fw"></i></button>
-
-
-
-                                                    <a class="collapsed"
-                                                        data-bs-toggle="collapse"
-                                                        :href="'#' + replace(channel.i)">
-                                                        <span
-                                                            class="if-collapsed"><button
-                                                                class="btn btn-outline-primary"><i
-                                                                    class="fa-solid fa-magnifying-glass fa-fw"></i></button></span>
-                                                        <span
-                                                            class="if-not-collapsed"><button
-                                                                class="btn btn-primary"><i
-                                                                    class="fa-solid fa-magnifying-glass fa-fw"></i></button></span>
-                                                    </a>
-
-
-                                                </td>
-                                            </tr>
-                                            <tr v-for="channel in sponsor">
-                                                <td class="collapse border-0"
-                                                    colspan="4" :id="replace(channel.i)"
-                                                    v-if="channel.c == 1">
-                                                    <ul class="text-start">
-                                                        <li>Contract ID: {{channel.i}}
-                                                        </li>
-                                                        <li v-if="channel.c == 1">Size
-                                                            Allowed:
-                                                            {{channel.a}} bytes</li>
-                                                        <li v-if="channel.c == 2">Size:
-                                                            {{channel.u}} bytes
-                                                        </li>
-                                                        <li>File Owner: @{{channel.t}}
-                                                        </li>
-                                                        <li>Service Provider:
-                                                            @{{channel.b}}
-                                                        </li>
-                                                        <li>Sponsor: @{{channel.f}}</li>
-                                                        <li>Expiration:
-                                                            {{exp_to_time(channel.e)}}
-                                                        </li>
-                                                        <li>Price: {{channel.r}} Broca
-                                                        </li>
-                                                        <li>Redundancy: {{channel.p}}
-                                                        </li>
-                                                        <li v-if="channel.s">Terms:
-                                                            {{slotDecode(channel.s,
-                                                            1)}}%
-                                                            Bennificiary to
-                                                            @{{slotDecode(channel.s,
-                                                            0)}}</li>
-                                                        <li>Status: {{channel.c == 1 ?
-                                                            'Waiting For Upload' :
-                                                            'Uploaded'}}
-                                                        </li>
-                                                        <li v-if="channel.df">Files:<p
-                                                                v-for="file in channel.df">
-                                                                {{file}}
-                                                            </p>
-                                                        </li>
-                                                        <li v-if="channel.n">Stored by:
-                                                            <p v-for="acc in channel.n">
-                                                                @{{acc}}
-                                                            </p>
-                                                        </li>
-                                                    </ul>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </td>
-
-
-
-                        </tr>
-                    
-
-                </tbody>
-            </table>
-
-
-            
-            
-                <div v-if="contract.id" style="background: #16191C;">
-                    <div class="p-2">
-                        <form onsubmit="return false;">
-                            <div
-                                class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 mx-2">Upload Files</h5>
-                                <div class="flex-column ms-auto me-auto">
-                                    <input type="file" @change="uploadFile" multiple class="form-control bg-darkg border-secondary text-white-50" />
-                                </div>
-                                <button type="button"
-                                    class="btn-lg btn-close btn-close-white ms-2"
-                                    @click="contract.id = ''; contract.api = ''"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="p-5 my-4 mx-3 text-center" id="img-well"
-                                @drop="dragFile($event)" @dragenter.prevent
-                                @dragover.prevent>
-                                Or drag the file(s) here
-                            </div>
-                        </form>
-                    </div>
-                    <div id="listOfImgs" v-for="(file, index) in File">
-                        <div class="p-3 mb-3 bg-dark" style="border-radius: 10px;">
-                            <div class="d-flex align-items-center flex-row pb-2 mb-2">
-                                <h6 class="m-0">{{file.name}}</h6>
-                                <div class="flex-grow-1 mx-5">
-                                    <div class="progress" role="progressbar"
-                                        aria-label="Upload progress" aria-valuenow="25"
-                                        aria-valuemin="0" aria-valuemax="100">
-                                        <div class="progress-bar"
-                                            :style="'width: ' + file.progress + '%'">
-                                            {{file.progress}}%
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex-shrink" v-if="File.length">
-                                    <button type="button" class="me-2 btn btn-secondary"
-                                        v-if="file.actions.pause"
-                                        @click="fileRequest[index].resumeFileUpload()">Pause</button>
-                                    <button type="button" class="me-2 btn btn-secondary"
-                                        v-if="file.actions.resume"
-                                        @click="fileRequest[index].resumeFileUpload()">Resume</button>
-                                    <button type="button" class="me-2 btn btn-secondary"
-                                        v-if="file.actions.cancel"
-                                        @click="fileRequest[index].resumeFileUpload()">Cancel</button>
-                                </div>
-                                <div class="ms-auto">
-                                    <button class="btn btn-danger"
-                                        @click="deleteImg(index, file.name)"
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="Delete Asset"><i
-                                            class="fas fa-fw fa-trash-alt"></i></button>
-                                </div>
-                            </div>
-                            <div class="d-flex w-100">
-                                <ul class="text-start w-100">
-                                    <li class="">Bytes: {{file.size}}</li>
-                                    <li class="">CID:
-                                        {{FileInfo[file.name].hash}}</li>
-                                    <li class="">Status:
-                                        {{FileInfo[file.name].status}}
-                                    </li>
-                                    <li class=""><a
-                                            :href="'https://ipfs.dlux.io/ipfs/' + FileInfo[file.name].hash"
-                                            target="_blank">{{FileInfo[file.name].hash}}<i
-                                                class="fa-solid fa-up-right-from-square fa-fw ms-1"></i></a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-if="File.length" class="text-center">
-                        <button type="button" class="btn btn-info mb-2"
-                            @click="signNUpload()"><i
-                                class="fa-solid fa-file-signature fa-fw me-2"></i>Sign
-                            and
-                            Upload</button>
-                    </div>
-                </div>
-            
-      </div>
     <div class="container">
         <div class="mt-3">
             <div class="alert alert-danger text-start" role="alert">
@@ -1009,13 +751,6 @@ export default {
             </div>
         </div>
     </div>
-        <div class="text-center">
-            <button class="btn btn-info my-2" type="button"
-                data-bs-toggle="collapse" data-bs-target="#spkwallet"><i
-                    class="fa-solid fa-angles-up fa-fw me-2"></i>Hide Wallet</button>
-        </div>
-    </div>
-    </div>
    `,
     props: {
         account: {
@@ -1268,6 +1003,17 @@ export default {
                 result = result * 64 + glyphs.indexOf(chars[e]);
             }
             return result;
+        },
+        slotDecode(slot, index) {
+            var item = slot.split(',')
+            switch (index) {
+              case 1:
+                return parseFloat(item[1] / 100).toFixed(2)
+                break;
+              default:
+                return item[0]
+                break;
+            } index
         },
         broca_calc(last = '0,0') {
             const last_calc = this.Base64toNumber(last.split(',')[1])
