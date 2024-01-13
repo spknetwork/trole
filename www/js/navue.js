@@ -1091,7 +1091,7 @@ export default {
           </a>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black mt-2" aria-labelledby="userDropdown" >
           <li class=""><a class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#spkWalletModal"><i class="fa-solid fa-wallet fa-fw me-2"></i>Wallet</a></li>
-			        <li class=""><a class="dropdown-item" :href="'https://vue.dlux.io/@' + user + '#files/'" @click="showTab('blog')">
+			        <li class=""><a class="dropdown-item" :href="'https://vue.dlux.io/@' + user + '#files/'" target="_blank">
               <i class="fa-solid fa-cloud me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .7em;"><i class="small fa-solid fa-up-right-from-square"></i><span class="visually-hidden">dlux.io</span></span></i>Files</a></li>
               
               <li class=""><hr class="dropdown-divider"></li>
