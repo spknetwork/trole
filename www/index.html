@@ -25,324 +25,87 @@
             <nav-vue @login="account = $event" @logout="account = ''" @ack="removeOp($event)" :op="toSign" />
         </div>
         <main role="main" class="flex-shrink-0" v-cloak>
-            <div>
-                <div>
+            <div class="container">
+                <div class="mb-3">
                     <h2>@{{ stats.node }}</h2>
+                    <h4 class="fw-light">NODE DASHBOARD</h4>
                 </div>
-                <!--
-                <div v-show="!numChannels" class="p-3">
-                    <p class="m-0">You have no available SPK Network
-                        contracts for file hosting. <span v-if="saccountapi.pubKey == 'NA'">After your account is registered, create a
-                        hosting contract to
-                        upload files.</span><span v-if="saccountapi.pubKey != 'NA'">Create a hosting contract to upload files.</span></p>
-                </div>
-                
-                <div v-show="numChannels" class="">
-                    <table
-                        class="table table-dark table-striped table-hover text-center align-middle mb-0">
-                        <thead>
-                            <tr>
-
-                                <th scope="col"><i
-                                        class="fa-solid fa-database fa-fw me-2"></i>Storage</th>
-                                <th scope="col"><i
-                                        class="fa-solid fa-clock fa-fw me-2"></i>Expiration</th>
-                                <th scope="col"><i
-                                        class="fa-solid fa-hand-holding-dollar fa-fw me-2"></i>Benificiary
-                                </th>
-                                <th scope="col"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <Transition>
-                                <tr v-for="(sponsor, key, index) in saccountapi.channels">
-                                    <td colspan="4" class="p-0">
-                                        <div class="table-responsive">
-                                            <table class="table text-white align-middle mb-0">
-                                                <tbody>
-                                                    <tr>
-                                                        <th class="border-0"
-                                                            v-for="channel in sponsor"
-                                                            v-if="channel.c == 1">
-                                                            {{channel.a/1000000}}
-                                                            MB</th>
-                                                        <td class="border-0"
-                                                            v-for="channel in sponsor"
-                                                            v-if="channel.c == 1">
-                                                            {{exp_to_time(channel.e)}}
-                                                        </td>
-                                                        <td class="border-0" scope="row"
-                                                            v-for="channel in sponsor"
-                                                            v-if="channel.c == 1 && channel.s">
-                                                            @{{slotDecode(channel.s, 0)}}
-                                                            ({{slotDecode(channel.s, 1)}}%)</td>
-                                                        <td class="border-0" scope="row"
-                                                            v-for="channel in sponsor"
-                                                            v-if="channel.c == 1 && !channel.s">
-                                                        </td>
-                                                        <td class="border-0 text-end"
-                                                            v-for="channel in sponsor"
-                                                            v-if="channel.c == 1">
-
-                                                            <button type="button"
-                                                                class="btn btn-outline-success m-1"
-                                                                v-bind:class="{'invisible': contract.id}"
-                                                                @click="selectContract(channel.i, channel.b)"><i
-                                                                    class="fa-solid fa-file-import fa-fw"></i></button>
-
-                                                            <button type="button"
-                                                                class="btn btn-success m-1"
-                                                                v-bind:class="{'d-none': !contract.id || contract.id != channel.i}"
-                                                                @click="contract.id = ''; contract.api = ''"><i
-                                                                    class="fa-solid fa-file-import fa-fw"></i></button>
-
-
-
-                                                            <a class="collapsed"
-                                                                data-bs-toggle="collapse"
-                                                                :href="'#' + replace(channel.i)">
-                                                                <span
-                                                                    class="if-collapsed"><button
-                                                                        class="btn btn-outline-primary"><i
-                                                                            class="fa-solid fa-magnifying-glass fa-fw"></i></button></span>
-                                                                <span
-                                                                    class="if-not-collapsed"><button
-                                                                        class="btn btn-primary"><i
-                                                                            class="fa-solid fa-magnifying-glass fa-fw"></i></button></span>
-                                                            </a>
-
-
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="collapse border-0"
-                                                            colspan="4" :id="replace(channel.i)"
-                                                            v-for="channel in sponsor"
-                                                            v-if="channel.c == 1">
-                                                            <ul class="text-start">
-                                                                <li>Contract ID: {{channel.i}}
-                                                                </li>
-                                                                <li v-if="channel.c == 1">Size
-                                                                    Allowed:
-                                                                    {{channel.a}} bytes</li>
-                                                                <li v-if="channel.c == 2">Size:
-                                                                    {{channel.u}} bytes
-                                                                </li>
-                                                                <li>File Owner: @{{channel.t}}
-                                                                </li>
-                                                                <li>Service Provider:
-                                                                    @{{channel.b}}
-                                                                </li>
-                                                                <li>Sponsor: @{{channel.f}}</li>
-                                                                <li>Expiration:
-                                                                    {{exp_to_time(channel.e)}}
-                                                                </li>
-                                                                <li>Price: {{channel.r}} Broca
-                                                                </li>
-                                                                <li>Redundancy: {{channel.p}}
-                                                                </li>
-                                                                <li v-if="channel.s">Terms:
-                                                                    {{slotDecode(channel.s,
-                                                                    1)}}%
-                                                                    Bennificiary to
-                                                                    @{{slotDecode(channel.s,
-                                                                    0)}}</li>
-                                                                <li>Status: {{channel.c == 1 ?
-                                                                    'Waiting For Upload' :
-                                                                    'Uploaded'}}
-                                                                </li>
-                                                                <li v-if="channel.df">Files:<p
-                                                                        v-for="file in channel.df">
-                                                                        {{file}}
-                                                                    </p>
-                                                                </li>
-                                                                <li v-if="channel.n">Stored by:
-                                                                    <p v-for="acc in channel.n">
-                                                                        @{{acc}}
-                                                                    </p>
-                                                                </li>
-                                                            </ul>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
-
-
-
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" role="tab" data-bs-toggle="tab" aria-expanded="true"
+                            aria-current="page" href="#newTab">New Contracts</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" role="tab" data-bs-toggle="tab" href="#storageTab">Storage</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" role="tab" data-bs-toggle="tab" href="#statsTab">Stats</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" role="tab" data-bs-toggle="tab" href="#walletTab">Wallet</a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div role="tabpanel" ref="newTab" class="tab-pane fade show active" id="newTab"
+                        aria-labelledby="newtab">
+                        <div class="card">
+                            <h2 class="mt-2 ms-3 fw-light">New Contracts</h2>
+                            <contract-vue node-view="true" :contracts="newContracts" :account="account"
+                                @tosign="toSign=$event" />
+                        </div>
+                    </div>
+                    <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
+                        aria-labelledby="storagetab">
+                        <div class="card">
+                            <h2 class="mt-2 ms-3 fw-light">Stored Contracts</h2>
+                            <contract-vue node-view="true" :contracts="contracts" :account="account"
+                                @tosign="toSign=$event" />
+                        </div>
+                    </div>
+                    <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab" aria-labelledby="newtab">
+                        <div class="card">
+                            <h2 class="mt-2 ms-3 fw-light">Stats</h2>
+                            <table>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Value</th>
                                 </tr>
-                            </Transition>
-
-                        </tbody>
-                    </table>
-
-
-                    
-                    <Transition>
-                        <div v-if="contract.id" style="background: #16191C;">
-                            <div class="p-2">
-                                <form onsubmit="return false;">
-                                    <div
-                                        class="d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0 mx-2">Upload Files</h5>
-                                        <div class="flex-column ms-auto me-auto">
-                                            <input type="file" @change="uploadFile" multiple class="form-control bg-darkg border-secondary text-white-50" />
-                                        </div>
-                                        <button type="button"
-                                            class="btn-lg btn-close btn-close-white ms-2"
-                                            @click="contract.id = ''; contract.api = ''"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="p-5 my-4 mx-3 text-center" id="img-well"
-                                        @drop="dragFile($event)" @dragenter.prevent
-                                        @dragover.prevent>
-                                        Or drag the file(s) here
-                                    </div>
-                                </form>
-                            </div>
-                            <div id="listOfImgs" v-for="(file, index) in File">
-                                <div class="p-3 mb-3 bg-dark" style="border-radius: 10px;">
-                                    <div class="d-flex align-items-center flex-row pb-2 mb-2">
-                                        <h6 class="m-0">{{file.name}}</h6>
-                                        <div class="flex-grow-1 mx-5">
-                                            <div class="progress" role="progressbar"
-                                                aria-label="Upload progress" aria-valuenow="25"
-                                                aria-valuemin="0" aria-valuemax="100">
-                                                <div class="progress-bar"
-                                                    :style="'width: ' + file.progress + '%'">
-                                                    {{file.progress}}%
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex-shrink" v-if="File.length">
-                                            <button type="button" class="me-2 btn btn-secondary"
-                                                v-if="file.actions.pause"
-                                                @click="fileRequest[index].resumeFileUpload()">Pause</button>
-                                            <button type="button" class="me-2 btn btn-secondary"
-                                                v-if="file.actions.resume"
-                                                @click="fileRequest[index].resumeFileUpload()">Resume</button>
-                                            <button type="button" class="me-2 btn btn-secondary"
-                                                v-if="file.actions.cancel"
-                                                @click="fileRequest[index].resumeFileUpload()">Cancel</button>
-                                        </div>
-                                        <div class="ms-auto">
-                                            <button class="btn btn-danger"
-                                                @click="deleteImg(index, file.name)"
-                                                data-toggle="tooltip" data-placement="top"
-                                                title="Delete Asset"><i
-                                                    class="fas fa-fw fa-trash-alt"></i></button>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex w-100">
-                                        <ul class="text-start w-100">
-                                            <li class="">Bytes: {{file.size}}</li>
-                                            <li class="">CID:
-                                                {{FileInfo[file.name].hash}}</li>
-                                            <li class="">Status:
-                                                {{FileInfo[file.name].status}}
-                                            </li>
-                                            <li class=""><a
-                                                    :href="'https://ipfs.dlux.io/ipfs/' + FileInfo[file.name].hash"
-                                                    target="_blank">{{FileInfo[file.name].hash}}<i
-                                                        class="fa-solid fa-up-right-from-square fa-fw ms-1"></i></a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-if="File.length" class="text-center">
-                                <button type="button" class="btn btn-info mb-2"
-                                    @click="signNUpload()"><i
-                                        class="fa-solid fa-file-signature fa-fw me-2"></i>Sign
-                                    and
-                                    Upload</button>
-                            </div>
+                                <tr>
+                                    <td>Head Block</td>
+                                    <td>{{stats.head_block}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Public Key</td>
+                                    <td>{{stats.pubKey}}</td>
+                                </tr>
+                                <tr>
+                                    <td>IPFS ID</td>
+                                    <td>{{stats.ipfsid}}</td>
+                                </tr>
+                                <tr>
+                                    <td>SPK API</td>
+                                    <td>{{stats.api}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Max Storage</td>
+                                    <td>{{stats.StorageMax}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Current Storage</td>
+                                    <td>{{stats.RepoSize}}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Objects</td>
+                                    <td>{{stats.NumObjects}}</td>
+                                </tr>
+                            </table>
                         </div>
-                    </Transition>
-                -->
-                <div class="container">
-                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
-                                                data-bs-target="#spkWalletModal">
-                                                <span class=""></span><i class="fa-solid fa-wallet"></i>
-                                            </button>
-                    <button class="btn btn-primary" type="button" data-toggle="collapse"
-                        data-target="#collapseContracts" aria-expanded="false" aria-controls="collapseExample"
-                        @click="showContracts = !showContracts">
-                        Display Contracts
-                    </button>
-                    <div v-if="showContracts">
-                        <h3>Stored Contracts</h3>
-                        <contract-vue node-view="true" :contracts="contracts" :account="account"
-                            @tosign="toSign=$event" />
                     </div>
-                    <button class="btn btn-primary" type="button" @click="showNewContracts = !showNewContracts">
-                        Show New Contracts
-                    </button>
-                    <div v-if="showNewContracts">
-                        <h3>New Contracts</h3>
-                        <contract-vue node-view="true" :contracts="newContracts" :account="account"
-                            @tosign="toSign=$event" />
-                    </div>
-                </div>
-                <div class="container">
-                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseData"
-                        aria-expanded="false" aria-controls="collapseExample" @click="showDetails = !showDetails">
-                        Storage Stats
-                    </button>
-                    <div v-if="showDetails">
-                        <table>
-                            <tr>
-                                <th>Name</th>
-                                <th>Value</th>
-                            </tr>
-                            <tr>
-                                <td>Head Block</td>
-                                <td>{{stats.head_block}}</td>
-                            </tr>
-                            <tr>
-                                <td>Public Key</td>
-                                <td>{{stats.pubKey}}</td>
-                            </tr>
-                            <tr>
-                                <td>IPFS ID</td>
-                                <td>{{stats.ipfsid}}</td>
-                            </tr>
-                            <tr>
-                                <td>SPK API</td>
-                                <td>{{stats.api}}</td>
-                            </tr>
-                            <tr>
-                                <td>Max Storage</td>
-                                <td>{{stats.StorageMax}}</td>
-                            </tr>
-                            <tr>
-                                <td>Current Storage</td>
-                                <td>{{stats.RepoSize}}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Objects</td>
-                                <td>{{stats.NumObjects}}</td>
-                            </tr>
-                        </table>
-
-                    </div>
-                </div>
-            </div>
-            <!-- SPK Wallet Modal -->
-            <div class="modal fade" id="spkWalletModal" tabindex="-1" aria-labelledby="spkWalletModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="spkWalletModalLabel">SPK Testnet Wallet</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)" :me="me" />
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    <div role="tabpanel" ref="walletTab" class="tab-pane fade" id="walletTab" aria-labelledby="newtab">
+                        <div class="card">
+                            <h2 class="mt-2 ms-3 fw-light">SPK Wallet</h2>
+                            <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)"
+                                :me="me" />
                         </div>
                     </div>
                 </div>
