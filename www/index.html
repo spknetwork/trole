@@ -65,6 +65,14 @@
                     <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab" aria-labelledby="newtab">
                         <div class="card">
                             <h2 class="mt-2 ms-3 fw-light">Stats</h2>
+                            <div class="progress" role="progressbar"
+                                aria-label="Upload progress" aria-valuenow="25"
+                                aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar"
+                                    :style="'width: ' + ((stats.RepoSize / stats.StorageMax) * 100) + '%'">
+                                    {{(stats.RepoSize / stats.StorageMax) * 100}}% of {{stats.StorageMax}}
+                                </div>
+                            </div>
                             <table>
                                 <tr>
                                     <th>Name</th>
