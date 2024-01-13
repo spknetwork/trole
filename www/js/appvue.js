@@ -1,8 +1,9 @@
 import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
 import Navue from "/js/navue.js";
 import ContractVue from "https://vue.dlux.io/js/contractvue.js";
-import SpkVue from "https://vue.dlux.io/js/spkvue.js";
+import SpkVue from "https://vue.dlux.io//js/spk-wallet-comp.js";
 import UploadVue from "https://vue.dlux.io/js/uploadvue.js";
+import FileVue from "https://vue.dlux.io/js/filevue.js";
 
 createApp({
   directives: {
@@ -27,7 +28,8 @@ createApp({
     "nav-vue": Navue,
     "contract-vue": ContractVue,
     "spk-vue": SpkVue,
-    "upload-vue": UploadVue
+    "upload-vue": UploadVue,
+    "file-vue": FileVue
   },
   methods: {
     removeOp(txid) {
