@@ -27,7 +27,6 @@
         <main role="main" class="flex-shrink-0" v-cloak>
             <div class="container">
                 <div class="mb-3">
-                    <h2>@{{ stats.node }}</h2>
                     <h4 class="fw-light">NODE DASHBOARD</h4>
                 </div>
                 <ul class="nav nav-tabs mb-3" role="tablist">
@@ -57,14 +56,14 @@
                     <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
                         aria-labelledby="storagetab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">Stored Contracts</h2>
+                            <h2 class="mt-2 ms-3 fw-light">@{{ stats.node }}: Stored Contracts</h2>
                             <contract-vue node-view="true" :contracts="contracts" :account="account"
                                 @tosign="toSign=$event" />
                         </div>
                     </div>
                     <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab" aria-labelledby="newtab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">Stats</h2>
+                            <h2 class="mt-2 ms-3 fw-light">@{{ stats.node }}: Stats</h2>
                             <div class="progress" role="progressbar"
                                 aria-label="Upload progress" aria-valuenow="25"
                                 aria-valuemin="0" aria-valuemax="100">
@@ -111,7 +110,7 @@
                     </div>
                     <div role="tabpanel" ref="walletTab" class="tab-pane fade" id="walletTab" aria-labelledby="newtab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">SPK Wallet</h2>
+                            <h2 class="mt-2 ms-3 fw-light">{{account}}'s SPK Wallet</h2>
                             <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)"
                                 :me="me" />
                         </div>
