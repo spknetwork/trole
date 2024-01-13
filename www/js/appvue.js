@@ -2,6 +2,8 @@ import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
 import Navue from "/js/navue.js";
 import ContractVue from "/js/contractvue.js";
 import SpkVue from "/js/spkvue.js";
+import UploadVue from "/js/uploadvue.js";
+
 createApp({
   directives: {
   },
@@ -25,6 +27,7 @@ createApp({
     "nav-vue": Navue,
     "contract-vue": ContractVue,
     "spk-vue": SpkVue,
+    "upload-vue": UploadVue
   },
   methods: {
     removeOp(txid) {
