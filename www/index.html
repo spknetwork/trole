@@ -27,6 +27,7 @@
         <main role="main" class="flex-shrink-0" v-cloak>
             <div class="container">
                 <div class="mb-3">
+                    <h2>@{{ stats.node }}</h2>
                     <h4 class="fw-light">NODE DASHBOARD</h4>
                 </div>
                 <ul class="nav nav-tabs mb-3" role="tablist">
@@ -39,9 +40,6 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" role="tab" data-bs-toggle="tab" href="#statsTab">Stats</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" role="tab" data-bs-toggle="tab" href="#walletTab">Wallet</a>
                     </li>
                 </ul>
                 <div class="tab-content">
@@ -56,20 +54,21 @@
                     <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
                         aria-labelledby="storagetab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">@{{ stats.node }}: Stored Contracts</h2>
+                            <h2 class="mt-2 ms-3 fw-light">Stored Contracts</h2>
                             <contract-vue node-view="true" :contracts="contracts" :account="account"
                                 @tosign="toSign=$event" />
                         </div>
                     </div>
                     <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab" aria-labelledby="newtab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">@{{ stats.node }}: Stats</h2>
-                            <div class="progress" role="progressbar"
-                                aria-label="Upload progress" aria-valuenow="25"
-                                aria-valuemin="0" aria-valuemax="100">
-                                <div class="progress-bar"
-                                    :style="'width: ' + ((stats.RepoSize / stats.StorageMax) * 100) + '%'">
-                                    {{(stats.RepoSize / stats.StorageMax) * 100}}% of {{stats.StorageMax}}
+                            <h2 class="mt-2 ms-3 fw-light">Stats</h2>
+                            <div class="p-3">
+                                <div class="progress" role="progressbar" aria-label="Upload progress" aria-valuenow="25"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar"
+                                        :style="'width: ' + ((stats.RepoSize / stats.StorageMax) * 100) + '%'">
+                                        {{(stats.RepoSize / stats.StorageMax) * 100}}% of {{stats.StorageMax}}
+                                    </div>
                                 </div>
                             </div>
                             <table>
@@ -108,11 +107,24 @@
                             </table>
                         </div>
                     </div>
-                    <div role="tabpanel" ref="walletTab" class="tab-pane fade" id="walletTab" aria-labelledby="newtab">
-                        <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">{{account}}'s SPK Wallet</h2>
-                            <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)"
-                                :me="me" />
+                </div>
+                <!-- SPK Wallet Modal -->
+                <div class="modal modal-xl fade" id="spkWalletModal" tabindex="-1" aria-labelledby="spkWalletModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="spkWalletModalLabel">SPK Testnet Wallet</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)"
+                                    :me="me" />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>

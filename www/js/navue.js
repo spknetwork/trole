@@ -1090,12 +1090,10 @@ export default {
           <span id="userName" class="mx-1 d-none d-md-flex">{{user}}</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black mt-2" aria-labelledby="userDropdown" >
-              <li class=""><a class="dropdown-item" :href="'https://3speak.tv/'" >3Speak</a></li>
-			        <li class=""><a class="dropdown-item" :href="'https://vue.dlux.io/@' + user + '#files/'" @click="showTab('blog')">DLUX</a></li>
-              <li class=""><a class="dropdown-item" :href="'https://d.buzz/'" @click="showTab('blog')">DBUZZ</a></li>
-			        <li class=""><a class="dropdown-item" :href="'https://hive.blog'" >Hive.Blog</a></li>
-			        <li class=""><a class="dropdown-item" :href="'https://ecency.com'" >Ecency</a></li>
-              <li class=""><a class="dropdown-item" :href="'https://peakd.com'" >PeakD</a></li>
+          <li class=""><a class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#spkWalletModal"><i class="fa-solid fa-wallet fa-fw me-2"></i>Wallet</a></li>
+			        <li class=""><a class="dropdown-item" :href="'https://vue.dlux.io/@' + user + '#files/'" @click="showTab('blog')">
+              <i class="fa-solid fa-cloud me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .7em;"><i class="small fa-solid fa-up-right-from-square"></i><span class="visually-hidden">dlux.io</span></span></i>Files</a></li>
+              
               <li class=""><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" role="button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers"><i class="fas fa-user-friends me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .9em;"><i class="small fa-solid fa-arrows-rotate"></i><span class="visually-hidden">change user</span></span></i>Users</a></li>
 			        <li><a class="dropdown-item" role="button" @click="logout()"><i class="fas fa-power-off fa-fw me-2"></i>Logout</a></li>
