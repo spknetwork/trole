@@ -3,7 +3,7 @@ import Navue from "/js/navue.js";
 import ContractVue from "/js/contractvue.js";
 import SpkVue from "/js/spk-wallet-comp.js";
 import UploadVue from "/js/uploadvue.js";
-import FileVue from "/js/filevue.js";
+import FileVue from "/js/filesvue.js";
 
 createApp({
   directives: {
