@@ -83,6 +83,10 @@ createApp({
     getNewContract(contract, i = -1) {
       console.log('Feed Contract',`${this.spkapi}/api/fileContract/${contract}`)
       fetch(`${this.spkapi}/api/fileContract/${contract}`).then(res => res.json()).then(r => {
+        if(r.result == 'Contract Not Found'){
+          if(i > -1)this.newContracts.splice(i, 1)
+          return
+        }
         if(i > -1)this.newContracts.splice(i, 1, r.result)
         else {
           this.newContracts.push(r.result)
