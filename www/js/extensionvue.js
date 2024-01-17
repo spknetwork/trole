@@ -34,7 +34,7 @@ export default {
             </div>
 
             <!-- node banner -->
-            <div v-if="saccountapi.storage && !nodeView" class="alert alert-secondary d-flex align-items-center py-1 ps-2 pe-1 mx-2 mb-2">
+            <div v-if="saccountapi.storage && !nodeview" class="alert alert-secondary d-flex align-items-center py-1 ps-2 pe-1 mx-2 mb-2">
                 <div class="me-1">{{isStored ? 'Your node is storing this contract' : 'Your node is not storing this contract'}}</div>
                 <div class="ms-auto d-flex flex-wrap align-items-center justify-content-center mb-1">
 
@@ -196,7 +196,7 @@ export default {
                 };
             },
         },
-        nodeView: {
+        nodeview: {
             default: false
         },
     },
@@ -331,14 +331,12 @@ export default {
     },
     watch: {
         'contract'(newValue) {
-            console.log('watch', newValue)
             this.contract.id = this.contract.i.replace(/:/g, "-");
             this.contract.extend = 7
             this.updateCost()
         }
       },
     mounted() {
-        console.log("mount", this.contract)
         this.contract.id = this.contract.i.replace(/:/g, "-");
         this.contract.extend = 7
         this.updateCost()

@@ -46,16 +46,14 @@
                     <div role="tabpanel" ref="newTab" class="tab-pane fade show active" id="newTab"
                         aria-labelledby="newtab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">New Contracts</h2>
-                            <contract-vue node-view="true" :contracts="newContracts" :account="account"
+                            <contract-vue :nodeview="true" :prop_contracts="newContracts" title="New Contracts" :account="account"
                                 @tosign="toSign=$event" />
                         </div>
                     </div>
                     <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
                         aria-labelledby="storagetab">
                         <div class="card">
-                            <h2 class="mt-2 ms-3 fw-light">Stored Contracts</h2>
-                            <contract-vue node-view="true" :contracts="contracts" :account="account"
+                            <contract-vue :nodeview="true" :prop_contracts="contracts" title="Stored Contracts" :account="account"
                                 @tosign="toSign=$event" />
                         </div>
                     </div>

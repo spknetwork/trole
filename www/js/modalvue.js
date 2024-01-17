@@ -7,7 +7,7 @@ export default {
       spkprefix: "spkcc",
       valid: false,
       d: {
-
+        valWorkable: [],
       },
     };
   },
@@ -78,7 +78,7 @@ export default {
                       </div>
                       <label class="small mb-1 d-flex" for="sendAmount">Amount 
                         <span class="ms-auto">
-                          Balance: <a role="button" class="text-info" @click="amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}
+                          Balance: <a role="button" class="text-info" @click="d.amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}
                         </span>
                       </label>
                       <div class="position-relative mb-3">
@@ -98,7 +98,7 @@ export default {
                       <label for="sendmirror">Mirror Network Only</label>
                     </div>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> 
-                  <button :disabled="!valid" type="submit" class="btn btn-primary" @click="send" data-bs-dismiss="modal">Send</button> 
+                  <button :disabled="!d.valid" type="submit" class="btn btn-primary" @click="send" data-bs-dismiss="modal">Send</button> 
                   </div>
               </form>
           </div>
@@ -156,7 +156,7 @@ export default {
                     <label for="delegatemirror">Mirror Network Only</label>
                   </div>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> 
-                  <button :disabled="!to" type="submit" class="btn btn-primary" @click="delegate" data-bs-dismiss="modal">Confirm</button> 
+                  <button :disabled="!d.to" type="submit" class="btn btn-primary" @click="delegate" data-bs-dismiss="modal">Confirm</button> 
                 </div>
               </form>
           </div>
@@ -241,18 +241,18 @@ export default {
                     <!-- Elect Validator -->
                     <div v-if="func == 'Election'">
                       <div class="modal-body">
-                        <h3 class="mb-2">Chosen Validators ({{valWorkable.length}}/30)</h3>
+                        <h3 class="mb-2">Chosen Validators ({{d.valWorkable.length}}/30)</h3>
                         <div class="d-flex mx-5 justify-content-between align-items-center border-bottom border-secondary py-2 mb-3">
                           <button class="btn btn-success invisible" type="button">Save</button>
                           <h5 class="m-0"> Node (Weight)</h5>
                           <button :class="{'invisible': !difVote}" class="btn btn-success" type="button" @click="valVote()">Save</button>
                         </div>
                         <div class="mb-5">
-                          <div v-if="!valWorkable.length">
+                          <div v-if="!d.valWorkable.length">
                             <p>No Validators Added</p>
                           </div>
                           <ul class="mx-5 p-0">
-                            <div v-for="(node, index) in valWorkable">
+                            <div v-for="(node, index) in d.valWorkable">
                               <li @dragstart="pick($event, node, index)" @dragover.prevent @dragenter.prevent @drop="move($event, node, index)" class="border border-secondary rounded d-flex align-items-center justify-content-between p-2 my-2 drop-zone" draggable="true" style="cursor: move;">
                                 <i class="fa-solid fa-grip-lines ms-3"></i>  
                                 <h5 class="m-0">@{{node.self}} ({{formatNumber(((30 - index )/ 30)* 100, 1,  '.', ',')}}%)</h5>
@@ -267,7 +267,7 @@ export default {
                             <li v-if="isVal(node)" class="border border-secondary rounded d-flex align-items-center justify-content-between p-2 my-2">
                               <button class="btn btn-primary invisible" type="button"><i class="fa-solid fa-plus"></i></button>
                               <h5 class="m-0">@{{node.self}}</h5>
-                              <button :disable="valWorkable.length == 30" class="btn btn-primary" @click="add(node)" type="button"><i class="fa-solid fa-plus"></i></button>
+                              <button :disable="d.valWorkable.length == 30" class="btn btn-primary" @click="add(node)" type="button"><i class="fa-solid fa-plus"></i></button>
                             </li>
                           </div>
                         </ul>
@@ -339,6 +339,8 @@ export default {
       </div>
   </div>
 
+  
+
   <!-- Cancel / Remove -->
   <div class="modal fade" id="confirm" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
@@ -375,12 +377,12 @@ export default {
     },
     valVote(){
       var op 
-      if(this.d.difVote)op = {
+      if(this.difVote)op = {
         type: "cja",
         cj: {
-          votes: this.d.voteString,
+          votes: this.voteString,
         },
-        id: `${this.d.spkprefix}_val_vote`,
+        id: `${this.spkprefix}_val_vote`,
         msg: `Voting for Validators...`,
         ops: ["getSapi"],
         api: "https://spkinstant.hivehoneycomb.com",
@@ -952,7 +954,7 @@ export default {
   computed:{
     difVote: {
       get() {
-        return typeof this.d.current == 'string' ? this.d.current.split(',')[0] : '' == this.d.voteString ? false : true
+        return typeof this.current == 'string' ? this.current.split(',')[0] : '' == this.voteString ? false : true
       }
     },
     voteString: {
