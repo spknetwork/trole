@@ -3,6 +3,7 @@ import ExtensionVue from "/js/extensionvue.js";
 import FilesVue from "/js/filesvue.js";
 import UploadVue from "/js/uploadvue.js";
 import ModalVue from "/js/modalvue.js";
+import PostVue from "/js/postvue.js";
 
 export default {
     components: {
@@ -10,7 +11,8 @@ export default {
         "extension-vue": ExtensionVue,
         "files-vue": FilesVue,
         "upload-vue": UploadVue,
-        "modal-vue": ModalVue
+        "modal-vue": ModalVue,
+        "post-vue": PostVue
     },
     template: `
     <div class="card-head p-2">
@@ -21,7 +23,10 @@ export default {
                 <!-- tools 1 -->
                 <div v-if="saccountapi.pubKey != 'NA'" class="d-flex mb-1 flex-wrap ms-auto order-lg-last">
                     <div class="d-flex flex-wrap justify-content-center ms-auto me-auto">
-                        <!-- new contract button -->
+                    <button v-if="title != 'New Contract'" type="button && prop_contracts.length" @click="storeAll(prop_contracts)" class="btn btn-danger mt-1 me-1">
+                            <span class=""></span><i class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>Store All
+                        </button>    
+                    <!-- new contract button -->
                         <button v-if="saccountapi.pubKey != 'NA' && saccountapi.spk_power" type="button"
                             class="btn btn-primary mt-1 me-1">
                             <modal-vue type="build" token="BROCA" :balance="broca_calc(saccountapi.broca)"
@@ -279,7 +284,7 @@ export default {
                                             </tr>
                                             <tr class="collapse" :id="replace(contract.i) + 'beneficiary'">
                                                 <td class=" border-0" colspan="4">
-                                                    <p v-if="account == contract.t">put post compose here</p>
+                                                    <post-vue v-if="account == contract.t" :account="account" prop_contract="contract"/>
                                                     <extension-vue :node-view="nodeview" :contract="contract"
                                                         :sstats="sstats" :account="account" :saccountapi="saccountapi"
                                                         @tosign="toSign=$event"></extension-vue>
@@ -711,6 +716,31 @@ export default {
                 type: "cja",
                 cj: {
                   items: [contract]
+                },
+                id: `spkcc_${!remove ? 'store' : 'remove'}`,
+                msg: `Storing ${contract}...`,
+                ops: ["getTokenUser"],
+                api: "https://spktest.dlux.io",
+                txid: `${contract}_${!remove ? 'store' : 'remove'}`,
+              }
+              this.$emit('tosign', toSign)
+        },
+        storeAll(arr){
+            var contracts = []
+            for(var i=0; i<arr.length; i++){
+                var found = false
+                for(var node in arr[i].n){
+                    if(arr[i].n[node] == this.account){
+                        found=true
+                        break
+                    }
+                }
+                if(!found)contracts.push(arr[i].i)
+            }
+            const toSign = {
+                type: "cja",
+                cj: {
+                  items: contracts
                 },
                 id: `spkcc_${!remove ? 'store' : 'remove'}`,
                 msg: `Storing ${contract}...`,
