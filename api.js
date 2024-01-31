@@ -232,8 +232,8 @@ const DB = {
 
 
 
-function localIpfsUpload(cid, contractID, res) {
-  console.log('ipfsUpload', cid, contractID)
+function localIpfsUpload(cid, contractID) {
+  return new Promise((res, rej) => {
   DB.read(contractID)
     .then(str => {
       var contract = JSON.parse(str)
@@ -248,11 +248,7 @@ function localIpfsUpload(cid, contractID, res) {
             ipfs.pin.add(cid, function (err, pin) {
               if (err) {
                 console.log(err);
-                res
-                  .status(410)
-                  .json({
-                    message: 'Internal Error'
-                  });
+                res({status: 410, message: 'Internal Error'})
               }
               console.log(`pinned ${cid}`)
               // sign and update contract
@@ -277,11 +273,7 @@ function localIpfsUpload(cid, contractID, res) {
                         for (var i = 0; i < contract.files; i++) {
                           fs.rmSync(getFilePath(contract.files[i], contract.id))
                         }
-                        res.status(200)
-                          .json({
-                            contract,
-                            message: 'Success'
-                          });
+                        res({status: 200, message: 'Success'})
                       }
                     })
                 })
@@ -290,12 +282,7 @@ function localIpfsUpload(cid, contractID, res) {
             console.log(`Files larger than contract: ${file[0].hash}`)
             fs.rmSync(getFilePath(cid, contract.id))
             DB.delete(contract.id)
-            res
-              .status(400)
-              .json({
-                contract,
-                message: 'Contract Space Exceeded: Failed'
-              });
+            res({status: 400, message: 'File Size Exceeded'})
           }
         } else {
           console.log(`mismatch between ${cid} and ${file[0].hash}`)
@@ -303,14 +290,11 @@ function localIpfsUpload(cid, contractID, res) {
           fs.createWriteStream(
             getFilePath(cid, contract.id), { flags: 'w' }
           );
-          res
-            .status(400)
-            .json({
-              message: 'File Credential Mismatch'
-            });
+          res({status: 400, message: 'File CID Mismatch'})
         }
       })
     })
+  })
 }
 
 exports.contract = (req, res, next) => {
@@ -468,8 +452,11 @@ exports.upload = (req, res, next) => {
   })
 
   busboy.on('finish', () => {
-    localIpfsUpload(fileId, contract)
-    res.sendStatus(200);
+    localIpfsUpload(fileId, contract).then(r => {
+      console.log('finish')
+      res.status(r.status).json(r.message)
+    })
+    
   });
 
   req.pipe(busboy);
