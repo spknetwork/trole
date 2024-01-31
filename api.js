@@ -277,7 +277,7 @@ function localIpfsUpload(cid, contractID, res) {
                         for (var i = 0; i < contract.files; i++) {
                           fs.rmSync(getFilePath(contract.files[i], contract.id))
                         }
-                        res.sendStatus(200)
+                        res.status(200)
                           .json({
                             contract,
                             message: 'Success'
@@ -291,7 +291,7 @@ function localIpfsUpload(cid, contractID, res) {
             fs.rmSync(getFilePath(cid, contract.id))
             DB.delete(contract.id)
             res
-              .sendStatus(400)
+              .status(400)
               .json({
                 contract,
                 message: 'Contract Space Exceeded: Failed'
