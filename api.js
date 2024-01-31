@@ -291,7 +291,7 @@ function localIpfsUpload(cid, contractID, res) {
             fs.rmSync(getFilePath(cid, contract.id))
             DB.delete(contract.id)
             res
-              .status(400)
+              .sendStatus(400)
               .json({
                 contract,
                 message: 'Contract Space Exceeded: Failed'
