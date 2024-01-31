@@ -5,7 +5,7 @@ const active_key = ENV.ACTIVE || ''
 const domain = ENV.DOMAIN || ''
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
-var registered = true, vcode = ENV.VALIDATOR || false, vreg = true, balance = 0, amount = 0
+var registered = true, vcode = ENV.VALIDATOR || false, vreg = false, balance = 0, amount = 0
 var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
 var key = dhive.PrivateKey.fromString(active_key);
 var price = 2000
