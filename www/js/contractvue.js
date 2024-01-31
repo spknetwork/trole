@@ -742,11 +742,11 @@ export default {
                 cj: {
                   items: contracts
                 },
-                id: `spkcc_${!remove ? 'store' : 'remove'}`,
+                id: `spkcc_store`,
                 msg: `Storing ${contract}...`,
                 ops: ["getTokenUser"],
                 api: "https://spktest.dlux.io",
-                txid: `${contract}_${!remove ? 'store' : 'remove'}`,
+                txid: `${contract}_store`,
               }
               this.$emit('tosign', toSign)
         },
