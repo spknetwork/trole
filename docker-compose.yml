@@ -6,6 +6,7 @@ services:
     environment:
       - IPFS_PATH=/data/ipfs
     network_mode: "host"
+    command: ["ipfs", "daemon", "--enable-gc"]
     volumes:
       - ipfs:/data/ipfs
       - ./ipfs-init.sh:/container-init.d/ipfs-init.sh
@@ -20,7 +21,7 @@ services:
       ipfs:
         condition: service_healthy
     image: disregardfiat/poa:0.0.2
-    restart: on-failure
+    restart: unless-stopped
     command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8000", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001"]
     network_mode: "host"
     container_name: poa
