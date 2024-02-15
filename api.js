@@ -32,6 +32,7 @@ var lock = {}
 function getStats() {
   live_stats.i = (live_stats.i + 1 ) % 10
   console.log('Clean: ' + live_stats.i)
+  inventory()
   fetch(`${config.SPK_API}/feed${live_stats.feed ? '/' + live_stats.feed : ''}`).then(rz => rz.json()).then(json => {
     const feed = json.feed
     const keys = Object.keys(json.feed)
@@ -230,7 +231,31 @@ const DB = {
   }
 }
 
-
+function inventory() {
+  DB.getKeys('contracts').then(keys => {
+    for (var i = 0; i < keys.length; i++) {
+      DB.read(keys[i]).then(contract => {
+        contract = JSON.parse(contract)
+        for (var j = 0; j < contract.files.length; j++) {
+          ipfs.pin.ls(contract.files[j], (err, pinset) => {
+            if (err) {
+              console.log('missing', contract.files[j])
+              ipfs.pin.add(contract.files[j], function (err, pin) {
+                if (err) {
+                  console.log(err);
+                }
+                console.log(`pinned ${contract.files[j]}`)
+              })
+            }
+            // setTimeout(() => { // slow it down, make a queue function
+            //   console.log('inventory', contract.files[j])
+            // })
+          })
+        }
+      })
+    }
+  })
+}
 
 function localIpfsUpload(cid, contractID) {
   return new Promise((res, rej) => {
