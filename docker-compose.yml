@@ -6,7 +6,7 @@ services:
     environment:
       - IPFS_PATH=/data/ipfs
     network_mode: "host"
-    command: ["ipfs", "daemon", "--enable-gc"]
+    command: ["daemon", "--migrate=true", "--agent-version-suffix=docker", "--enable-gc"]
     volumes:
       - ipfs:/data/ipfs
       - ./ipfs-init.sh:/container-init.d/ipfs-init.sh
