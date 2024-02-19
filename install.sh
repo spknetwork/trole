@@ -224,7 +224,7 @@ echo -e "${YELLOW}Ensure ipfs.${DOMAIN} is pointed to this server${NC}"
 if ! command -v ipfs > /dev/null
 then
     echo -e "${YELLOW}Installing IPFS(KUBO)${NC}"
-    wget https://dist.ipfs.tech/kubo/v0.17.0/kubo_v0.17.0_linux-amd64.tar.gz > /dev/null
+    wget https://github.com/ipfs/kubo/releases/download/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
     tar -xvzf kubo_v0.17.0_linux-amd64.tar.gz > /dev/null
     mv kubo ../kubo
     sudo bash ../kubo/install.sh > /dev/null
