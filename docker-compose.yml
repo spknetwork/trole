@@ -5,7 +5,10 @@ services:
     restart: always
     environment:
       - IPFS_PATH=/data/ipfs
-    network_mode: "host"
+    ports:
+      - "4001:4001"
+      - "8080:8080"
+      - "127.0.0.1:5001:5001"
     command: ["daemon", "--migrate=true", "--agent-version-suffix=docker", "--enable-gc"]
     volumes:
       - ipfs:/data/ipfs
@@ -23,7 +26,8 @@ services:
     image: disregardfiat/poa:0.0.2
     restart: unless-stopped
     command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8000", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001"]
-    network_mode: "host"
+    ports:
+      - "8000-8001:8000-8001"
     container_name: poa
   api:
     depends_on:
@@ -36,7 +40,8 @@ services:
       - ENDPOINT=http://127.0.0.1
       - ENDPORT=5001
       - DOCKER=true
-    network_mode: "host"
+    ports:
+      - "5050:5050"
     volumes:
       - ./.env:/.env
     logging:
