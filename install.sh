@@ -225,10 +225,10 @@ if ! command -v ipfs > /dev/null
 then
     echo -e "${YELLOW}Installing IPFS(KUBO)${NC}"
     wget https://github.com/ipfs/kubo/releases/download/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
-    tar -xvzf kubo_v0.17.0_linux-amd64.tar.gz > /dev/null
+    tar -xvzf kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
     mv kubo ../kubo
     sudo bash ../kubo/install.sh > /dev/null
-    rm kubo_v0.17.0_linux-amd64.tar.gz > /dev/null
+    rm kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
     # if ! command -v ipfs > /dev/null
     # then
     #     echo -e "${GREEN} IPFS installed succesfully${NC}"
