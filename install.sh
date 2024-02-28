@@ -402,6 +402,7 @@ then
     echo -e "${GREEN}Trole service exists${NC}"
 else
     echo -e "Installing Trole"
+    mkdir /home/${whoami}/trole/db
     echo -e TROLE_SERVICE="[Unit]\nDescription=trole\n[Service]\nExecStart=/usr/bin/node /home/${whoami}/trole/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $TROLE_SERVICE_FILE
     sudo systemctl daemon-reload 
 fi
