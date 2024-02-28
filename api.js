@@ -26,6 +26,106 @@ ipfs.id().then(r => {
     }
   })
 })
+
+const DB = {
+  getKeys: function (type = 'contracts') {
+    return new Promise((res, rej) => {
+      fs.readdir(`./db/`, (err, files) => {
+        if (err) {
+          console.log('Failed to read:', type)
+          rej(err)
+        } else {
+          switch (type) {
+            case 'contracts':
+              for (var i = 0; i < files.length; i++) {
+                if (files[i].indexOf('.json') < 0) {
+                  files.splice(i, 1)
+                  i--
+                } else {
+                  files[i] = files[i].replace('.json', '')
+                }
+              }
+              break;
+            case 'flags':
+              for (var i = 0; i < files.length; i++) {
+                if (files[i].indexOf('.flag') < 0) {
+                  files.splice(i, 1)
+                  i--
+                }
+              }
+              break;
+            default:
+              break;
+          }
+          res(files)
+        }
+      });
+    })
+  },
+  read: function (key) {
+    return new Promise((res, rej) => {
+      fs.readJSON(`./db/${key}.json`)
+        .then(json => res(json))
+        .catch(e => {
+          res(JSON.stringify({}))
+        })
+    })
+  },
+  write: function (key, value) {
+    if (lock[key]) {
+      return new Promise((res, rej) => {
+        setTimeout(() => {
+          DB.write(key, value).then(json => res(json)).catch(e => rej(e))
+        }, 100)
+      })
+    }
+    return new Promise((res, rej) => {
+      lock[key] = true
+      fs.writeJSON(`./db/${key}.json`, value)
+        .then(json => {
+          delete lock[key]
+          res(json)
+        })
+        .catch(e => {
+          delete lock[key]
+          console.log('Failed to read:', key)
+          rej(e)
+        })
+    })
+  },
+  delete: function (key) {
+    return new Promise((res, rej) => {
+      fs.remove(`./db/${key}.json`)
+        .then(json => {
+          console.log('deleted', key)
+          res(json)
+        })
+        .catch(e => {
+          console.log('Failed to delete:', key)
+          rej(e)
+        })
+    })
+  },
+  update: function (key, att, value) {
+    return new Promise((res, rej) => {
+      fs.readJSON(`./db/${key}.json`)
+        .then(json => {
+          json[att] = value
+          fs.writeJSONSync(`./db/${key}.json`, json)
+            .then(json => res(json))
+            .catch(e => {
+              console.log('Failed to update:', key)
+              rej(e)
+            })
+        })
+        .catch(e => {
+          console.log('Failed to update:', key)
+          rej(e)
+        })
+    })
+  }
+}
+
 getStats()
 var lock = {}
 
@@ -130,105 +230,6 @@ function ipfsUnpin(cid) {
     })
     else res('Not Pinned')
   })
-}
-
-const DB = {
-  getKeys: function (type = 'contracts') {
-    return new Promise((res, rej) => {
-      fs.readdir(`./db/`, (err, files) => {
-        if (err) {
-          console.log('Failed to read:', type)
-          rej(err)
-        } else {
-          switch (type) {
-            case 'contracts':
-              for (var i = 0; i < files.length; i++) {
-                if (files[i].indexOf('.json') < 0) {
-                  files.splice(i, 1)
-                  i--
-                } else {
-                  files[i] = files[i].replace('.json', '')
-                }
-              }
-              break;
-            case 'flags':
-              for (var i = 0; i < files.length; i++) {
-                if (files[i].indexOf('.flag') < 0) {
-                  files.splice(i, 1)
-                  i--
-                }
-              }
-              break;
-            default:
-              break;
-          }
-          res(files)
-        }
-      });
-    })
-  },
-  read: function (key) {
-    return new Promise((res, rej) => {
-      fs.readJSON(`./db/${key}.json`)
-        .then(json => res(json))
-        .catch(e => {
-          res(JSON.stringify({}))
-        })
-    })
-  },
-  write: function (key, value) {
-    if (lock[key]) {
-      return new Promise((res, rej) => {
-        setTimeout(() => {
-          DB.write(key, value).then(json => res(json)).catch(e => rej(e))
-        }, 100)
-      })
-    }
-    return new Promise((res, rej) => {
-      lock[key] = true
-      fs.writeJSON(`./db/${key}.json`, value)
-        .then(json => {
-          delete lock[key]
-          res(json)
-        })
-        .catch(e => {
-          delete lock[key]
-          console.log('Failed to read:', key)
-          rej(e)
-        })
-    })
-  },
-  delete: function (key) {
-    return new Promise((res, rej) => {
-      fs.remove(`./db/${key}.json`)
-        .then(json => {
-          console.log('deleted', key)
-          res(json)
-        })
-        .catch(e => {
-          console.log('Failed to delete:', key)
-          rej(e)
-        })
-    })
-  },
-  update: function (key, att, value) {
-    return new Promise((res, rej) => {
-      fs.readJSON(`./db/${key}.json`)
-        .then(json => {
-          json[att] = value
-          fs.writeJSONSync(`./db/${key}.json`, json)
-            .then(json => res(json))
-            .catch(e => {
-              console.log('Failed to update:', key)
-              rej(e)
-            })
-        })
-        .catch(e => {
-          console.log('Failed to update:', key)
-          rej(e)
-        })
-    })
-  }
 }
 
 function inventory() {
