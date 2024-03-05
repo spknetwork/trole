@@ -10,7 +10,8 @@ var { exec } = require('child_process');
 const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
-var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
+var ipfs = new Ipfs(config.ENDPOINT, { protocol: config.ENDPROTOCOL, port: config.ENDPORT})
+console.log(ipfs.id(), config.ENDPOINT, config.ENDPROTOCOL, config.ENDPORT)
 const Busboy = require('busboy');
 
 var live_stats = {
@@ -237,7 +238,7 @@ function inventory() {
     for (var i = 0; i < keys.length; i++) {
       DB.read(keys[i]).then(contract => {
         contract = JSON.parse(contract)
-        for (var j = 0; j < contract.files.length; j++) {
+        for (var j = 0; j < contract.df.length; j++) {
           ipfs.pin.ls(contract.files[j], (err, pinset) => {
             if (err) {
               console.log('missing', contract.files[j])

@@ -8,8 +8,9 @@ const posting_key = ENV.POSTING || ''
 const ipfsid = ENV.IPFSID || ''
 const active_key = ENV.ACTIVE || ''
 const posting_pub = ENV.POSTING_PUB || ''
-const ENDPOINT = ENV.ENDPOINT || "localhost";
+const ENDPOINT = ENV.ENDPOINT || "127.0.0.1";
 const ENDPORT = ENV.ENDPORT || 5001
+const ENDPROTOCOL = ENV.ENDPROTOCOL || "http"
 const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
 const SPK_API = ENV.SPK_API || "https://spktest.dlux.io";
 const flex = ENV.FLEX || 10000000 //upload temp space limit
@@ -73,6 +74,7 @@ const config = {
   posting_key,
   ENDPOINT,
   ENDPORT,
+  ENDPROTOCOL,
   HIVE_API,
   SPK_API,
   tables,
