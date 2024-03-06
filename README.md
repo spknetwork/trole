@@ -22,6 +22,8 @@ Now run the build and up
 
 `docker-compose up`
 
+If you make any changes ensure you run `docker-compose down` before `up` to reset the IPFS healthchecks.
+
 More documentation will follow. Follow spknetwork, disregardfiat, and nathansenn on hive.
 
 ### Simple Full
