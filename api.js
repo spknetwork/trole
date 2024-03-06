@@ -187,10 +187,10 @@ function getStats() {
             if(contract == 'Contract Not Found'){
               if (behind < 100){
                 DB.delete(key)
-                for(var i = 0; i < json.files.length; i++){
-                  fs.remove(getFilePath(json.files[i], key))
-                  ipfsUnpin(json.files[i])
-                  console.log('unpinning', json.files[i])
+                for(var i = 0; i < json.df.length; i++){
+                  fs.remove(getFilePath(json.df[i], key))
+                  ipfsUnpin(json.df[i])
+                  console.log('unpinning', json.df[i])
                 }
               }
             } else {
@@ -203,10 +203,10 @@ function getStats() {
                 }
               }
               if(isMine == 0){ //or j > p + threshold
-                for(var i = 0; i < json.files.length; i++){
-                  fs.remove(getFilePath(json.files[i], key))
-                  ipfsUnpin(json.files[i])
-                  console.log('unpinning', json.files[i])
+                for(var i = 0; i < json.df.length; i++){
+                  fs.remove(getFilePath(json.df[i], key))
+                  ipfsUnpin(json.df[i])
+                  console.log('unpinning', json.df[i])
                 }
                 DB.delete(key).then(d=>{
                   console.log('deleted', key + '.json')
@@ -239,18 +239,18 @@ function inventory() {
       DB.read(keys[i]).then(contract => {
         contract = JSON.parse(contract)
         for (var j = 0; j < contract.df.length; j++) {
-          ipfs.pin.ls(contract.files[j], (err, pinset) => {
+          ipfs.pin.ls(contract.df[j], (err, pinset) => {
             if (err) {
-              console.log('missing', contract.files[j])
-              ipfs.pin.add(contract.files[j], function (err, pin) {
+              console.log('missing', contract.df[j])
+              ipfs.pin.add(contract.df[j], function (err, pin) {
                 if (err) {
                   console.log(err);
                 }
-                console.log(`pinned ${contract.files[j]}`)
+                console.log(`pinned ${contract.df[j]}`)
               })
             }
             // setTimeout(() => { // slow it down, make a queue function
-            //   console.log('inventory', contract.files[j])
+            //   console.log('inventory', contract.df[j])
             // })
           })
         }
@@ -287,9 +287,9 @@ function localIpfsUpload(cid, contractID) {
                     .then(json => {
                       console.log('signNupdate', contract)
                       var allDone = true
-                      for (var i = 0; i < contract.files.length; i++) {
-                        console.log(contract.files[i], contract[contract.files[i]], cid, i)
-                        if (!contract[contract.files[i]]) {
+                      for (var i = 0; i < contract.df.length; i++) {
+                        console.log(contract.df[i], contract[contract.df[i]], cid, i)
+                        if (!contract[contract.df[i]]) {
                           allDone = false
                           break
                         }
@@ -650,7 +650,7 @@ exports.arrange = (req, res, next) => {
             j.fo = r[1][1].t,
             j.co = r[1][1].b,
             j.f = r[1][1].f,
-            j.files = files,
+            j.df = files,
             j.n = cids.split(',').length - 1,
             j.u = 0,
             j.e = r[1][1].e.split(':')[0],
@@ -692,8 +692,8 @@ function checkThenBuild(path){
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
     var sizes = ''
-    for (var i = 0; i < contract.files.length; i++) {
-      sizes += `${contract[contract.files[i]]},`
+    for (var i = 0; i < contract.df.length; i++) {
+      sizes += `${contract[contract.df[i]]},`
     }
     sizes = sizes.substring(0, sizes.length - 1)
     const data = {
@@ -702,7 +702,7 @@ function signNupdate(contract) {
       sig: contract.sig, //signature of uploader
       co: config.account, //broker
       f: contract.f, //from
-      c: contract.files.join(','), //cids uploaded
+      c: contract.df.join(','), //cids uploaded
       s: sizes
     }
     const operations = [

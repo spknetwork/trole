@@ -27,7 +27,7 @@ services:
         condition: service_healthy
     image: disregardfiat/poa:0.0.2
     restart: unless-stopped
-    command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8002", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001"]
+    command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8002", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001", "-validators", "https://spktest.dlux.io/services/VAL"]
 #    ports:
 #     - "8000-8001:8000-8001"
     container_name: poa
@@ -43,7 +43,7 @@ services:
       - ENDPOINT=127.0.0.1
       - ENDPORT=5001
       - DOCKER=true
-#    ports:
+#    ports: #IPFS API with the default settings disallows the bridge adapter as traffic appears to come from 0.0.0.0 and not 127.0.0.1
 #      - "5050:5050"
     volumes:
       - ./.env:/.env
