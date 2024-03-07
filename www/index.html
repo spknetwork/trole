@@ -39,6 +39,9 @@
                         <a class="nav-link" role="tab" data-bs-toggle="tab" href="#storageTab">Storage</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" role="tab" data-bs-toggle="tab" href="#myTab">My Contracts</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" role="tab" data-bs-toggle="tab" href="#statsTab">Stats</a>
                     </li>
                 </ul>
@@ -54,6 +57,13 @@
                         aria-labelledby="storagetab">
                         <div class="card">
                             <contract-vue :nodeview="true" :prop_contracts="contracts" title="Stored Contracts" :account="account"
+                                @tosign="toSign=$event" :accountinfo="accountinfo"/>
+                        </div>
+                    </div>
+                    <div role="tabpanel" ref="myTab" class="tab-pane fade" id="myTab"
+                        aria-labelledby="newtab">
+                        <div class="card">
+                            <contract-vue :nodeview="false" title="My Contracts" :account="account"
                                 @tosign="toSign=$event" :accountinfo="accountinfo"/>
                         </div>
                     </div>

@@ -508,6 +508,34 @@ createApp({
           this.accountinfo.rshares = (power * final_vest) / 10000;
         });
     },
+    formatNumber(t, n, r, e) { // number, decimals, decimal separator, thousands separator
+      if (typeof t != "number") {
+        const parts = t ? t.split(" ") : []
+        var maybe = 0
+        for (i = 0; i < parts.length; i++) {
+          if (parseFloat(parts[i])>0){
+            maybe += parseFloat(parts[i])
+          }
+        }
+        if (maybe>parseFloat(t)){
+          t = maybe
+        } else {
+          t = parseFloat(t)
+        }
+      }
+      if (isNaN(t)) return "Invalid Number";
+      if (!isFinite(t)) return (t < 0 ? "-" : "") + "infinite";
+      (r = r || "."), (e = e || "");
+      var u = t < 0;
+      t = Math.abs(t);
+      var a = (null != n && 0 <= n ? t.toFixed(n) : t.toString()).split("."),
+        i = a[0],
+        o = 1 < a.length ? r + a[1] : "";
+      if (e)
+        for (var c = /(\d+)(\d{3})/; c.test(i); )
+          i = i.replace(c, "$1" + e + "$2");
+      return (u ? "-" : "") + i + o;
+    },
   },
   mounted() {
     this.getState()

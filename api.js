@@ -11,7 +11,6 @@ const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
 var ipfs = new Ipfs(config.ENDPOINT, { protocol: config.ENDPROTOCOL, port: config.ENDPORT})
-console.log(ipfs.id(), config.ENDPOINT, config.ENDPROTOCOL, config.ENDPORT)
 const Busboy = require('busboy');
 
 var live_stats = {

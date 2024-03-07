@@ -73,6 +73,9 @@ export default {
                         <!-- tools 1 -->
                         <div class="d-flex mb-1 flex-wrap ms-auto order-lg-last">
                             <div class="d-flex flex-wrap justify-content-center ms-auto me-auto">
+                                <button v-if="title == 'New Contracts'" type="button && prop_contracts.length" @click="storeAll(prop_contracts)" class="btn btn-danger mt-1 me-1">
+                                    <span class=""></span><i class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>Store All
+                                </button>  
                                 <!-- new contract button -->
                                 <button v-if="saccountapi.pubKey != 'NA' && saccountapi.spk_power" type="button"
                                     class="btn btn-primary mt-1 me-1">
@@ -745,6 +748,7 @@ export default {
             }
             return Math.floor(seconds) + " seconds";
           },
+
         reward_spk() {
             var r = 0,
               a = 0,
@@ -824,6 +828,31 @@ export default {
                 ops: ["getTokenUser"],
                 api: "https://spktest.dlux.io",
                 txid: `${contract}_${!remove ? 'store' : 'remove'}`,
+              }
+              this.$emit('tosign', toSign)
+        },
+        storeAll(arr){
+            var contracts = []
+            for(var i=0; i<arr.length; i++){
+                var found = false
+                for(var node in arr[i].n){
+                    if(arr[i].n[node] == this.account){
+                        found=true
+                        break
+                    }
+                }
+                if(!found)contracts.push(arr[i].i)
+            }
+            const toSign = {
+                type: "cja",
+                cj: {
+                  items: contracts
+                },
+                id: `spkcc_store`,
+                msg: `Storing ${contract}...`,
+                ops: ["getTokenUser"],
+                api: "https://spktest.dlux.io",
+                txid: `${contract}_store`,
               }
               this.$emit('tosign', toSign)
         },
