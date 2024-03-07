@@ -1048,7 +1048,8 @@ export default {
                     fetch('https://spktest.dlux.io/api/fileContract/' + id)
                         .then((r) => r.json())
                         .then((res) => {
-                            res.result.extend = "7"
+                            if (res.result == 'Contract Not Found') console.log('contract not found')
+                            else res.result.extend = "7"
                             if (res.result) {
                                 this.contracts.splice(this.contractIDs[id].index, 1, res.result)
                                 //this.extendcost[id] = parseInt(res.result.extend / 30 * res.result.r)

@@ -47,14 +47,14 @@
                         aria-labelledby="newtab">
                         <div class="card">
                             <contract-vue :nodeview="true" :prop_contracts="newContracts" title="New Contracts" :account="account"
-                                @tosign="toSign=$event" />
+                                @tosign="toSign=$event" :accountinfo="accountinfo"/>
                         </div>
                     </div>
                     <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
                         aria-labelledby="storagetab">
                         <div class="card">
                             <contract-vue :nodeview="true" :prop_contracts="contracts" title="Stored Contracts" :account="account"
-                                @tosign="toSign=$event" />
+                                @tosign="toSign=$event" :accountinfo="accountinfo"/>
                         </div>
                     </div>
                     <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab" aria-labelledby="newtab">

@@ -22,6 +22,18 @@ createApp({
       feed: {},
       lastFeed: 0,
       spkapi: "https://spktest.dlux.io",
+      denoms: {
+        HIVE: {
+          checked: false,
+          balance: 0
+        },
+        HBD: {
+          checked: false,
+          balance: 0
+        },
+      },
+      accountinfo: {},
+      hapi: 'https://api.hive.blog',
     };
   },
   components: {
@@ -468,9 +480,38 @@ createApp({
         //   .catch((error) => console.log("error", error));
       });
     },
+    getHiveUser(user = this.account) {
+      console.log('hive info', user)
+      fetch(this.hapi, {
+        body: `{"jsonrpc":"2.0", "method":"condenser_api.get_accounts", "params":[["${user}"]], "id":1}`,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method: "POST",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          this.accountinfo = data.result[0];
+          this.denoms.HIVE.balance = `${this.formatNumber((parseFloat(this.accountinfo.balance)).toFixed(3), 3, '.', ',')} HIVE`
+          this.denoms.HBD.balance = `${this.formatNumber((parseFloat(this.accountinfo.hbd_balance)).toFixed(3), 3, '.', ',')} HBD`
+          var pfp = "";
+          try {
+            pfp = this.accountinfo.posting_json_metadata.profile.profile_image;
+          } catch (e) {}
+          const total_vests =
+            parseInt(this.accountinfo.vesting_shares) +
+            parseInt(this.accountinfo.received_vesting_shares) -
+            parseInt(this.accountinfo.delegated_vesting_shares);
+          const final_vest = total_vests * 1000000;
+          const power =
+            (parseInt(this.accountinfo.voting_power) * 10000) / 10000 / 50;
+          this.accountinfo.rshares = (power * final_vest) / 10000;
+        });
+    },
   },
   mounted() {
     this.getState()
+    this.getHiveUser()
     this.getContracts()
     this.getFeed()
     setInterval(() => {
