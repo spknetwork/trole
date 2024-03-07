@@ -7,6 +7,7 @@ export default {
       spkprefix: "spkcc",
       valid: false,
       d: {
+        spkprefix: "spkcc",
         valWorkable: [],
       },
     };
