@@ -93,9 +93,14 @@ const Pstats = () => {
         fetch(`https://spktest.dlux.io/`).then(r => r.json()).then(r=>{resolve(r)})
     })
 }
-const Pservices = () => {
+const Pval = () => {
     return new Promise((resolve, reject)=>{
         fetch(`https://spktest.dlux.io/services/VAL`).then(r => r.json()).then(r=>{resolve(r)})
+    })
+}
+const Pipfs = () => {
+    return new Promise((resolve, reject)=>{
+        fetch(`https://spktest.dlux.io/services/IPFS`).then(r => r.json()).then(r=>{resolve(r)})
     })
 }
 const Pmarkets= () => {
@@ -104,17 +109,17 @@ const Pmarkets= () => {
     })
 }
 
-Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets(), ipfs.id()]).then(r => {
-    cprice = r[1].result.IPFSRate
-    if(r[0].storage[r[4].id]){
+Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()]).then(r => {
+    const price = r[1].result.IPFSRate
+    if(registered && r[0].storage[r[4].id]){
         console.log('storage already registered')
-    } else if (r[0].pubKey == 'NA'){
+    } else if (registered && r[0].pubKey == 'NA'){
         console.log('Registering IPFS')
         registered = false
     }
     if(r[2].providers?.[account] == r[4].id){
         vreg = true
-    } else if (ENV.VALIDATOR == "true"){
+    } else if (ENV.VALIDATOR){
         console.log('Registering VAL')
         vreg = false
     }
@@ -137,7 +142,7 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets(), ipfs.id()]).t
         console.log('not enough Larynx balance')
         process.exit()
     }
-    if(!registered){
+    if(!registered && domain){
         RegisterService(price, 'IPFS', `https://ipfs.${domain}`).then(r=>{
             console.log('IPFS registered')
             if(vcode){
@@ -162,7 +167,7 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets(), ipfs.id()]).t
             process.exit()
         })
     } else {
-        if(!vreg){
+        if(!vreg && domain){
             RegisterService(price, 'VAL', `https://poa.${domain}`).then(r=>{
                 console.log('VAL registered')
                 if(vcode)process.exit()
@@ -173,7 +178,7 @@ Promise.all([Paccount(account), Pstats(), Pservices(), Pmarkets(), ipfs.id()]).t
             })
         } else {
             if(vcode)process.exit()
-            else RegisterVal(price)
+            else if (!vreg && domain) RegisterVal(price)
         }
     }
 })
