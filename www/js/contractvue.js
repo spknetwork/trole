@@ -24,6 +24,10 @@ export default {
                 <button type="button" class="btn btn-primary" @click="updatePubkey()">
                     Register Account
                 </button>
+                <button type="button" class="mt-1 me-1 btn btn-secondary"
+                                    data-bs-toggle="modal" data-bs-target="#spkWalletModal">
+                                    <span class=""></span><i class="fa-solid fa-wallet fa-fw me-1"></i>SPK
+                                </button>
             </div>
         </div>
     </div>
