@@ -6,6 +6,10 @@ const pool = new Pool({
   connectionString: config.dbcs,
 });
 const fs = require('fs-extra')
+// if directory ./db/ does not exist, create it
+if (!fs.existsSync('./db/')) {
+  fs.mkdirSync('./db/');
+}
 var { exec } = require('child_process');
 const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
@@ -25,7 +29,7 @@ ipfs.id().then(r => {
       return;
     }
   })
-})
+}).catch(e => console.log(e))
 
 const DB = {
   getKeys: function (type = 'contracts') {
