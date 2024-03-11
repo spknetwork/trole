@@ -38,6 +38,8 @@ Clone Repo:
 
 Change Directory `cd trole`
 
+Next, copy `env.sample` to `.env` and write your spknetwork hive account and active key in the coppied file.
+
 Run Install Script `./install.sh`
 
 Follow instructions

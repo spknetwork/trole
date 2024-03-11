@@ -13,7 +13,7 @@ then
     exit
 fi
 
-group = $(groups | grep $whoami)
+group=$(groups | grep $whoami)
 if [ -z "$group" ];
 then
     echo -e "${RED}User $whoami is not a part of the group $whoami. Add user to group and run this script again.${NC}"
