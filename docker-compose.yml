@@ -5,7 +5,6 @@ services:
     restart: always
     environment:
       - IPFS_PATH=/data/ipfs
-    # network_mode: host
     ports:
       - "4001:4001"
       - "8080:8080"
@@ -13,40 +12,27 @@ services:
     command: ["daemon", "--migrate=true", "--agent-version-suffix=docker", "--enable-gc"]
     volumes:
       - ipfs:/data/ipfs
-      # - ./ipfs-init.sh:/container-init.d/ipfs-init.sh
     networks:
       - default
     container_name: ipfs
-    healthcheck:
-        test: ["CMD", "wget", "http://localhost:8080/ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"]
-        interval: 5s
-        timeout: 1s
-        retries: 5
   poa:
-    depends_on:
-      ipfs:
-        condition: service_healthy
     image: disregardfiat/poa:0.0.2
-    restart: unless-stopped
+    restart: always
     command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8002", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001", "-validators", "https://spktest.dlux.io/services/VAL"]
     ports:
-      - "8001-8002:8000-8001"
+      - "8000-8001:8000-8001"
     networks:
       - default
     container_name: poa
-    # network_mode: host
   api:
-    depends_on:
-      ipfs:
-        condition: service_healthy
     build: .
-    restart: unless-stopped
+    restart: always
     environment:
       - PORT=5050
       - ENDPOINT=ipfs
       - ENDPORT=5001
       - DOCKER=true
-    ports: #IPFS API with the default settings disallows the bridge adapter as traffic appears to come from 0.0.0.0 and not 127.0.0.1
+    ports: 
       - "5050:5050"
     volumes:
       - ./.env:/.env
@@ -59,7 +45,6 @@ services:
         max-file: "3"
     stdin_open: true
     tty: true
-    # network_mode: host
 volumes:
   ipfs:
     driver: local
