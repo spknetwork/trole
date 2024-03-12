@@ -17,3 +17,4 @@ ipfs config --json ResourceMgr.Limits.Transient.ConnsOutbound 256
 ipfs config --json ResourceMgr.Limits.Transient.Streams 1024
 ipfs config --json ResourceMgr.Limits.Transient.StreamsInbound 512
 ipfs config --json ResourceMgr.Limits.Transient.StreamsOutbound 512
+ipfs config --json Addresses.API /ip4/127.0.0.1/tcp/5001
