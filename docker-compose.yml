@@ -5,11 +5,11 @@ services:
     restart: always
     environment:
       - IPFS_PATH=/data/ipfs
-    network_mode: host
-    # ports:
-    #   - "4001:4001"
-    #   - "8080:8080"
-    #   - "127.0.0.1:5001:5001"
+    # network_mode: host
+    ports:
+      - "4001:4001"
+      - "8080:8080"
+      - "127.0.0.1:5001:5001"
     command: ["daemon", "--migrate=true", "--agent-version-suffix=docker", "--enable-gc"]
     volumes:
       - ipfs:/data/ipfs
@@ -20,8 +20,6 @@ services:
         interval: 5s
         timeout: 1s
         retries: 5
-    networks:
-      - trole
   poa:
     depends_on:
       ipfs:
@@ -58,6 +56,3 @@ services:
 volumes:
   ipfs:
     driver: local
-networks:
-  trole:
-    driver: bridge
