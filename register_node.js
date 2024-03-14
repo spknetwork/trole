@@ -5,7 +5,7 @@ const active_key = ENV.ACTIVE || ''
 const domain = ENV.DOMAIN || ''
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
-var registered = true, vcode = ENV.VALIDATOR || false, vreg = false, balance = 0, amount = 0
+var registered = false, vcode = ENV.VALIDATOR != "false" ? true : false, vreg = true, balance = 0, amount = 0
 var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
 var key = dhive.PrivateKey.fromString(active_key);
 var price = 2000
@@ -111,15 +111,14 @@ const Pmarkets= () => {
 
 Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()]).then(r => {
     const price = r[1].result.IPFSRate
-    if(registered && r[0].storage[r[4].id]){
+    if(r[0].storage == r[4].id){
         console.log('storage already registered')
-    } else if (registered && r[0].pubKey == 'NA'){
-        console.log('Registering IPFS')
+    } else {
         registered = false
     }
     if(r[2].providers?.[account] == r[4].id){
         vreg = true
-    } else if (ENV.VALIDATOR){
+    } else if (ENV.VALIDATOR != 'false' && r[2].providers?.[account] != r[4].id){
         console.log('Registering VAL')
         vreg = false
     }
@@ -142,8 +141,8 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         console.log('not enough Larynx balance')
         process.exit()
     }
-    if(!registered && domain){
-        RegisterService(price, 'IPFS', `https://ipfs.${domain}`).then(r=>{
+    if(!registered){
+        RegisterService(price, 'IPFS', domain ? `https://ipfs.${domain}` : "NA").then(r=>{
             console.log('IPFS registered')
             if(vcode){
                 RegisterService(price, 'VAL', `https://poa.${domain}`).then(r=>{

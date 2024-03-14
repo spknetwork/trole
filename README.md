@@ -20,9 +20,18 @@ Now run the build and up
 
 `docker-compose build`
 
-`docker-compose up`
+`docker-compose up -d`
 
 If you make any changes ensure you run `docker-compose down` before `up` to reset the IPFS healthchecks.
+
+Some Users have had issues with the docker network with the above configuration. They have had success with `docker-host.yml` which you can run with the following command.
+ * `docker-compose build -f docker-host.yml`
+ * `docker-compose up -d -f docker-host.yml`
+
+ You can view the status of your containers with the following
+  * `docker-compose logs -f --tail="200"`
+    * -f => follow (live view)
+    * --tail="History Lines" with out this it will show everything in the current cycle, may overwhelm.
 
 More documentation will follow. Follow spknetwork, disregardfiat, and nathansenn on hive.
 

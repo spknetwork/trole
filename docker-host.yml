@@ -5,40 +5,30 @@ services:
     restart: always
     environment:
       - IPFS_PATH=/data/ipfs
-    ports:
-      - "4001:4001"
-      - "8080:8080"
-      - "127.0.0.1:5001:5001"
+    network_mode: host
     command: ["daemon", "--migrate=true", "--agent-version-suffix=docker", "--enable-gc"]
     volumes:
       - ipfs:/data/ipfs
-    networks:
-      - default
+      - ./ipfs-init.sh:/container-init.d/ipfs-init.sh
     container_name: ipfs
   poa:
     image: disregardfiat/poa:0.0.2
     restart: always
     command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8002", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001", "-validators", "https://spktest.dlux.io/services/VAL"]
-    ports:
-      - "8002-8003:8000-8001"
-    networks:
-      - default
+    network_mode: host
     container_name: poa
   api:
     build: .
     restart: always
     environment:
       - PORT=5050
-      - ENDPOINT=ipfs
+      - ENDPOINT=127.0.0.1
       - ENDPORT=5001
       - DOCKER=true
-    ports: 
-      - "5050:5050"
+    network_mode: host
     volumes:
       - ./.env:/.env
       - db:/db/
-    networks:
-      - default
     logging:
       options:
         max-size: "2m"
@@ -50,5 +40,3 @@ volumes:
     driver: local
   db:
     driver: local
-networks:
-  default:
