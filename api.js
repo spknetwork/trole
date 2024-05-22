@@ -633,6 +633,7 @@ exports.arrange = (req, res, next) => {
     let account = req.headers['x-account'];
     let sig = req.headers['x-sig'];
     let cids = req.headers['x-files'];
+    let meta = req.headers['x-meta'];
     let contract = req.headers['x-contract'];
     if (!account || !sig) {
       res.status(401).send("Access denied. No Valid Signature");
@@ -661,6 +662,7 @@ exports.arrange = (req, res, next) => {
             j.key = r[0][1],
             j.b = r[1][1].r,
             j.id = r[1][1].i
+            j.m = meta
             if (
               account != j.fo //or account mismatch
             ) {
@@ -706,7 +708,8 @@ function signNupdate(contract) {
       co: config.account, //broker
       f: contract.f, //from
       c: contract.df.join(','), //cids uploaded
-      s: sizes
+      s: sizes,
+      m: contract.m
     }
     const operations = [
       [
