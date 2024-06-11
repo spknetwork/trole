@@ -128,10 +128,10 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         vreg = false
     }
     console.log(vcode, r[3].markets.node[account]?.val_code)
-    if(vcode && r[3].markets.node[account]?.val_code){
-        vcode = false
-    } else {
+    if(vcode && !r[3].markets.node[account]?.val_code){
         vcode = true
+    } else {
+        vcode = false
     }
     var fees = 0
     if(!vreg)fees++
