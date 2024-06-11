@@ -175,15 +175,15 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         if(!vreg && domain){
             RegisterService(price, 'VAL', `https://poa.${domain}`).then(r=>{
                 console.log('VAL registered')
-                if(vcode)process.exit()
-                else RegisterVal(price)
+                if(vcode && domain)RegisterVal(price)
+                else process.exit()
             }).catch(e=>{
                 console.log(e)
                 process.exit()
             })
         } else {
-            if(vcode)process.exit()
-            else if (!vreg && domain) RegisterVal(price)
+            if(vcode && domain)RegisterVal(price)
+            else process.exit()
         }
     }
 })
