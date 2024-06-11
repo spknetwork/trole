@@ -24,6 +24,7 @@ var live_stats = {
 ipfs.id().then(r => {
   live_stats.ipfsid = r.id
   exec(`node register_node.js`, (error, stdout, stderr) => {
+    console.log(stdout)
     if (error) {
       console.log(`error: ${error.message}`);
       return;
