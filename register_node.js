@@ -127,16 +127,16 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         console.log('Registering VAL')
         vreg = false
     }
-    console.log(vcode, r[3].markets.node[account]?.val_code)
     if(vcode && !r[3].markets.node[account]?.val_code){
-        vcode = true
+        console.log('Registering VAL')
     } else {
+        console.log('VAL already registered')
         vcode = false
     }
     var fees = 0
     if(!vreg)fees++
     if(!registered)fees++
-    if(!vcode)fees++
+    if(vcode)fees++
     balance = r[0].balance
     amount = price * fees
     if(!fees){
