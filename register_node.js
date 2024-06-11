@@ -16,6 +16,9 @@ if(!active_key || !account){
     process.exit()
 
 }
+console.log('Validator:', vcode)
+console.log('Account:', account)
+console.log('Domain:', domain)
 
 const RegisterService = (amount, type, api) => {
     return new Promise((resolve, reject)=>{
@@ -124,10 +127,11 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         console.log('Registering VAL')
         vreg = false
     }
+    console.log(vcode, r[3].markets.node[account]?.val_code)
     if(vcode && r[3].markets.node[account]?.val_code){
-        vcode = true
-    } else {
         vcode = false
+    } else {
+        vcode = true
     }
     var fees = 0
     if(!vreg)fees++
