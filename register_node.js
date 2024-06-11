@@ -114,6 +114,7 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
     console.log(r[0].storage, r[4].id)
     if(r[0].storage == r[4].id){
         console.log('storage already registered')
+        registered = true
     } else {
         registered = false
     }
@@ -123,7 +124,7 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         console.log('Registering VAL')
         vreg = false
     }
-    if(vcode && !r[3].markets.node[account]?.val_code){
+    if(vcode && r[3].markets.node[account]?.val_code){
         vcode = true
     } else {
         vcode = false
