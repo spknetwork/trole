@@ -123,7 +123,7 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
     }
     if(r[2].providers?.[account] == r[4].id){
         vreg = true
-    } else if (ENV.VALIDATOR != 'false' && r[2].providers?.[account].indexOf(r[4].id) >= 0){
+    } else if (ENV.VALIDATOR != 'false' && (!r[2].providers?.[account] || r[2].providers?.[account].indexOf(r[4].id) < 0)){
         console.log('Registering VAL')
         vreg = false
     }
