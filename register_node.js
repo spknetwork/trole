@@ -6,7 +6,7 @@ const domain = ENV.DOMAIN || ''
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
 var registered = false, vcode = ENV.VALIDATOR != "false" ? true : false, vreg = true, balance = 0, amount = 0
-var client = new dhive.Client(["https://api.hive.blog", "https://api.hivekings.com", "https://anyx.io", "https://api.openhive.network"]);
+var client = new dhive.Client(["https://hive-api.dlux.io", "https://api.hive.blog", "https://anyx.io"]);
 var key = dhive.PrivateKey.fromString(active_key);
 var price = 2000
 const Ipfs = require('ipfs-api')
@@ -26,7 +26,7 @@ const RegisterService = (amount, type, api) => {
             client.broadcast.json({
                 required_auths: [account],
                 required_posting_auths: [],
-                id: "spkcc_register_service",
+                id: "spkccT_register_service",
                 json: JSON.stringify({
                     amount,
                     type,
@@ -49,7 +49,7 @@ const RegisterVal = (amount) => {
         client.broadcast.json({
             required_auths: [account],
             required_posting_auths: [],
-            id: "spkcc_validator_burn",
+            id: "spkccT_validator_burn",
             json: JSON.stringify({
                 amount
             })
@@ -80,7 +80,7 @@ const Paccount = (acc) => {
         client.broadcast.json({
             required_auths: [account],
             required_posting_auths: [],
-            id: "spkcc_register_authority",
+            id: "spkccT_register_authority",
             json: JSON.stringify({
                 pubKey: r.result[0].posting.key_auths[0][0]
             })
