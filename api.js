@@ -358,7 +358,7 @@ exports.contract = (req, res, next) => {
               config.account
             ],
             "required_posting_auths": [],
-            "id": "spkcc_channel_open",
+            "id": "spkccT_channel_open",
             "json": `{\"broca\":${grant},\"broker\":\"${config.account}\",\"to\":\"${user}\",\"contract\":\"1\",\"slots\":\"dlux-io,1000\"}`
           }
         ]
@@ -724,7 +724,7 @@ function signNupdate(contract) {
             config.account
           ],
           "required_posting_auths": [],
-          "id": "spkcc_channel_update",
+          "id": "spkccT_channel_update",
           "json": JSON.stringify(data)
         }
       ]

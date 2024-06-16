@@ -627,11 +627,11 @@ export default {
             this.toSign = {
               type: "cja",
               cj: cja,
-              id: `spkcc_register_authority`,
+              id: `spkccT_register_authority`,
               msg: `Registering: ${this.account}:${this.accountinfo.posting.key_auths[0][0]}`,
               ops: ["getSapi"],
               api: this.sapi,
-              txid: `spkcc_register_authority`,
+              txid: `spkccT_register_authority`,
             };
         },
         addAssets(id, contract) {
@@ -812,7 +812,7 @@ export default {
                   file_owner: contract.t,
                   power: this.spread ? 1 : 0,
                 },
-                id: `spkcc_extend`,
+                id: `spkccT_extend`,
                 msg: `Extending ${contract.i}...`,
                 ops: ["getTokenUser"],
                 api: "https://spktest.dlux.io",
@@ -827,7 +827,7 @@ export default {
                 cj: {
                   items: [contract]
                 },
-                id: `spkcc_${!remove ? 'store' : 'remove'}`,
+                id: `spkccT_${!remove ? 'store' : 'remove'}`,
                 msg: `Storing ${contract}...`,
                 ops: ["getTokenUser"],
                 api: "https://spktest.dlux.io",
@@ -852,7 +852,7 @@ export default {
                 cj: {
                   items: contracts
                 },
-                id: `spkcc_store`,
+                id: `spkccT_store`,
                 msg: `Storing ${contract}...`,
                 ops: ["getTokenUser"],
                 api: "https://spktest.dlux.io",
