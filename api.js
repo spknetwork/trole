@@ -638,7 +638,7 @@ exports.arrange = (req, res, next) => {
     let account = req.headers['x-account'];
     let sig = req.headers['x-sig'];
     let cids = req.headers['x-files'];
-    let meta = req.headers['x-meta'];
+    let meta = decodeURI(req.headers['x-meta']);
     let contract = req.headers['x-contract'];
     if (!account || !sig) {
       res.status(401).send("Access denied. No Valid Signature");
