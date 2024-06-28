@@ -664,7 +664,7 @@ exports.arrange = (req, res, next) => {
             j.df = files,
             j.n = cids.split(',').length - 1,
             j.u = 0,
-            j.e = r[1][1].e.split(':')[0],
+            j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
             j.sig = sig,
             j.key = r[0][1],
             j.b = r[1][1].r,
