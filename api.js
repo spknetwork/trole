@@ -257,7 +257,7 @@ function inventory() {
                 console.log(e)
               }
             } else if (!contract.df[j]) {
-              console.log('missing', keys[i])
+              console.log('missing', contract)
             }
             // setTimeout(() => { // slow it down, make a queue function
             //   console.log('inventory', contract.df[j])
