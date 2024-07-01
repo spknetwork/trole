@@ -9,6 +9,7 @@ export default {
       d: {
         spkprefix: "spkcc",
         valWorkable: [],
+        test: false
       },
     };
   },
@@ -37,7 +38,7 @@ export default {
                   <input class="form-check-input" type="checkbox" role="switch" v-model="d.up"> 
                 </div> 
                 <label class="small mb-1 d-flex" for="sendAmount">Amount
-                  <span class="ms-auto">Balance: <a class="text-info" role="button" @click="amount = balance">{{formatNumber(balance, 0, '', ',')}}</a> {{token}}</span></label>
+                  <span class="ms-auto">Balance: <a class="text-info" role="button" @click="d.amount = balance">{{formatNumber(balance, 0, '', ',')}}</a> {{token}}</span></label>
                 <div class="position-relative">
                   <input class="pe-5 form-control text-white bg-dark border-dark" id="sendAmount" type="number" step="1" :min="contract.r" placeholder="Enter amount" v-model="d.amount"> 
                   <span class="position-absolute end-0 top-50 translate-middle-y px-2">
@@ -94,9 +95,9 @@ export default {
                       </div>
                   </div>
                   <div class="modal-footer"> 
-                    <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Mirror Network Only" v-if="token == 'SPK' || token == 'LARYNX'">
+                    <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transaction on Test Network Only" v-if="token == 'SPK' || token == 'LARYNX'">
                       <input id="sendmirror" type="checkbox" v-model="d.test" class="me-2">
-                      <label for="sendmirror">Mirror Network Only</label>
+                      <label for="sendmirror">Test Network Only</label>
                     </div>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> 
                   <button :disabled="!d.valid" type="submit" class="btn btn-primary" @click="send" data-bs-dismiss="modal">Send</button> 
@@ -141,7 +142,7 @@ export default {
                   </div>
                   <label for="delAmount" class="small mb-1 d-flex">Amount
                     <span class="ms-auto">
-                      Balance: <a role="button" class="text-info" @click="amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}
+                      Balance: <a role="button" class="text-info" @click="d.amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}
                     </span>
                   </label>
                   <div class="position-relative">
@@ -152,9 +153,9 @@ export default {
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Mirror Network Only" v-if="token == 'SPK' || token == 'LARYNX'">
+                  <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Test Network Only" v-if="token == 'SPK' || token == 'LARYNX'">
                     <input id="delegatemirror" type="checkbox" v-model="d.test" class="me-2">
-                    <label for="delegatemirror">Mirror Network Only</label>
+                    <label for="delegatemirror">Test Network Only</label>
                   </div>
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button> 
                   <button :disabled="!d.to" type="submit" class="btn btn-primary" @click="delegate" data-bs-dismiss="modal">Confirm</button> 
@@ -169,7 +170,7 @@ export default {
       <div class="modal-dialog modal-dialog-centered" role="document">
           <div class="modal-content bg-darker text-white">
               <div class="modal-header">
-                  <h5 class="modal-title">{{func}} {{token}}  {{func == 'Election' ? 'Validators' : ''}}</h5> 
+                  <h5 class="modal-title">{{func}} | {{token}}  {{func == 'Election' ? 'Validators' : ''}}</h5> 
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <form name="power">
@@ -177,7 +178,7 @@ export default {
                       <!-- Power / Gov Up / Down -->
                       <div v-if="func == 'Power Up' || func == 'Power Down' || func == 'Lock' || func == 'Unlock'">
                         <div class="modal-body">
-                        <label for="poweramount" class="small mb-1 d-flex">Amount<span class="ms-auto">Balance: <a role="button" class="text-info" @click="amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}</span></label>
+                        <label for="poweramount" class="small mb-1 d-flex">Amount<span class="ms-auto">Balance: <a role="button" class="text-info" @click="d.amount = balance / 1000">{{formatNumber((balance)/1000, 3, '.', ',')}}</a> {{token}}</span></label>
                         <div class="position-relative">
                           <input class="pe-5 form-control text-white border-dark bg-dark" type="number" step="0.001" :min="min" :max="formatNumber((balance)/1000, 3, '.', ',')" placeholder="1.000" v-model="d.amount"> 
                           <span class="position-absolute end-0 top-50 translate-middle-y px-2">
@@ -186,9 +187,9 @@ export default {
                         </div>
                         </div>
                         <div class="modal-footer">
-                          <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Mirror Network Only" v-if="token == 'LARYNX'">
+                          <div class="me-auto btn-group border border-info rounded px-2 py-1" role="group" aria-label="Transact on Test Network Only" v-if="token == 'LARYNX'">
                             <input id="pwrupmirror" type="checkbox" v-model="d.test" class="me-2">
-                            <label for="pwrupmirror">Mirror Network Only</label>
+                            <label for="pwrupmirror">Test Network Only</label>
                           </div>
                           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                           <button type="button" class="btn btn-primary" @click="power" data-bs-dismiss="modal">Continue</button>
@@ -196,7 +197,7 @@ export default {
                       </div>
 
                         <!-- Register Service-->
-                        <div v-if="func == 'Register a Service'"> 
+                        <div v-if="func == 'Register a Service' || func == 'Register a Validator'"> 
                           <div class="modal-body text-start">
                             <label for="api" class="small mb-1">Location (ex: https://ipfs.dlux.io)</label>
                             <div class="input-group mb-3" id="api"> 
@@ -291,14 +292,14 @@ export default {
               <form name="contract">
                     <div class="modal-body text-start"> 
                       <label for="broca" class="small mb-1 d-flex">Amount
-                      <span class="ms-auto">Balance: <a role="button" class="text-info" @click="amount = balance / 1000">{{formatNumber((balance)/1000, 0, '', ',')}}</a> {{token}}</span></label>
+                      <span class="ms-auto">Balance: <a role="button" class="text-info" @click="d.amount = balance">{{formatNumber((balance), 0, '', ',')}}</a> {{token}}</span></label>
                       <div class="position-relative mb-1">
-                        <input id="broca" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="1" :min="1" :max="balance" placeholder="1" v-model="d.amount"> 
+                        <input id="broca" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="1" min="100" :max="balance" placeholder="1" v-model="d.amount"> 
                         <span class="position-absolute end-0 top-50 translate-middle-y px-2">
                           {{token}}
                         </span>  
                       </div>
-                      <div class="text-center mb-3 small text-muted">~{{fancyBytes(amount * 1000)}}</div>
+                      <div class="text-center mb-3 small text-muted">~{{fancyBytes(d.amount * 1000)}}</div>
                       <label for="c_to" class="small mb-1">Account to Upload File</label>
                       <div class="position-relative mb-3" id="c_to">
                         <span class="position-absolute top-50 translate-middle-y ps-2">
@@ -312,18 +313,18 @@ export default {
                           <i class="fa-solid fa-at fa-fw"></i>
                         </span> 
                         <select class="ps-4 form-select text-white bg-dark border-dark" id="sponsoredContracts" v-model="d.broker">
-                          <option value="" disabled selected>Select provider</option>
-                          <option v-for="(account, key) in ipfsproviders" :value="key">{{key}}</option>
+                          <option class="text-white" value="" disabled selected>Select provider</option>
+                          <option class="text-white" v-for="(account, key) in ipfsproviders" :value="key">{{key}}</option>
                         </select>
                       </div>
-                      <label for="ben_to" class="small mb-1">Benificiary Account</label>
+                      <label for="ben_to" class="small mb-1">Beneficiary Account</label>
                       <div class="position-relative mb-3" id="ben_to">
                         <span class="position-absolute top-50 translate-middle-y ps-2">
                           <i class="fa-solid fa-at fa-fw"></i>
                         </span>   
                         <input class="ps-4 form-control text-white border-dark bg-dark" type="text" v-model="d.ben_to"> 
                       </div>
-                      <label for="ben" class="small mb-1">Requested Benificary Amount</label>
+                      <label for="ben" class="small mb-1">Requested Beneficiary Amount</label>
                       <div class="position-relative">
                       <input id="ben" class="pe-5 form-control text-white border-dark bg-dark" type="number" step="0.01" :min="0" :max="100" v-model="d.ben_amount"> 
                         <span class="position-absolute end-0 top-50 translate-middle-y px-2">
@@ -333,7 +334,7 @@ export default {
                     </div> 
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                      <button type="button" class="btn btn-primary" @click="build" data-bs-dismiss="modal">Propose</button>
+                      <button type="button" class="btn btn-primary" :class="{'disabled': d.amount < 100}" :disabled="d.amount < 100" @click="build" data-bs-dismiss="modal">Propose</button>
                     </div>
               </form>
           </div>
@@ -394,7 +395,7 @@ export default {
       }
     },
     accountCheck() {
-      fetch("https://anyx.io", {
+      fetch("https://hive-api.dlux.io", {
         body: `{\"jsonrpc\":\"2.0\", \"method\":\"condenser_api.get_accounts\", \"params\":[[\"${this.d.to}\"]], \"id\":1}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -442,7 +443,7 @@ export default {
     },
     formatNumber(t, n, r, e) {
       if (typeof t != "number") t = parseFloat(t);
-      if (isNaN(t)) return "Invalid Number";
+      if (isNaN(t)) return "0";
       if (!isFinite(t)) return (t < 0 ? "-" : "") + "infinite";
       (r = r || "."), (e = e || "");
       var u = t < 0;
@@ -464,7 +465,7 @@ export default {
             cj: {
               amount: 0,
             },
-            id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_down`,
+            id: `${this.d.spkprefix}${this.d.test ? 'T' : ''}_power_down`,
             msg: `Canceling Power Down...`,
             ops: ["getSapi"],
             api: "https://spkinstant.hivehoneycomb.com",
@@ -478,7 +479,7 @@ export default {
               to: this.d.account,
               amount: 0,
             },
-            id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_grant`,
+            id: `${this.d.spkprefix}${this.d.test ? 'T' : ''}_power_grant`,
             msg: `Canceling Power Down...`,
             ops: ["getSapi"],
             api: "https://spkinstant.hivehoneycomb.com",
@@ -540,7 +541,7 @@ export default {
             amount: parseInt(this.d.amount * 1000),
             memo: this.d.memo,
           },
-          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}spk_send`,
+          id: `${this.d.spkprefix}${this.d.test ? 'T' : ''}_spk_send`,
           msg: `Trying to send ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -554,7 +555,7 @@ export default {
             amount: parseInt(this.d.amount * 1000),
             memo: this.d.memo,
           },
-          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}send`,
+          id: `${this.d.spkprefix}${this.d.test ? 'T' : ''}_send`,
           msg: `Trying to send ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -610,7 +611,7 @@ export default {
             to: this.d.to,
             amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_grant`,
+          id: `${this.d.spkprefix}${this.d.test ? 'T' : ''}_power_grant`,
           msg: `Trying to delegate ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -630,7 +631,7 @@ export default {
           },
           id: `${this.d.token.toLowerCase()}_val_vote`,
           msg: `Trying to unlock ${this.d.token}...`,
-          ops: ["getTokenUser"],
+          ops: ["getTokenUser", "getSapi"],
           api: "https://token.dlux.io",
           txid: "send",
         };
@@ -648,7 +649,7 @@ export default {
           },
           id: `${this.d.token.toLowerCase()}_val_vote`,
           msg: `Trying to unlock ${this.d.token}...`,
-          ops: ["getTokenUser"],
+          ops: ["getTokenUser", "getSapi"],
           api: "https://token.dlux.io",
           txid: "send",
         };
@@ -709,7 +710,7 @@ export default {
           cj: {
             amount: parseInt(this.d.amount * 1000),
           },
-          id: `spkccT_${this.d.test ? 'T' : ''}power_down`,
+          id: `spkcc${this.d.test ? 'T' : ''}_power_down`,
           msg: `Trying to power down ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -799,7 +800,7 @@ export default {
           cj: {
             amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}power_up`,
+          id: `${this.d.spkprefix}_power_up`,
           msg: `Trying to power up ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -811,7 +812,7 @@ export default {
           cj: {
             amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}gov_down`,
+          id: `${this.d.spkprefix}_gov_down`,
           msg: `Trying to unlock ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -823,7 +824,7 @@ export default {
           cj: {
             amount: parseInt(this.d.amount * 1000),
           },
-          id: `${this.d.spkprefix}_${this.d.test ? 'T' : ''}gov_up`,
+          id: `${this.d.spkprefix}_gov_up`,
           msg: `Trying to lock ${this.d.token}...`,
           ops: ["getSapi"],
           api: "https://spkinstant.hivehoneycomb.com",
@@ -928,7 +929,7 @@ export default {
       default: 0,
     },
     amount: {
-      default: 0.001,
+      default: 100,
     },
     ben_amount: {
       default: "10.00",
@@ -970,6 +971,7 @@ export default {
     for (var i = 0; i < props.length; i++) {
       this.d[props[i]] = options[props[i]];
     }
+    this.d.to = this.account
     if(!this.$slots["trigger"]){
       //console.log(options)
     } else {
