@@ -1,5 +1,5 @@
 import ChoicesVue from '/js/choices-vue.js';
-import Pop from "/js/pop-min.js";
+import Pop from "/js/pop.js";
 
 export default {
     components: {

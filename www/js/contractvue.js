@@ -1,4 +1,4 @@
-import Pop from "/js/pop-min.js";
+import Pop from "/js/pop.js";
 import ExtensionVue from "/js/extensionvue.js";
 import FilesVue from "/js/filesvue.js";
 import UploadVue from "/js/uploadvue.js";
