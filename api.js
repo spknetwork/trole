@@ -14,7 +14,7 @@ var { exec } = require('child_process');
 const { Blob } = require("buffer");
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
 const Ipfs = require('ipfs-api')
-var ipfs = new Ipfs(config.ENDPOINT, { protocol: config.ENDPROTOCOL, port: config.ENDPORT})
+var ipfs = new Ipfs(`/ip4/${config.ENDPOINT}/tcp/${config.ENDPORT}`)
 const Busboy = require('busboy');
 
 var live_stats = {
