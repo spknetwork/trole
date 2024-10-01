@@ -77,6 +77,7 @@ export default {
         required: false,
         default: ""
     },
+  },
   watch: {
     op(op, oldOp) {
       if (op.txid) {
