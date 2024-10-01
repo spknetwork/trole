@@ -983,14 +983,12 @@ export default {
       <div class="d-flex w-100 ms-auto me-auto align-items-center container" style="max-width: 1800px;" id="navbarSupportedContent">
 
         <!-- MAIN NAV -->
-        <div v-if ="node" class="me-auto">
-        <div class="fs-5">SPK Network</div>
-        </div>
-        <ul class="navbar-nav me-auto align-items-center" v-if="!node">
-          <li><a class="navbar-brand d-md-flex" href="/"><img src="/img/dlux-hive-logo-alpha.svg" alt="dlux-logo" width="40" height="40"></a></li> 
-          <li class="nav-item"><a class="nav-link text-center" href="/hub/"><i class="fa-solid fs-5 px-1 fa-mountain-sun"></i><br><span class="small">HUB</span></a></li>
-          <li class="nav-item"><a class="nav-link text-center" href="/nfts/"><i class="fa-solid fs-5 px-1 fa-store"></i><br><span class="small">NFT</span></a></li>
-          <li class="nav-item"><a class="nav-link text-center" href="/dex/"><i class="fa-solid fs-5 px-1 fa-building-columns"></i><br><span class="small">DEX</span></a></li>
+        <ul class="navbar-nav me-auto align-items-center">
+          <li v-if="node" class="d-flex align-items-center"><a class="navbar-brand d-md-flex" href="/"><img src="/img/logo.svg" alt="spk-logo" width="40" height="40"></a><div class="fs-5">SPK Network</div></li>
+          <li v-if="!node"><a class="navbar-brand d-md-flex" href="/"><img src="/img/dlux-hive-logo-alpha.svg" alt="dlux-logo" width="40" height="40"></a></li> 
+          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/hub/"><i class="fa-solid fs-5 px-1 fa-mountain-sun"></i><br><span class="small">HUB</span></a></li>
+          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/nfts/"><i class="fa-solid fs-5 px-1 fa-store"></i><br><span class="small">NFT</span></a></li>
+          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/dex/"><i class="fa-solid fs-5 px-1 fa-building-columns"></i><br><span class="small">DEX</span></a></li>
         </ul>
 
         <!-- LOGIN MENU -->
