@@ -19,8 +19,7 @@ export default {
     },
     template: `
     <div class="d-flex flex-column">
-    
-    <div class="d-flex flex-grow-1 p-1">
+    <div class="d-flex flex-grow-1 p-1" v-if="!nodeview">
         <div class="d-flex flex-grow-1 flex-wrap align-items-stretch justify-content-around">
             
             
