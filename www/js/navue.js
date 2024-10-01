@@ -1004,10 +1004,10 @@ export default {
               </span>
               </button>
               <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black" aria-labelledby="infoDropdown" style="position: absolute;"> 
-                  <li class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode fa-fw me-2"></i>Invite</a></li>
-                  <li class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
+                  <li v-if="!node" class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode fa-fw me-2"></i>Invite</a></li>
+                  <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
                   <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i class="fa-solid fa-book fa-fw me-2"></i>Docs</a></li>
-                  <li class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
+                  <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
                 </ul>
             </div>
                 
@@ -1017,7 +1017,7 @@ export default {
 
         <!-- USER MENU -->
 	      <ul class="navbar-nav" v-if="user" id="userMenu">
-          <li class="nav-item d-flex align-items-center"><a class="nav-link" href="/new/advanced"><i class="fa-solid fa-plus fa-fw me-1"></i></a></li>
+          <li v-if="!node" class="nav-item d-flex align-items-center"><a class="nav-link" href="/new/advanced"><i class="fa-solid fa-plus fa-fw me-1"></i></a></li>
           <li class="nav-item d-flex align-items-center d-none">
             <a class="nav-link" role="button" @click="toggleChat" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
               <img src="/img/sting_white.svg" alt="" width="30" height="30" class="img-fluid me-2">
