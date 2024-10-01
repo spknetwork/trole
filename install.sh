@@ -200,7 +200,7 @@ then
     fi
     if [ -z "$ENDPOINT" ];
     then
-        echo "ENDPOINT=http://127.0.0.1" | tee -a .env 
+        echo "ENDPOINT=127.0.0.1" | tee -a .env 
     fi
     if [ -z "$POA_URL" ];
     then
@@ -215,7 +215,7 @@ else
     read ACCOUNT
     echo "ACCOUNT=${ACCOUNT}" | tee -a .env
     echo "API_PORT=5050" | tee -a .env 
-    echo "ENDPOINT=http://127.0.0.1" | tee -a .env 
+    echo "ENDPOINT=127.0.0.1" | tee -a .env 
     echo "ENDPORT=5001" | tee -a .env
     echo "VALIDATOR=${BUILDVAL}" | tee -a .env
     echo "ipfshost=127.0.0.1" | tee -a .env
