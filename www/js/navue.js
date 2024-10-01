@@ -59,7 +59,24 @@ export default {
     "toast-vue": ToastVue,
   },
   emits: ["login", "logout", "refresh", "ack"],
-  props: ["op", "lapi"],
+  props: {
+    op: {
+        type: Object,
+        required: true,
+        default: function () {
+            return {}
+        }
+    },
+    node: {
+        type: Boolean,
+        required: false,
+        default: false
+    },
+    lapi: {
+        type: String,
+        required: false,
+        default: ""
+    },
   watch: {
     op(op, oldOp) {
       if (op.txid) {

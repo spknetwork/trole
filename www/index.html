@@ -23,7 +23,7 @@
 <body class="d-flex flex-column h-100 text-white pt-5" id="explore">
     <div id="app">
         <div>
-            <nav-vue @login="account = $event" @logout="account = ''" @ack="removeOp($event)" :op="toSign" />
+            <nav-vue @login="account = $event" @logout="account = ''" @ack="removeOp($event)" :op="toSign" :node="true"/>
         </div>
         <main role="main" class="flex-shrink-0" v-cloak>
             <div class="container">
