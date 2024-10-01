@@ -11,6 +11,7 @@ createApp({
   data() {
     return {
       account: '',
+      node: true,
       toSign: {},
       stats: {},
       contracts: [],
