@@ -395,7 +395,7 @@ export default {
       }
     },
     accountCheck() {
-      fetch("https://hive-api.dlux.io", {
+      fetch("https://api.hive.blog", {
         body: `{\"jsonrpc\":\"2.0\", \"method\":\"condenser_api.get_accounts\", \"params\":[[\"${this.d.to}\"]], \"id\":1}`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",

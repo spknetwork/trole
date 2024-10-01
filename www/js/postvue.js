@@ -1,6 +1,6 @@
 import Tagify from "/js/tagifyvue.js";
 import MDE from "/js/mde.js";
-import Bennies from "/js/bennies-min.js";
+import Bennies from "/js/bennies.js";
 
 export default {
   template: `

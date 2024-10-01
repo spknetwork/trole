@@ -1,158 +1,18 @@
-class StWidget {
-  constructor(url) {
-    this.url = url.indexOf('?') === -1 ? (url + '?embed') : (url + '&embed');
-    this.element = null;
-    this.iframe = null;
-    this.user = null;
-    this.properties = null;
-    this.initialized = false;
-    this.enableKeychainPassthrough = true;
-    this.allowedCustomJson = ["community", "follow"];
-    this.messageListener = null;
-    this.onLastRead = null;
-    this.frameOrigin = '*';
-  }
-  createElement(width = 450, height = 556, overlay = true, resizable = true) {
-    this.initialize();
-    var div = document.createElement('div');
-    this.element = div;
-    var style = { border: '1px solid gray' };
-    if (overlay) {
-      style['position'] = 'absolute';
-      style['z-index'] = '10000';
-    }
-    if (resizable) {
-      style['resize'] = 'both';
-      style['overflow'] = 'hidden';
-    }
-
-    this.setStyle(style);
-    this.resize(width, height);
-
-    var iframe = document.createElement('iframe');
-    this.iframe = iframe;
-    iframe.src = this.url;
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    div.appendChild(iframe);
-
-    return div;
-  }
-  resize(width = 450, height = 556) {
-    this.setStyle({
-      width: typeof width === 'string' ? width : (width + 'px'),
-      height: typeof height === 'string' ? height : (height + 'px'),
-    });
-  }
-  setStyle(style) {
-    for (var name in style) this.element.style.setProperty(name, style[name]);
-  }
-  setLastReadCallback(fn) {
-    this.onLastRead = fn;
-  }
-  postMessage(message) {
-    if (this.initialized) {
-      var _this = this;
-      if (this.iframe.contentWindow != null)
-        this.iframe.contentWindow.postMessage(message, this.frameOrigin);
-      else this.iframe.addEventListener("load", () => {
-        _this.iframe.contentWindow.postMessage(message, this.frameOrigin);
-      });
-      return true;
-    }
-    return false;
-  }
-  setProperties(properties) {
-    this.properties = properties;
-    this.postMessage(["stlib", "setProperties", JSON.stringify(this.properties)]);
-  }
-  pause(value) { return this.postMessage(["stlib", "pause", JSON.stringify(value)]); }
-  setUser(user) {
-    this.user = user;
-    this.postMessage(["stlib", "setUser", JSON.stringify(user)])
-    this.reload();
-  }
-  reload() {
-    this.postMessage(["stlib", "reload", JSON.stringify("")])
-  }
-  navigate(url) {
-    this.url = url.indexOf('?') === -1 ? (url + '?embed') : (url + '&embed');
-    this.postMessage(["stlib", "navigate", JSON.stringify(this.url)]);
-  }
-
-  initialize() {
-    if (this.messageListener != null) return;
-    var _this = this;
-    this.messageListener = (event) => {
-      try {
-        if (event.data != null && Array.isArray(event.data)) {
-          var data = event.data;
-          if (data.length > 2 && data[0] === 'stlib') {
-            _this.onMessage(event, data[1], data[2], data.length > 3 ? data[3] : []);
-          }
-        }
-      }
-      catch (e) { console.log(e); }
-    };
-    window.addEventListener("message", this.messageListener);
-  }
-  onMessage(event, msgId, name, args) {
-    switch (name) {
-      case "initialize":
-        this.initialized = true;
-        this.frameOrigin = event.origin;
-        if (this.properties != null)
-          event.source.postMessage(["stlib", "setProperties", JSON.stringify(this.properties)], event.origin);
-        if (this.user != null)
-          event.source.postMessage(["stlib", "setUser", JSON.stringify(this.user)], event.origin);
-        event.source.postMessage(["stlib", "initMain", JSON.stringify("")], event.origin);
-        break;
-      case "notifications":
-        if (this.onLastRead) this.onLastRead(args);
-        break;
-      case "requestCustomJson":
-        if (this.enableKeychainPassthrough &&
-          this.allowedCustomJson.indexOf(args[1]) !== -1 &&
-          args[2] === 'Posting')
-          window.hive_keychain.requestCustomJson(args[0], args[1], 'Posting', args[3], args[4], (r) => {
-            event.source.postMessage(["stlib", msgId, JSON.stringify(r)], event.origin);
-          });
-        break;
-      case "requestVerifyKey":
-        if (this.enableKeychainPassthrough && args[2] === 'Posting')
-          window.hive_keychain.requestVerifyKey(args[0], args[1], 'Posting', (r) => {
-            event.source.postMessage(["stlib", msgId, JSON.stringify(r)], event.origin);
-          });
-        break;
-      case "requestSignBuffer":
-        if (this.enableKeychainPassthrough && args[2] === 'Posting')
-          window.hive_keychain.requestSignBuffer(args[0], args[1], 'Posting', (r) => {
-            event.source.postMessage(["stlib", msgId, JSON.stringify(r)], event.origin);
-          });
-        break;
-      case "requestEncodeMessage":
-        if (this.enableKeychainPassthrough && args[3] === 'Posting')
-          window.hive_keychain.requestEncodeMessage(args[0], args[1], args[2], 'Posting', (r) => {
-            event.source.postMessage(["stlib", msgId, JSON.stringify(r)], event.origin);
-          });
-        break;
-    }
-  }
-  cleanup() {
-    if (this.messageListener != null) {
-      window.removeEventListener("message", this.messageListener);
-      this.messageListener = null;
-    }
-  }
-}
+import ToastVue from "/js/toastvue.js";
+import StWidget from "/js/stwidget.js";
 
 export default {
   data() {
     return {
       chatVisible: false,
+      userPinFeedback: "",
       passwordField: "",
       level: "posting",
-      decrypted: false,
+      decrypted: {
+        pin: false,
+        accounts: {
+        },
+      },
       HAS: false,
       HKC: true,
       HSR: false,
@@ -186,12 +46,17 @@ export default {
       },
       haspich: 50,
       haspic: "/img/hiveauth.svg",
-      decrypted: {},
+      decrypted: {
+        pin: false,
+        accounts: {
+        },
+      },
       PIN: "1234",
       PENstatus: "",
     };
   },
   components: {
+    "toast-vue": ToastVue,
   },
   emits: ["login", "logout", "refresh", "ack"],
   props: ["op", "lapi"],
@@ -245,20 +110,20 @@ export default {
           PrivateKey.sign("Testing123")
         );
         if (success) {
-          if (!this.decrypted[this.account]) this.decrypted[this.account] = {};
+          if (!this.decrypted.accounts[this.account]) this.decrypted[this.account] = {};
             this.decrypted[this.account][level] = key;
           var encrypted = CryptoJS.AES.encrypt(
             JSON.stringify(this.decrypted),
             this.PIN
           );
-          localStorage.setItem("PEN" + this.account, encrypted);
+          localStorage.setItem("PEN", encrypted);
         } else {
           this.PENstatus = "Invalid Key";
         }
       })
     },
     decryptPEN(user = this.account){
-      var PEN = localStorage.getItem("PEN" + user);
+      var PEN = localStorage.getItem("PEN");
       if(PEN){
         var decrypted = CryptoJS.AES.decrypt(encrypted, this.PIN);
         this.decrypt = JSON.parse(decrypted);
@@ -314,6 +179,9 @@ export default {
       this.sign(op)
         .then((r) => {
           this.statusFinder(r, obj);
+          try {
+            obj.callbacks[0](`${obj.challenge}:${r}`, console.log("callback?"));
+          } catch (e) {}
         })
         .catch((e) => {
           console.log(e);
@@ -340,6 +208,9 @@ export default {
       this.sign(op)
         .then((r) => {
           this.statusFinder(r, obj);
+          try {
+            obj.callbacks[0](`${obj.challenge}:${r}`, console.log("callback?"));
+          } catch (e) {}
         })
         .catch((e) => {
           console.log(e);
@@ -350,6 +221,9 @@ export default {
       this.sign(op)
         .then((r) => {
           if (obj.id) this.statusFinder(r, obj);
+          try {
+            obj.callbacks[0](`${obj.challenge}:${r}`, console.log("callback?"));
+          } catch (e) {}
         })
         .catch((e) => {
           console.log(e);
@@ -785,7 +659,7 @@ export default {
       if (response.success == true) {
         obj.status = "Hive TX Success:\nAwaiting Layer 2 confirmation...";
         obj.delay = 100000;
-        obj.link = "https://hiveblocks.com/tx/" + response.result.id;
+        obj.link = "https://hivehub.dev/tx/" + response.result.id;
         obj.txid = response.result.id;
         this.ops.push(obj);
         this.cleanOps(); //also stores it in localStorage
@@ -934,6 +808,55 @@ export default {
         this.setUser();
       }
     },
+    queueUser() {
+      fetch("https://api.hive.blog", {
+        method: "POST",
+        body: JSON.stringify([
+          "get_accounts",
+          [[this.userField]],
+        ]),
+
+      }).then(r=>{
+        if(r[0].active.key_auths[0][0]){
+          this.userPinFeedback = "Valid User";
+          this.pinSetup = {
+            account: this.userField,
+            activePub: r[0].active.key_auths[0],
+            postingPub: r[0].posting.key_auths[0],
+            memoPub: r[0].memo_key,
+            ownerPub: r[0].owner.key_auths[0],
+          }
+        } else {
+          this.userPinFeedback = "Invalid User";
+        }
+        var PublicKey = hiveTx.PublicKey.from(
+          r[0][level].key_auths[0][0]
+        );
+        var PrivateKey = hiveTx.PrivateKey.from(key);
+        var success = PublicKey.verify(
+          "Testing123",
+          PrivateKey.sign("Testing123")
+        );
+        if (success) {
+          if (!this.decrypted.accounts[this.account]) this.decrypted[this.account] = {};
+            this.decrypted[this.account][level] = key;
+          var encrypted = CryptoJS.AES.encrypt(
+            JSON.stringify(this.decrypted),
+            this.PIN
+          );
+          localStorage.setItem("PEN", encrypted);
+        } else {
+          this.PENstatus = "Invalid Key";
+        }
+      })
+      this.decrypted.accounts[this.account] = {
+        posting: "",
+        active: "",
+        memo: "",
+        owner: "",
+        master: "",
+        };
+    },
     cleanOps(txid) {
       const ops = this.ops;
       for (var i = 0; i < ops.length; i++) {
@@ -996,7 +919,7 @@ export default {
     if(decrypted)this.decrypted = JSON.parse(decrypted)
     if (signer == "HSR") this.useHS();
     else if (signer == "HAS") this.useHAS();
-    else if (signer == "PEN") this.usePEN();
+    else if (signer == "PEN" && this.decrypted) this.usePEN();
     else this.useKC();
     this.getUser();
     this.getRecentUsers();
@@ -1032,7 +955,7 @@ export default {
   },
   template: `
 <div>
-<header class="navbar navbar-expand navbar-dark dnav fixed-top">
+<div class="navbar navbar-expand navbar-dark dnav fixed-top">
   <div class="container-fluid">
     <!--pwa nav toggle-->
     <a class="d-none text-white d-sm-none" style="font-size: 1.5em;" data-bs-toggle="offcanvas" href="#offcanvasNav" role="button" aria-controls="offcanvasExample">
@@ -1043,7 +966,10 @@ export default {
 
         <!-- MAIN NAV -->
         <ul class="navbar-nav me-auto align-items-center">
-          <li><a class="navbar-brand d-md-flex" href="/"><img src="/img/logo.svg" alt="dlux-logo" width="40" height="40"></a></li>
+          <li><a class="navbar-brand d-md-flex" href="/"><img src="/img/dlux-hive-logo-alpha.svg" alt="dlux-logo" width="40" height="40"></a></li> 
+          <li class="nav-item"><a class="nav-link text-center" href="/hub/"><i class="fa-solid fs-5 px-1 fa-mountain-sun"></i><br><span class="small">HUB</span></a></li>
+          <li class="nav-item"><a class="nav-link text-center" href="/nfts/"><i class="fa-solid fs-5 px-1 fa-store"></i><br><span class="small">NFT</span></a></li>
+          <li class="nav-item"><a class="nav-link text-center" href="/dex/"><i class="fa-solid fs-5 px-1 fa-building-columns"></i><br><span class="small">DEX</span></a></li>
         </ul>
 
         <!-- LOGIN MENU -->
@@ -1059,7 +985,7 @@ export default {
               <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black" aria-labelledby="infoDropdown" style="position: absolute;"> 
                   <li class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode fa-fw me-2"></i>Invite</a></li>
                   <li class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
-                  <li class=""><a class="dropdown-item" href="/docs/"><i class="fa-solid fa-book fa-fw me-2"></i>Docs</a></li>
+                  <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i class="fa-solid fa-book fa-fw me-2"></i>Docs</a></li>
                   <li class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
                 </ul>
             </div>
@@ -1070,10 +996,10 @@ export default {
 
         <!-- USER MENU -->
 	      <ul class="navbar-nav" v-if="user" id="userMenu">
-          <li class="nav-item d-flex align-items-center d-none"><a class="nav-link" href="/new/"><i class="fa-solid fa-plus fa-fw me-1"></i></a></li>
-          <li class="nav-item d-flex align-items-center">
+          <li class="nav-item d-flex align-items-center"><a class="nav-link" href="/new/advanced"><i class="fa-solid fa-plus fa-fw me-1"></i></a></li>
+          <li class="nav-item d-flex align-items-center d-none">
             <a class="nav-link" role="button" @click="toggleChat" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
-              <img src="/img/sting_white.svg" alt="" width="30" height="30" class="img-fluid me-md-2">
+              <img src="/img/sting_white.svg" alt="" width="30" height="30" class="img-fluid me-2">
             </a>
           </li>
           <li class="nav-item d-flex align-items-center">
@@ -1084,17 +1010,27 @@ export default {
           </li>
           <div class="btn-group dropdown">
 		      <a class="nav-link mt-auto mb-auto d-flex align-items-center dropdown-toggle dropdown-bs-toggle text-white-50" id="userDropdown" role="button" aria-expanded="false" data-bs-toggle="dropdown" href="#">
-			    <a role="button" v-show="user" class="p-0 d-md-none me-1 nav-link d-flex align-items-center text-white-50">
-            <img :src="avatar" id="userImage" alt="" width="40" height="40" class="img-fluid rounded-circle bg-light cover"> 
-          </a>  
-          <span id="userName" class="mx-1 d-none d-md-flex">{{user}}</span>
+            <div v-show="user" class="p-0 d-md-none me-1 nav-link d-flex align-items-center text-white-50">
+              <img :src="avatar" id="userImage" alt="" width="40" height="40" class="img-fluid rounded-circle bg-light cover"> 
+            </div>  
+            <span id="userName" class="mx-1 d-none d-md-flex">{{user}}</span>
           </a>
           <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black mt-2" aria-labelledby="userDropdown" >
-          <li class=""><a class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#spkWalletModal"><i class="fa-solid fa-wallet fa-fw me-2"></i>Wallet</a></li>
-			        <li class=""><a class="dropdown-item" :href="'https://vue.dlux.io/@' + user + '#files/'" target="_blank">
-              <i class="fa-solid fa-cloud me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .7em;"><i class="small fa-solid fa-up-right-from-square"></i><span class="visually-hidden">dlux.io</span></span></i>Files</a></li>
-              
+          <li class="">
+            <a class="dropdown-item" role="button" @click="toggleChat" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
+              <img src="/img/sting_white.svg" alt="" width="20" height="20" class="img-fluid me-2">Chat
+            </a>
+          </li>
+			        <li class=""><a class="dropdown-item" :href="'/me#blog/'" @click="showTab('blog')"><i class="fas fa-user fa-fw me-2"></i>Profile</a></li>
+			        <li class=""><a class="dropdown-item" :href="'/me#wallet/'" @click="showTab('wallet')"><i class="fas fa-wallet fa-fw me-2"></i>Wallet</a></li>
+			        <li class=""><a class="dropdown-item" :href="'/me#inventory/'" @click="showTab('inventory')"><i class="fas fa-boxes fa-fw me-2"></i>Inventory</a></li>
+              <li class=""><a class="dropdown-item" :href="'/me#files/'" @click="showTab('files')"><i class="fas fa-cloud fa-fw me-2"></i>Cloud</a></li>
               <li class=""><hr class="dropdown-divider"></li>
+              <li class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
+              <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i class="fa-solid fa-book me-2 fa-fw"></i>Docs</a></li>
+              <li class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
+              <li class=""><hr class="dropdown-divider"></li>
+              <li class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode me-2 fa-fw"></i>Invite</a></li>
               <li><a class="dropdown-item" role="button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers"><i class="fas fa-user-friends me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .9em;"><i class="small fa-solid fa-arrows-rotate"></i><span class="visually-hidden">change user</span></span></i>Users</a></li>
 			        <li><a class="dropdown-item" role="button" @click="logout()"><i class="fas fa-power-off fa-fw me-2"></i>Logout</a></li>
 		      </ul>
@@ -1106,12 +1042,12 @@ export default {
     
       <div>
   </div>
-</header>
-<!--<div class="position-fixed bottom-0 end-0 p-3 toast-container" style="z-index: 11">
+</div>
+<div class="position-fixed bottom-0 end-0 p-3 toast-container" style="z-index: 11">
   <div v-for="op in ops">  
     <toast-vue :alert="op"/>
   </div>
-</div>-->
+</div>
 
 <!-- sting chat -->
 <div class="offcanvas offcanvas-end bg-blur-darkg bg-img-none text-white-50" tabindex="-1" id="offcanvasSting" aria-labelledby="offcanvasStingLabel">
@@ -1140,9 +1076,15 @@ export default {
         <div class="dropdown">
           <button class="btn btn-secondary w-100 p-0" role="button" id="authDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" >
             <button v-if="HKC" class="btn btn-hivekeychain h-100 w-100 dropdown-toggle"><img src="/img/keychain.png" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
-            </button>
+            <button v-if="HAS" class="btn btn-hiveauth h-100 w-100 dropdown-toggle"><img src="/img/hiveauth.svg" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+            <button v-if="HSR" class="btn btn-hivesigner h-100 w-100 dropdown-toggle"><img src="/img/hivesigner.svg" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+            <button v-if="PEN" class="btn btn-pen h-100 w-100 dropdown-toggle"><img src="/img/dlux-pen.png" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+          </button>
           <ul class="dropdown-menu dropdown-menu-dark text-center bg-black p-2" aria-labelledby="authDropdown">
             <li class="p-2"><button class="btn btn-hivekeychain h-100 w-100" @click="useKC()"><img src="/img/keychain.png" class="img-responsive" style="height:50px !important;" ></button></li>
+            <li class="p-2"><button class="btn btn-hiveauth h-100 w-100" @click="useHAS()"><img src="/img/hiveauth.svg" class="img-responsive" style="height:50px !important;" ></button></li>
+            <li class="p-2"><button class="btn btn-hivesigner h-100 w-100" @click="useHS()"><img src="/img/hivesigner.svg" class="img-responsive" style="height:50px !important;" ></button></li>
+            <li class="p-2"><button class="btn btn-pen h-100 w-100" @click="usePEN()"><img src="/img/dlux-pen.png" class="img-responsive" style="height:50px !important;" ></button></li>
           </ul>
         </div>
 
@@ -1158,7 +1100,7 @@ export default {
       </div>
     </div>
 
-    <div v-if="!PEN">
+    <div v-if="!decrypted.pin">
       <label class="form-label">Add user</label>
       <div class="position-relative has-validation">
         <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
@@ -1166,17 +1108,57 @@ export default {
         </span>
         <input v-model="userField" autocapitalize="off" placeholder="username" @keyup.enter="setUser()" class="px-4 form-control bg-dark border-dark text-info">
         <span v-if="userField" class="position-absolute end-0 top-50 translate-middle-y pe-2">
-          <a role="button" @click="setUser()" class="text-info"><i class="fa-solid fa-circle-plus fa-fw"></i></a>
+          <a role="button" @click="queueUser()" class="text-info"><i class="fa-solid fa-circle-plus fa-fw"></i></a>
         </span>
       </div>
+      <p v-if="userPinFeedback"></p>
       <div class="small text-muted text-center mt-1 mb-2">
         Usernames are stored locally. <a class="no-decoration text-info" target="_blank" href="https://signup.hive.io/">Get Account</a>
       </div>
     </div>
 
-    <div v-if="PEN">
-    <!-- v-if no pin -->
+   <!-- <div v-if="false">
       <div>
+      <div>
+      <div class="d-flex justify-content-center align-items-center">
+        <div><a role="button" class="no-decoration">Lock<i class="fa-solid fa-lock ms-1"></i></a></div>
+        <div class="form-check form-switch ms-2 fs-2">
+          <div><input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked></div>
+        </div>
+        <div><a role="button" class="no-decoration"><i class="fa-solid fa-lock-open me-1"></i>Unlock</a></div>
+      </div>
+    
+    <label class="form-label">Add user</label>
+    <div class="position-relative has-validation">
+      <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
+        <i class="fa-solid fa-at fa-fw"></i>
+      </span>
+      <input v-model="userField" autocapitalize="off" placeholder="username" @keyup.enter="setUser()" class="px-4 form-control bg-dark border-dark text-info">
+      <span v-if="userField" class="position-absolute end-0 top-50 translate-middle-y pe-2">
+        <a role="button" @click="setUser()" class="text-info"><i class="fa-solid fa-circle-plus fa-fw"></i></a>
+      </span>
+    </div>
+    <div class="small text-muted text-center mt-1 mb-2">
+      Usernames are stored locally. <a class="no-decoration text-info" target="_blank" href="https://signup.hive.io/">Get Account</a>
+    </div>
+  <label class="form-label">Key Type</label>
+    <select :value="level" class="form-select bg-dark border-dark text-info mb-2" aria-label="Default select example">
+      <option selected value="owner">Owner Private Key</option>
+      <option value="master">Master Password</option>
+      <option value="active">Active Private Key</option>
+      <option value="posting">Posting Private Key</option>
+      <option value="memo">Memo Private Key</option>
+    </select>
+    <label class="form-label">Key</label>
+    <div class="position-relative has-validation">
+      <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
+        <i class="fa-solid fa-key fa-fw"></i>
+      </span>
+      <input v-model="passwordField" autocapitalize="off" placeholder="key" class="px-4 form-control bg-dark border-dark text-info">
+    </div>
+    <div class="small text-muted text-center mt-1 mb-3">
+      Keys are stored locally. Only enter your keys on websites you trust.
+    </div>
         <div class="fs-4 mb-1 text-center">
         Set a PIN
         </div>
@@ -1278,52 +1260,10 @@ export default {
         to encrypt and decrypt your keys
         </div>
       </div>
-
-      <!-- v-if pin is set and entered in -->
-      <div>
-        <div class="d-flex justify-content-center align-items-center">
-          <div><a role="button" class="no-decoration">Lock<i class="fa-solid fa-lock ms-1"></i></a></div>
-          <div class="form-check form-switch ms-2 fs-2">
-            <div><input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked></div>
-          </div>
-          <div><a role="button" class="no-decoration"><i class="fa-solid fa-lock-open me-1"></i>Unlock</a></div>
-        </div>
-      
-      <label class="form-label">Add user</label>
-      <div class="position-relative has-validation">
-        <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
-          <i class="fa-solid fa-at fa-fw"></i>
-        </span>
-        <input v-model="userField" autocapitalize="off" placeholder="username" @keyup.enter="setUser()" class="px-4 form-control bg-dark border-dark text-info">
-        <span v-if="userField" class="position-absolute end-0 top-50 translate-middle-y pe-2">
-          <a role="button" @click="setUser()" class="text-info"><i class="fa-solid fa-circle-plus fa-fw"></i></a>
-        </span>
-      </div>
-      <div class="small text-muted text-center mt-1 mb-2">
-        Usernames are stored locally. <a class="no-decoration text-info" target="_blank" href="https://signup.hive.io/">Get Account</a>
-      </div>
-    <label class="form-label">Key Type</label>
-      <select :value="level" class="form-select bg-dark border-dark text-info mb-2" aria-label="Default select example">
-        <option selected value="owner">Owner Private Key</option>
-        <option value="master">Master Password</option>
-        <option value="active">Active Private Key</option>
-        <option value="posting">Posting Private Key</option>
-        <option value="memo">Memo Private Key</option>
-      </select>
-      <label class="form-label">Key</label>
-      <div class="position-relative has-validation">
-        <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
-          <i class="fa-solid fa-key fa-fw"></i>
-        </span>
-        <input v-model="passwordField" autocapitalize="off" placeholder="key" class="px-4 form-control bg-dark border-dark text-info">
-      </div>
-      <div class="small text-muted text-center mt-1 mb-3">
-        Keys are stored locally. Only enter your keys on websites you trust.
-      </div>
     </div>
     </div>
 
-    
+    -->
       
     <div class="mb-3">
       <div>

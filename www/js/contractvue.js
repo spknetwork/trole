@@ -18,45 +18,141 @@ export default {
         "choices-vue": ChoicesVue
     },
     template: `
-    <div class="d-flex justify-content-center mt-2">
+    <div class="d-flex flex-column">
+    
+    <div class="d-flex flex-grow-1 p-1">
+        <div class="d-flex flex-grow-1 flex-wrap align-items-stretch justify-content-around">
+            
+            
+            <div class="card m-1" style="width: 18rem;">
+                <div class="card-header d-flex align-items-center justify-content-between px-2 py-1 fs-4"><i class="fa-solid fa-atom me-1"></i><span>SPK</span></div>
+                <div class="card-body px-2 py-1">
+                    <div class="d-flex flex-column">
+                        <div class="mb-1 fw-light d-flex justify-content-center" style="font-size: 1.1rem !important;">{{formatNumber((saccountapi.spk/1000),'3','.',',')}} SPK</div>
+                        <div class="d-flex justify-content-around mt-1">
+                            <!-- spk wallet button -->
+                            <button v-if="!nodeview" type="button" class="btn btn-sm btn-dark border-secondary text-secondary d-flex justify-content-center" data-bs-toggle="modal" data-bs-target="#spkWalletModal" style="width:110px;">
+                                <i class="fa-solid fa-wallet fa-fw me-1 my-auto"></i>
+                                <span class="my-auto">Wallet</span>
+                                <span class="badge small text-bg-secondary text-black ms-1 mb-auto" style="font-size: 0.5em;">Test</span>
+                            </button>
+                            <modal-vue type="power" token="SPK" test="test"
+                                    func="Power Up" :balance="saccountapi.spk"
+                                    :account="account"
+                                    @modalsign="sendIt($event)" v-slot:trigger>
+                                    <button class="btn btn-sm btn-dark border-warning text-warning trigger"
+                                        type="button" style="width:110px;"><i class="fa-solid fa-bolt fa-fw me-1"></i>Power Up</button>
+                                </modal-vue>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+            
+            
+            <div class="card m-1" style="width: 18rem;">
+                <div class="card-header d-flex align-items-center justify-content-between px-2 py-1 fs-4"><i class="fa-solid fa-bolt me-1"></i>
+                <span class="d-flex align-items-center">Power</span></div>
+                <div class="d-flex flex-column card-body px-2 py-1">
+                    <div class="mb-1 fw-light text-center " style="font-size: 1.1rem !important;">{{formatNumber(saccountapi.spk_power/1000,'3','.',',')}} SPK Power</div>
+                    <div class="progress mb-1 is-danger" role="progressbar" aria-label="Basic example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar" :style="{'width':  saccountapi.spk_power ? (broca_calc(saccountapi.broca)/(saccountapi.spk_power*1000))*100 + '%' : '0%' }">{{ formatNumber((broca_calc(saccountapi.broca)/(saccountapi.spk_power*1000))*100,'2','.',',') }}%</div>
+                    </div>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#buyTokenModal" class="text-center text-primary">Get more power</a>
+                </div>
+            </div>
+
+            <div class="card m-1" style="width: 18rem;">
+                <div class="card-header d-flex align-items-center justify-content-between px-2 py-1 fs-4"><i class="fa-solid fa-chart-pie me-1"></i><span>Storage</span></div>
+                <div class="d-flex flex-column card-body px-2 py-1">
+                    <div class="mb-1 fw-light text-center" style="font-size: 1.1rem !important;">{{fancyBytes(usedBytes)}} of {{fancyBytes(availableBytes)}} used</div>
+                    <div class="progress mb-1" role="progressbar" aria-label="Basic example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar" :style="'width:' + (usedBytes/availableBytes)*100 + '%;'">{{formatNumber((usedBytes/availableBytes)*100,'2','.',',')}}%</div>
+                    </div>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#buyTokenModal" class="text-center text-primary">Get more storage</a>
+                </div>
+            </div>
+
+            <div class="card m-1" style="width: 18rem;">
+                <div class="card-header d-flex align-items-center justify-content-between px-2 py-1 fs-4"><i class="fa-solid fa-cloud-arrow-up me-1"></i><span>Upload</span></div>
+                    <div class="card-body px-2 py-1">
+                        <div class="d-flex flex-column">
+                            <div class="mb-1 fw-light text-center" style="font-size: 1.1rem !important;">Open a contract to store files</div>
+                            <div class="d-flex justify-content-around mt-1">
+                                <!-- new contract button -->
+                                <button v-if="saccountapi.pubKey != 'NA' && saccountapi.spk_power" type="button"
+                                    class="btn btn-sm btn-dark border-info text-info" style="width:110px;">
+                                    <modal-vue type="build" token="BROCA" :balance="broca_calc(saccountapi.broca)"
+                                        :account="account" @modalsign="toSign=$event" :ipfsproviders="ipfsProviders"
+                                        v-slot:trigger>
+                                        <span slot="trigger" class="trigger"><i
+                                                class="fa-solid fa-file-contract fa-fw me-1"></i>NEW</span>
+                                    </modal-vue>
+                                </button>
+                                <!-- free button -->
+                                <button v-if="saccountapi.pubKey != 'NA'" type="button" class="btn btn-sm btn-dark border-success text-success"
+                                    data-bs-toggle="modal" data-bs-target="#sponsoredModal" style="width:110px;">
+                                    <span class=""></span><i class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>FREE
+                                </button>
+                                <!-- register -->
+                                <button v-if="saccountapi.pubKey == 'NA'" type="button" class="btn btn-sm btn-dark border-info text-info"
+                                    @click="updatePubkey()" style="width:110px;">
+                                    <span class=""></span><i class="fa-solid fa-user-plus fa-fw me-1"></i>Register
+                                </button>
+                                  
+                        </div>    
+                    </div>    
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- register account -->
-    <div v-if="saccountapi.pubKey == 'NA'" class="d-flex">
-        <div class="d-flex justify-content-center p-3">
+    <div v-if="saccountapi.pubKey == 'NA'" class="d-flex justify-content-center">
+        <div class="d-flex p-3 mt-3">
             <div class="text-center" style="max-width: 600px;">
-                <p class="lead">Click Register Account to join the SPK Network and store your files on IPFS</p>
+                <p class="fs-4 lead">Register your account on SPK Network for free<br>to start storing your files on IPFS</p>
                 <div class="d-flex justify-content-center">
-                <button type="button" class="btn btn-primary" @click="updatePubkey()">
+                <button type="button" class="btn btn-primary my-3" @click="updatePubkey()">
                 <i class="fa-solid fa-user-plus fa-fw me-1"></i> Register Account
                 </button>
-                <button type="button" class="ms-2 btn btn-secondary d-flex" data-bs-toggle="modal" data-bs-target="#spkWalletModal">
-                    <i class="fa-solid fa-wallet fa-fw me-1 my-auto"></i>
-                    <span class="my-auto">SPK</span>
-                    <span class="badge small text-bg-warning ms-1 mb-auto" style="font-size: 0.5em;">Test</span>
-                </button>
+                
                 </div>
             </div>
         </div>
     </div>
-    <!-- tabs nav -->
-    <div v-if="saccountapi.pubKey != 'NA'" class="d-flex flex-column w-100">
-        <ul class="nav nav-pills ms-auto me-auto mb-2">
 
-            <li class="nav-item">
-                <a class="nav-link active" href="#contractsTab" role="tab" data-bs-toggle="tab"
-                    aria-controls="contractstab" aria-expanded="true"><i class="fa-solid fa-list fa-fw"></i></a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link " aria-current="page" href="#filesTab" role="tab" data-bs-toggle="tab"
-                    aria-controls="filestab" aria-expanded="false"><i class="fa-solid fa-cloud fa-fw"></i></a>
-            </li>
-        </ul>
+    <!-- tabs nav -->
+    <div v-if="saccountapi.pubKey != 'NA'" class="d-flex flex-column card p-0"  >
+
+        <!-- top menu -->
+        <div class="pb-1 mb-3">
+            <div class="d-flex flex-wrap align-items-center ">
+                <div class="mx-auto ">
+                    <ul class="nav nav-tabs rounded mx-auto mt-3 fs-5 " style="background-color: rgb(0,0,0,0.3)">
+                        <li class="nav-item">
+                            <a class="nav-link active px-4" href="#contractsTab" role="tab" data-bs-toggle="tab"
+                                aria-controls="contractstab" aria-expanded="true">CONTRACTS</a>
+                        </li>
+                        <li v-if="!cc" class="nav-item">
+                            <a class="nav-link px-4" aria-current="page" href="#filesTab" role="tab" data-bs-toggle="tab"
+                                aria-controls="filestab" aria-expanded="false">FILES</a>
+                        </li>
+                        <li v-if="cc" class="nav-item">
+                            <a class="nav-link px-4" aria-current="page" href="#ccTab" role="tab" data-bs-toggle="tab"
+                                aria-controls="cctab" aria-expanded="false">Files</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
         <!-- tabs -->
-        <div class="tab-content bg-color">
-            
-            <!-- files -->
-            <div role="tabpanel" class="tab-pane" id="filesTab" aria-labelledby="filestab">
-                
-                <!-- no files -->
+        <div class="tab-content">
+
+            <!-- cc -->
+            <div v-if="cc" role="tabpanel" class="tab-pane" id="ccTab" aria-labelledby="cctab">
+                 <!-- no files -->
                 <div v-if="hasFiles" class="ms-auto me-auto text-center">
                     <div class="ms-auto me-auto card px-3 py-2 mt-3 mb-4 bg-darker" style="max-width: 600px">
                         <h2 class="fw-light mt-1">No files found</h2>
@@ -71,103 +167,89 @@ export default {
                 
                 <!-- has files -->
                 <div v-if="!hasFiles" class="d-flex flex-wrap justify-content-center">
-                    
-                        <files-vue :assets="assets" @addassets="addAssets($event)" :account="spkapi.name" :current="saccountapi.head_block"
+                        <files-vue :assets="assets" @addassets="addAssets($event)" :account="saccountapi.name" :current="saccountapi.head_block" :cc="true"
                             :contracts="contracts"></files-vue>
                    
                 </div>
             </div>
+        
             
-            <!-- contracts -->
-            <div role="tabpanel" class="tab-pane show active" id="contractsTab" aria-labelledby="contractstab">
-                <!-- top menu -->
-                <div class="pb-1 mb-2 border-bottom border-2 border-light">
-                    <div class="mx-1 mx-lg-3 d-flex flex-wrap justify-content-center align-items-center">
-                        <h2 class="my-1 fw-light text-start">{{title}}</h2>
-                        <h6 class="my-1 fw-light text-start">{{fancyBytes(usedBytes)}}/{{fancyBytes(availableBytes)}}</h6>
-                        <div class="d-flex flex-wrap flex-grow-1 ms-2">
-                            <!-- tools 1 -->
-                            <div class="d-flex mb-1 flex-wrap ms-auto order-lg-last">
-                                <div class="d-flex flex-wrap justify-content-center ms-auto me-auto">
-
-                                    <!-- new contract button -->
-                                    <button v-if="saccountapi.pubKey != 'NA' && saccountapi.spk_power" type="button"
-                                        class="btn btn-primary mt-1 me-1">
-                                        <modal-vue type="build" token="BROCA" :balance="broca_calc(saccountapi.broca)"
-                                            :account="account" @modalsign="toSign=$event" :ipfsproviders="ipfsProviders"
-                                            v-slot:trigger>
-                                            <span slot="trigger" class="trigger"><i
-                                                    class="fa-solid fa-file-contract fa-fw me-1"></i>NEW</span>
-                                        </modal-vue>
-                                    </button>
-
-                                    <!-- free button -->
-                                    <button v-if="saccountapi.pubKey != 'NA'" type="button" class="btn btn-danger mt-1 me-1"
-                                        data-bs-toggle="modal" data-bs-target="#sponsoredModal">
-                                        <span class=""></span><i class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>FREE
-                                    </button>
-
-                                    <!-- spk wallet button -->
-                                    <button v-if="!nodeview" type="button" class="mt-1 btn btn-secondary d-flex" data-bs-toggle="modal" data-bs-target="#spkWalletModal">
-                                        <i class="fa-solid fa-wallet fa-fw me-1 my-auto"></i>
-                                        <span class="my-auto">SPK</span>
-                                        <span class="badge small text-bg-warning ms-1 mb-auto" style="font-size: 0.5em;">Test</span>
-                                    </button>
-                                    
-                                </div>
-                            </div>
-                            <!-- tools 2 (hidden) -->
-                            <div>
-                                <div
-                                    class="d-none position-relative flex-grow-1 me-1 order-lg-first d-flex align-items-center">
-                                    <!-- search bar -->
-                                    <span class="flex-grow-1">
-                                        <span class="position-absolute ps-2 top-50 translate-middle-y">
-                                            <i class="fa-solid fa-magnifying-glass fa-fw"></i>
-                                        </span>
-                                        <input type="search" class="ps-4 form-control text-info border-light"
-                                            placeholder="Search" @keyup.enter="postSelect.entry = 'search';getPosts()"
-                                            @search="postSelect.entry = 'search';getPosts()">
-                                    </span>
-                                    <!-- filter button -->
-                                    <button type="button" class="btn btn-secondary ms-1">
-                                        <span class=""></span><i class="fa-solid fa-filter"></i>
-                                    </button>
-                                </div>
-                            </div>
+            <!-- files -->
+            <div v-else role="tabpanel" class="tab-pane" id="filesTab" aria-labelledby="filestab">
+                
+                <!-- no files -->
+                <div v-show="!contracts.length"> 
+                    <div class="ms-auto me-auto d-flex justify-content-center">
+                        <div class="card mx-1 px-3 py-2 mt-3 mb-4 bg-darker" style="max-width: 600px">
+                            <h2 class="fw-light mt-1">No files found</h2>
+                            <p class="lead mb-1" v-show="saccountapi.spk_power">
+                            Click 
+                                <a class="btn btn-sm btn-dark border-info text-info no-decoration small" style="font-size: 0.6em; width: 72px;" role="button" data-bs-toggle="modal" data-bs-target="#contractModal">
+                                    <modal-vue type="build" token="BROCA"
+                                        :balance="broca_calc(saccountapi.broca)" :account="account"
+                                        @modalsign="toSign=$event" :ipfsproviders="ipfsProviders"
+                                        v-slot:trigger>
+                                        <span slot="trigger" class="trigger"><i
+                                                class="fa-solid fa-file-contract fa-fw me-1"></i>NEW</span>
+                                    </modal-vue>
+                                </a>
+                                    to create a contract using SPK Power
+                                
+                            </p>
+                            <p class="lead mb-1" v-if="!nodeview">
+                                Click <a class="btn btn-sm btn-dark border-success text-success no-decoration small" style="font-size: 0.6em; width:72px;"
+                                    role="button" data-bs-toggle="modal" data-bs-target="#sponsoredModal"><i
+                                        class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>FREE</a>
+                                to select a sponsored contract</p>
+                                
+                                
                         </div>
                     </div>
                 </div>
+                
+                <!-- has files -->
+                <div v-if="contracts.length" class="d-flex flex-wrap justify-content-center">
+                    
+                        <files-vue :assets="assets" @addassets="addAssets($event)" :account="saccountapi.name" :current="saccountapi.head_block"
+                            :contracts="contracts"></files-vue>
+                   
+                </div>
+            </div>
+
+            
+            
+            <!-- contracts -->
+            <div role="tabpanel" class="tab-pane show active" id="contractsTab" aria-labelledby="contractstab">
+                
                 <div class="card-body p-0">
                     <!-- registered -->
                     <div v-if="saccountapi.pubKey != 'NA'">
                         
                         <!-- no contracts -->
                         <div v-show="!contracts.length"> 
-                        <div class="ms-auto me-auto d-flex justify-content-center">
-                            <div class="card mx-1 px-3 py-2 mt-3 mb-4 bg-darker" style="max-width: 600px">
-                                <h2 class="fw-light mt-1">No contracts found</h2>
-                                <p class="lead mb-1" v-if="!nodeview">
-                                    Click <a class="btn btn-sm btn-danger no-decoration small" style="font-size: 0.6em;"
-                                        role="button" data-bs-toggle="modal" data-bs-target="#sponsoredModal"><i
-                                            class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>FREE</a>
-                                    to select a sponsored contract. 
-                                    <span v-show="saccountapi.spk_power"> If
-                                        you have BROCA token, click <a
-                                            class="btn btn-sm btn-primary no-decoration small" style="font-size: 0.6em;"
-                                            role="button" data-bs-toggle="modal" data-bs-target="#contractModal">
-                                            <modal-vue type="build" token="BROCA"
-                                                :balance="broca_calc(saccountapi.broca)" :account="account"
-                                                @modalsign="toSign=$event" :ipfsproviders="ipfsProviders"
-                                                v-slot:trigger>
-                                                <span slot="trigger" class="trigger"><i
-                                                        class="fa-solid fa-file-contract fa-fw me-1"></i>NEW</span>
-                                            </modal-vue></a>
-                                        to create a custom contract
-                                    </span>
-                                </p>
+                            <div class="ms-auto me-auto d-flex justify-content-center">
+                                <div class="card mx-1 px-3 py-2 mt-3 mb-4 bg-darker" style="max-width: 600px">
+                                    <h2 class="fw-light mt-1">No contracts found</h2>
+                                    <p class="lead mb-1" v-show="saccountapi.spk_power">Click <a
+                                                class="btn btn-sm btn-dark border-info text-info no-decoration small" style="font-size: 0.6em; width: 72px;"
+                                                role="button" data-bs-toggle="modal" data-bs-target="#contractModal">
+                                                <modal-vue type="build" token="BROCA"
+                                                    :balance="broca_calc(saccountapi.broca)" :account="account"
+                                                    @modalsign="toSign=$event" :ipfsproviders="ipfsProviders"
+                                                    v-slot:trigger>
+                                                    <span slot="trigger" class="trigger"><i
+                                                            class="fa-solid fa-file-contract fa-fw me-1"></i>NEW</span>
+                                                </modal-vue></a>
+                                            to create a contract using SPK Power
+                                    </p>
+                                    <p class="lead mb-1" v-if="!nodeview">
+                                        Click <a class="btn btn-sm btn-dark border-success text-success no-decoration small" style="font-size: 0.6em; width:72px;"
+                                            role="button" data-bs-toggle="modal" data-bs-target="#sponsoredModal"><i
+                                                class="fa-solid fa-wand-magic-sparkles fa-fw me-1"></i>FREE</a>
+                                        to select a sponsored contract</p>
+                                        
+                                </div>
                             </div>
-                        </div>
                         </div>
 
                         <!-- contracts -->
@@ -385,9 +467,9 @@ export default {
                                                                                 <div class="d-flex flex-wrap justify-content-around justify-content-md-between mx-1 mx-md-2 pt-1 pt-md-2">
                                                                                     <div class="fs-1 fw-bold align-items-start">SPK Network</div>
                                                                                    <div class="input-group-text">
-                                                                                        <div class="form-check form-switch fs-5">
+                                                                                        <div class="form-check form-switch fs-5" :class="{'is-danger': !saccountapi.spk}">
                                                                                             <input class="form-check-input" type="checkbox" checked="" role="switch" :id="contract.i + 'autoRenew'" v-model="newMeta[contract.i].contract.autoRenew">
-                                                                                            <label class="form-check-label ms-auto" :for="contract.i + 'autoRenew'">Auto-Renew</label>
+                                                                                            <label class="form-check-label ms-auto" :class="{'text-danger': !saccountapi.spk}" :for="contract.i + 'autoRenew'">Auto-Renew</label>
                                                                                         </div>
                                                                                     </div>
                                                                                  
@@ -692,6 +774,9 @@ export default {
         nodeview: {
             default: false
         },
+        cc: {
+            default: false
+        },
         prop_contracts: {
             default: function () {
                 return []
@@ -858,6 +943,9 @@ export default {
         getdelimed(string, del = ',', index = 0) {
             return string.split(del)[index] ? string.split(del)[index] : ''
         },
+        sendIt(event){
+            this.$emit('tosign', event)
+        },
         getImgData(id, cid) {
             var string = this.smartThumb(id, cid)
             fetch(string).then(response => response.text()).then(data => {
@@ -901,7 +989,7 @@ export default {
                     }
                 }
 
-                if (newAccounts.length) fetch('https://hive-api.dlux.io', {
+                if (newAccounts.length) fetch('https://api.hive.blog', {
                     method: 'POST',
                     body: JSON.stringify({
                         "jsonrpc": "2.0",

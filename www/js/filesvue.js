@@ -1,5 +1,5 @@
 import ChoicesVue from '/js/choices-vue.js';
-import Pop from "/js/pop.js";
+import Pop from "/js/pop-min.js";
 
 export default {
     components: {
@@ -7,103 +7,378 @@ export default {
         "choices-vue": ChoicesVue
     },
     template: `
-<div class="d-flex flex-grow-1 flex-column p-05 rounded m-05" style="background-color: rgba(0, 0, 0, 0.7);">
+<div class="d-flex flex-grow-1 flex-column rounded">
     <div class="pt-1">
-        <!-- ACTION BAR -->
-        <div class="d-flex flex-wrap align-items-center justify-content-center mx-1">
-            <!-- Search -->
-            <div class="position-relative flex-grow-1 mb-1 me-1">
-                <span class="position-absolute top-50 translate-middle-y ps-2"><i
-                        class="fa-solid fa-magnifying-glass fa-fw"></i></span>
-                <input @keyup="render()" @change="render()" @search="render()"
-                    class="ps-4 form-control border-white" type="search"
-                    placeholder="Search names" v-model="filesSelect.search">
-            </div>
+        <!-- USER INPUT -->
+            <div v-if="cc" class="d-flex flex-column flex-grow-1 mb-1 mx-1">
+                <label class="fs-5 fw-light mb-1">View other users' files, use <i class="fa-brands fa-creative-commons fa-fw"></i> and <i class="fa-brands fa-creative-commons-zero fa-fw"></i> licensed files, and decrypt files that have been shared with you</label>
+                <div class="d-flex">
+                    <div class="position-relative flex-grow-1">
+                        <span class="position-absolute top-50 translate-middle-y ps-2"><i
+                                class="fa-solid fa-at fa-fw"></i></span>
+                        <input 
+                            class="ps-4 mb-1 form-control border-white" type="search"
+                            placeholder="username" @blur="appendUserFiles()" v-model="newUser">
+                    </div>
+                    <div class="ms-1">
+                            <div class="btn btn-lg btn-light" @click="appendUserFiles()"><i class="fa-solid fa-fw fa-plus"></i>
+                            </div>
+                        </div>
+                </div>
+                
+                <div class="d-flex flex-wrap d-xl-flex mb-1" v-if="owners.length > 1">
+                <!-- Active Filters -->
+                <div v-for="owner in owners" class="btn-group btn-group me-1 mb-1" style="height:50px">
+                    <a :href="'/@' + owner" target="_blank" class="btn btn-light rounded-start align-content-center">
+                        <span>{{owner}}</span>
+                    </a>
+                    <button type="button" class="btn btn-dark ms-0 me-0 ps-0 pe-0" disabled>
+                    </button>
+                    <button type="button" @click="cycleView(owner)" class="btn btn-light px-2">
+                        <i class="fa-solid fa-fw" :class="{'fa-eye': filesSelect.addusers[owner] === true, 'fa-eye-slash': filesSelect.addusers[owner] === false, 'fa-lock': filesSelect.addusers[owner] == 'lock', 'fa-brands fa-creative-commons': filesSelect.addusers[owner] == 'cc'}"></i>
+                        <i class="fa-solid fa-eye-slash fa-fw d-none"></i>
+                    </button>
+                    <button type="button" class="btn btn-dark ms-0 me-0 ps-0 pe-0" disabled>
+                    </button>
+                    <button @click="purge(owner)" type="button" class="btn btn-light px-2">
+                        <i class="fa-solid fa-xmark fa-fw"></i>
+                    </button>
+                </div>
 
-            <!-- choices-js-->
-            <div class=" mb-1 mx-1" style="min-width: 300px !important;">
-
-                <choices-vue ref="select-tag" :prop_selections="filterFlags" prop_function="search" prop_type="tags" @data="handleTag($event)"></choices-vue>
-            </div>
-            <div class="mb-1 mx-1" style="min-width: 300px !important;">
-
-                <choices-vue ref="select-label" :prop_selections="filterLabels" prop_function="search" prop_type="labels" @data="handleLabel($event)"></choices-vue>
-            </div> 
-
-            <!-- Sort -->
-            <div class="dropdown mb-1">
-                <button class="btn btn-outline-light w-100" type="button" data-bs-toggle="dropdown"
-                    aria-expanded="false"><i class="fa-solid fa-sort fa-fw ms-1"></i>
-                    {{filesSelect.sort.charAt(0).toUpperCase() + filesSelect.sort.slice(1)}} {{filesSelect.dir == 'asc' ? 'Ascending' : 'Descending'}}
+                <button @click="clearFilters()" type="button"
+                    class="btn btn-secondary mb-1 d-none">
+                    Clear All
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end bg-black">
-                    <li>
-                        <a @click="filesSelect.dir='asc';filesSelect.sort='time';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-calendar-days fa-fw me-1"></i>Created<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
-                    </li>
+                
+            </div>
+            </div>
+
+            
+
+        <!-- ACTION BAR -->
+        <div class="d-flex border-bottom border-white-50">
+            <div class="d-flex flex-wrap align-items-center justify-content-center mx-1 flex-grow-1">
+                
+                <!-- Search -->
+                <div class="position-relative flex-grow-1 mb-1 me-1">
+                    <span class="position-absolute top-50 translate-middle-y ps-2"><i
+                            class="fa-solid fa-magnifying-glass fa-fw"></i></span>
+                    <input @keyup="render()" @change="render()" @search="render()"
+                        class="ps-4 form-control border-white" type="search"
+                        placeholder="Search filename" v-model="filesSelect.search">
+                </div>
+
+                <!-- choices-js-->
+                <div class=" mb-1 mx-1" style="min-width: 300px !important;">
+
+                    <choices-vue ref="select-tag" :prop_selections="filterFlags" prop_function="search" prop_type="tags" @data="handleTag($event)"></choices-vue>
+                </div>
+                <div class="mb-1 mx-1" style="min-width: 300px !important;">
+
+                    <choices-vue ref="select-label" :prop_selections="filterLabels" prop_function="search" prop_type="labels" @data="handleLabel($event)"></choices-vue>
+                </div> 
+
+                <!-- Sort -->
+                <div class="dropdown mb-1">
+                    <button class="btn btn-outline-light w-100" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false"><i class="fa-solid fa-sort fa-fw ms-1"></i>
+                        {{filesSelect.sort.charAt(0).toUpperCase() + filesSelect.sort.slice(1)}} {{filesSelect.dir == 'asc' ? 'Ascending' : 'Descending'}}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end bg-black">
                         <li>
-                        <a @click="filesSelect.dir='dec';filesSelect.sort='time';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-calendar-days fa-fw me-1"></i>Created<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a @click="filesSelect.dir='asc';filesSelect.sort='exp';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-clock fa-fw me-1"></i><span class="me-1">Expiration</span><i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
-                    </li>
-                    <li>
-                        <a @click="filesSelect.dir='dec';filesSelect.sort='exp';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-clock fa-fw me-1"></i><span class="me-1">Expiration</span><i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a @click="filesSelect.dir='asc';filesSelect.sort='size';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-database fa-fw me-1"></i>Size<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
-                    </li>
-                    <li>
-                        <a @click="filesSelect.dir='dec';filesSelect.sort='size';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-database fa-fw me-1"></i>Size<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a @click="filesSelect.dir='dec';filesSelect.sort='name';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-tag fa-fw me-1"></i>Name<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
-                    </li>
-                    <li>
-                        <a @click="filesSelect.dir='asc';filesSelect.sort='name';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-tag fa-fw me-1"></i>Name<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a @click="filesSelect.dir='asc';filesSelect.sort='type';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-layer-group fa-fw me-1"></i>Type<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
-                    </li>
-                    <li>
-                        <a @click="filesSelect.dir='dec';filesSelect.sort='type';render()"
-                            class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-layer-group fa-fw me-1"></i>Type<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
-                    </li>
-                    
-                </ul>
+                            <a @click="filesSelect.dir='asc';filesSelect.sort='time';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-calendar-days fa-fw me-1"></i>Created<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
+                        </li>
+                            <li>
+                            <a @click="filesSelect.dir='dec';filesSelect.sort='time';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-calendar-days fa-fw me-1"></i>Created<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a @click="filesSelect.dir='asc';filesSelect.sort='exp';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-clock fa-fw me-1"></i><span class="me-1">Expiration</span><i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
+                        </li>
+                        <li>
+                            <a @click="filesSelect.dir='dec';filesSelect.sort='exp';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-clock fa-fw me-1"></i><span class="me-1">Expiration</span><i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a @click="filesSelect.dir='asc';filesSelect.sort='size';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-database fa-fw me-1"></i>Size<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
+                        </li>
+                        <li>
+                            <a @click="filesSelect.dir='dec';filesSelect.sort='size';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-database fa-fw me-1"></i>Size<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a @click="filesSelect.dir='dec';filesSelect.sort='name';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-file fa-fw me-1"></i>Name<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
+                        </li>
+                        <li>
+                            <a @click="filesSelect.dir='asc';filesSelect.sort='name';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-file fa-fw me-1"></i>Name<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a @click="filesSelect.dir='asc';filesSelect.sort='type';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-layer-group fa-fw me-1"></i>Type<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
+                        </li>
+                        <li>
+                            <a @click="filesSelect.dir='dec';filesSelect.sort='type';render()"
+                                class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-layer-group fa-fw me-1"></i>Type<i class="fa-solid fa-caret-down fa-fw ms-auto"></i></a>
+                        </li>
+                        
+                    </ul>
+                </div>
+
             </div>
         </div>
+
+        
 
         <div class="d-flex align-items-center my-1 mx-1">
             <h5 class="mb-0"> {{filesArray.length}} File{{filesArray.length == 1 ? '' : 's'}}</h5>
             <div class="ms-auto">
                 <div class="btn-group">
-                    <input type="radio" class="btn-check" name="smView" id="setSingle" autocomplete="off" @click="viewOpts.list = true" :checked="viewOpts.list" />
-                    <label class="btn btn-outline-warning" for="setSingle"><i
+                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id="'setSingle' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = true" :checked="viewOpts.list" />
+                    <label class="btn btn-outline-warning" :for="'setSingle' + (cc ? 'cc' : '')"><i
                             class="fa-solid fa-table-list fa-fw"></i></label>
-                    <input type="radio" class="btn-check" name="smView" id="setDouble" autocomplete="off" @click="viewOpts.list = false"
+                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id="'setDouble' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = false"
                         :checked="!viewOpts.list" />
-                    <label class="btn btn-outline-warning" for="setDouble"><i
+                    <label class="btn btn-outline-warning" :for="'setDouble' + (cc ? 'cc' : '')"><i
                             class="fa-solid fa-table-cells-large fa-fw"></i></label>
                 </div>
             </div>
         </div>
     </div>
 
-    <div>
-        <div class="table-responsive" v-if="viewOpts.list">
+    <div class="bg-dark rounded-bottom">
+
+        <div class="text-center" role="table" aria-label="Files" v-if="viewOpts.list">
+            <div class="d-flex flex-wrap align-items-center fw-bold justify-content-end border-top border-start border-end border-dark" role="rowgroup" style="background-color: #1976D2">
+                <div class="py-1 border-bottom border-dark" role="columnheader" style="width:70px">&nbsp;</div>
+                <div class="py-1 border-start border-bottom border-dark flex-grow-1 first" role="columnheader" style="max-width:480px">Filename</div>
+                <div class="py-1 border-start border-bottom border-dark" role="columnheader" style="width:150px">Tags & Labels</div>
+                <div class="py-1 border-start border-bottom border-dark" role="columnheader" style="width:150px">Owner</div>
+                <div class="py-1 border-start border-bottom border-dark" role="columnheader" style="width:80px">Size</div>
+                <div class="py-1 border-start border-bottom border-dark" role="columnheader" style="width:100px">Created</div>
+                <div class="py-1 border-start border-bottom border-dark" role="columnheader" style="width:146px">Expiration</div>
+                <div class="py-1 border-start border-bottom border-dark" role="columnheader" style="width:120px">&nbsp;</div>
+            </div>
+            <div class="flex-table d-flex flex-wrap align-items-center justify-content-end" role="rowgroup" v-for="file in filesArray">
+                <div class="" role="cell">
+                    <div style="width: 70px;">
+                        
+                            
+                        <div class="bg-light position-relative rounded first m-1" style="width: 50px;">
+                            <div v-if="flagsDecode(newMeta[file.i][file.f].flags, 1).length" class="position-absolute bottom-0 end-0 bg-dark rounded-circle small px-05">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <img v-if="newMeta[file.i][file.f].thumb" class="img-fluid rounded" :src="newMeta[file.i][file.f].thumb_data"  >
+                            <svg v-else version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                                    viewBox="0 0 800 800" style="enable-background:new 0 0 800 800;" xml:space="preserve">
+                                <g>
+                                    <path class="st0" d="M650,210H500c-5.5,0-10-4.5-10-10V50c0-5.5,4.5-10,10-10s10,4.5,10,10v140h140c5.5,0,10,4.5,10,10
+                                        S655.5,210,650,210z"/>
+                                    <path class="st0" d="M650,309.7c-5.5,0-10-4.5-10-10v-95.5L495.9,60H200c-22.1,0-40,17.9-40,40v196.3c0,5.5-4.5,10-10,10
+                                        s-10-4.5-10-10V100c0-33.1,26.9-60,60-60h300c2.7,0,5.2,1,7.1,2.9l150,150c1.9,1.9,2.9,4.4,2.9,7.1v99.7
+                                        C660,305.2,655.5,309.7,650,309.7z"/>
+                                    <path class="st0" d="M600,760H200c-33.1,0-60-26.9-60-60V550c0-5.5,4.5-10,10-10s10,4.5,10,10v150c0,22.1,17.9,40,40,40h400
+                                        c22.1,0,40-17.9,40-40V550c0-5.5,4.5-10,10-10s10,4.5,10,10v150C660,733.1,633.1,760,600,760z"/>
+                                    <path class="st0" d="M550,560H250c-5.5,0-10-4.5-10-10s4.5-10,10-10h300c5.5,0,10,4.5,10,10S555.5,560,550,560z"/>
+                                    <path class="st0" d="M400,660H250c-5.5,0-10-4.5-10-10s4.5-10,10-10h150c5.5,0,10,4.5,10,10S405.5,660,400,660z"/>
+                                    <path class="st0" d="M650,560H150c-33.1,0-60-26.9-60-60l0,0V346.3c0-33.1,26.9-60,60-60l0,0h0.4l500,3.3
+                                        c32.9,0.3,59.5,27.1,59.6,60V500C710,533.1,683.2,560,650,560C650,560,650,560,650,560z M150,306.3c-22.1,0-40,17.9-40,40V500
+                                        c0,22.1,17.9,40,40,40h500c22.1,0,40-17.9,40-40V349.7c-0.1-22-17.8-39.8-39.8-40l-500-3.3H150z"/>
+                                    <text transform="matrix(1 0 0 1 233.3494 471.9725)" class="st1 st2" style="text-transform: uppercase; font-size: 149px;">{{newMeta[file.i][file.f].type}}</text>
+                                </g>
+                            </svg>
+                        </div>
+                     
+                    </div>
+                </div>
+                <div class="flex-grow-1 first" role="cell">
+                    <div style="max-width:480px;">
+                        <div class="text-start text-break m-1">{{newMeta[file.i][file.f].name || file.f}}{{newMeta[file.i][file.f].thumb ? '.' + newMeta[file.i][file.f].type : ''}}</div>
+                    </div>
+                </div>
+               
+                <div class="" role="cell">
+                    <div style="width:150px;">
+                        <div class="d-flex flex-wrap align-items-center justify-content-center bg-darkg rounded px-1 py-05 m-1">
+                            <div>&nbsp;</div>
+                            <!-- colors -->
+                            <div v-if="file.lc" class="d-flex me-1 align-items-center" style="margin-left: 15px">
+                                    <i v-for="(color, num) in labelsDecode(file.lc)" :class="color.fa" :style="'margin-left: ' + -15 +'px !important;'"></i>
+                            </div>
+                            <!-- labels -->
+                            <div class="me-1" v-for="label in labelsDecode(file.ll)">
+                                <span class="d-flex align-items-center">
+                                    <pop-vue :id="'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
+                                        <i :class="label.fa"></i>
+                                    </pop-vue>
+                                </span>
+                            </div>
+                            <!-- flags -->
+                            <div class="d-flex align-items-center">
+                            <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 3)" >
+                                    <!-- title="Labels"  -->
+                                    <pop-vue :id="'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
+                                        <i :class="flag.fa"></i>
+                                    </pop-vue>
+                                </div>
+                            </div>
+                            <div>
+                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                    <i :class="lic.fa"></i>
+                                </pop-vue>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="" role="cell"><div style="width:150px"><div class="m-1"><a :href="'/@' + contract[file.i].t">@{{contract[file.i].t}}</a></div></div></div>
+                <div class="" role="cell"><div style="width:80px"><div class="m-1">{{fancyBytes(file.s)}}</div></div></div>
+                <div class="" role="cell"><div style="width:100px"><div class="m-1">{{blockToTime(file.c)}}</div></div></div>
+                <div class="">
+                    <div style="width: 146px;" role="cell">
+                        <div class="border rounded px-1 py-05 m-1" :class="{'border-success': newMeta[file.i].contract.autoRenew, 'border-warning': !newMeta[file.i].contract.autoRenew}">
+                            {{blockToTime(file.e)}}
+                            <i :class="{'text-success': newMeta[file.i].contract.autoRenew, 'text-warning': !newMeta[file.i].contract.autoRenew}" class="ms-05 fa-solid fa-arrows-rotate fa-fw"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="" role="cell">
+                    <div class="" style="width: 120px;">
+                            <div class="m-1">
+                            <!-- link -->
+                            <div v-if="!newMeta[file.i][file.f].encrypted">
+                                <a :href="'https://ipfs.dlux.io/ipfs/' + file.f" target="_blank" class="w-100 btn btn-sm btn-info my-1 mx-auto"><span class="d-flex align-items-center">URL<i class="ms-auto fa-solid fa-fw fa-up-right-from-square"></i></span></a>
+                            </div>
+                            <!-- decrypt  -->
+                            <div v-if="newMeta[file.i][file.f].encrypted && !contract[file.i].encryption.key">
+                                <button type="button" class="w-100 btn btn-sm btn-primary my-1 mx-auto" @click="decode(file.i)"><span class="d-flex align-items-center w-100">Decrypt<i class="fa-solid fa-fw ms-auto fa-lock-open"></i></span></button>
+                            </div>
+                            <!-- download enc -->
+                            <div v-if="newMeta[file.i][file.f].encrypted && contract[file.i].encryption.key">
+                                <button type="button" class="w-100 btn btn-sm btn-primary my-1 mx-auto" @click="downloadFile(file.f, file.i)"><span class="d-flex align-items-center w-100">Download<i class="fa-solid fa-download fa-fw ms-auto"></i></span></button>
+                            </div>
+                            <!-- add to post -->
+                            <div v-if="assets">
+                                <button type="button" class="w-100 btn btn-sm btn-purp my-1 mx-auto" @click="addToPost(file.f, contract.i, index)"><span class="d-flex align-items-center w-100"><span class="d-sm-none">Add to</span> Post<i class="fa-solid fa-plus fa-fw ms-auto"></i></span></button>
+                            </div>
+                            <!-- add to asset -->
+                            <div v-if="assets">
+                                <button type="button" class="w-100 btn btn-sm btn-purp my-1 mx-auto" @click="addAsset(file, contract)"><span class="d-flex align-items-center w-100"><span class="d-sm-none">Add to </span>Asset<i class="fa-solid fa-plus fa-fw ms-auto"></i></span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p></p>
+
+        <div class="d-none table-container" role="table" aria-label="Destinations" v-if="viewOpts.list">
+            <div class="flex-table header" role="rowgroup">
+                <div class="flex-row order-md-first" role="columnheader"></div>
+                <div class="flex-row order-first first flex-grow-1" role="columnheader">Filename</div>
+                <div class="flex-row" role="columnheader">Owner</div>
+                <div class="flex-row" role="columnheader">Tags & Labels</div>
+                <div class="flex-row" role="columnheader">Size</div>
+                <div class="flex-row" role="columnheader">Created</div>
+                <div class="flex-row" role="columnheader">Expiration</div>
+                <div class="flex-row" role="columnheader"></div>
+            </div>
+            <div class="flex-table row" role="rowgroup" v-for="file in filesArray">
+                <div class="flex-row order-md-first" role="cell">
+                    <div class="bg-light mx-auto" style="width:50px;">
+                        <img v-if="newMeta[file.i][file.f].thumb" class="mx-auto img-fluid rounded bg-light" :src="newMeta[file.i][file.f].thumb_data" width="50px" >
+                        <svg v-else version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                                viewBox="0 0 800 800" style="enable-background:new 0 0 800 800;" xml:space="preserve">
+                            <g>
+                                <path class="st0" d="M650,210H500c-5.5,0-10-4.5-10-10V50c0-5.5,4.5-10,10-10s10,4.5,10,10v140h140c5.5,0,10,4.5,10,10
+                                    S655.5,210,650,210z"/>
+                                <path class="st0" d="M650,309.7c-5.5,0-10-4.5-10-10v-95.5L495.9,60H200c-22.1,0-40,17.9-40,40v196.3c0,5.5-4.5,10-10,10
+                                    s-10-4.5-10-10V100c0-33.1,26.9-60,60-60h300c2.7,0,5.2,1,7.1,2.9l150,150c1.9,1.9,2.9,4.4,2.9,7.1v99.7
+                                    C660,305.2,655.5,309.7,650,309.7z"/>
+                                <path class="st0" d="M600,760H200c-33.1,0-60-26.9-60-60V550c0-5.5,4.5-10,10-10s10,4.5,10,10v150c0,22.1,17.9,40,40,40h400
+                                    c22.1,0,40-17.9,40-40V550c0-5.5,4.5-10,10-10s10,4.5,10,10v150C660,733.1,633.1,760,600,760z"/>
+                                <path class="st0" d="M550,560H250c-5.5,0-10-4.5-10-10s4.5-10,10-10h300c5.5,0,10,4.5,10,10S555.5,560,550,560z"/>
+                                <path class="st0" d="M400,660H250c-5.5,0-10-4.5-10-10s4.5-10,10-10h150c5.5,0,10,4.5,10,10S405.5,660,400,660z"/>
+                                <path class="st0" d="M650,560H150c-33.1,0-60-26.9-60-60l0,0V346.3c0-33.1,26.9-60,60-60l0,0h0.4l500,3.3
+                                    c32.9,0.3,59.5,27.1,59.6,60V500C710,533.1,683.2,560,650,560C650,560,650,560,650,560z M150,306.3c-22.1,0-40,17.9-40,40V500
+                                    c0,22.1,17.9,40,40,40h500c22.1,0,40-17.9,40-40V349.7c-0.1-22-17.8-39.8-39.8-40l-500-3.3H150z"/>
+                                <text transform="matrix(1 0 0 1 233.3494 471.9725)" class="st1 st2" style="text-transform: uppercase; font-size: 149px;">{{newMeta[file.i][file.f].type}}</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex-row order-first first flex-grow-1" role="cell">{{newMeta[file.i][file.f].name || file.f}}{{newMeta[file.i][file.f].thumb ? '.' + newMeta[file.i][file.f].type : ''}}</div>
+                <div class="flex-row " role="cell">@{{contract[file.i].t}}</div>
+                <div class="flex-row" role="cell">
+                    <div class="d-flex flex-wrap align-items-center justify-content-center">
+                        <!-- colors -->
+                        <div v-if="file.lc" class="d-flex me-1 align-items-center" style="margin-left: 15px">
+                                <i v-for="(color, num) in labelsDecode(file.lc)" :class="color.fa" :style="'margin-left: ' + -15 +'px !important;'"></i>
+                        </div>
+                        <!-- labels -->
+                        <div class="me-1" v-for="label in labelsDecode(file.ll)">
+                            <span class="d-flex align-items-center">
+                                <pop-vue :id="'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
+                                    <i :class="label.fa"></i>
+                                </pop-vue>
+                            </span>
+                        </div>
+                        <!-- flags -->
+                        <div class="d-flex align-items-center">
+                        <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 3)" >
+                                <!-- title="Labels"  -->
+                                <pop-vue :id="'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
+                                    <i :class="flag.fa"></i>
+                                </pop-vue>
+                            </div>
+                        </div>
+                        <div>
+                            <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                <i :class="lic.fa"></i>
+                            </pop-vue>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-row" role="cell">{{fancyBytes(file.s)}}</div>
+                <div class="flex-row" role="cell">{{blockToTime(file.c)}}</div>
+                <div class="flex-row" role="cell">{{blockToTime(file.e)}}<i v-if="newMeta[file.i].contract.autoRenew" class="fa-solid fa-arrows-rotate text-success fa-fw"></i></div>
+                <div class="flex-row" role="cell">
+                    <div class="mt-1">
+                        <!-- link -->
+                        <div v-if="!newMeta[file.i][file.f].encrypted">
+                            <a :href="'https://ipfs.dlux.io/ipfs/' + file.f" target="_blank" class="w-100 btn btn-sm btn-info mb-1 mx-auto"><span class="d-flex align-items-center">URL<i class="ms-auto fa-solid fa-fw fa-up-right-from-square"></i></span></a>
+                        </div>
+                        <!-- decrypt  -->
+                        <div v-if="newMeta[file.i][file.f].encrypted && !contract[file.i].encryption.key">
+                            <button type="button" class="w-100 btn btn-sm btn-primary mb-1 mx-auto" @click="decode(file.i)"><span class="d-flex align-items-center w-100">Decrypt<i class="fa-solid fa-fw ms-auto fa-lock-open"></i></span></button>
+                        </div>
+                        <!-- download enc -->
+                        <div v-if="newMeta[file.i][file.f].encrypted && contract[file.i].encryption.key">
+                            <button type="button" class="w-100 btn btn-sm btn-primary mb-1 mx-auto" @click="downloadFile(file.f, file.i)"><span class="d-flex align-items-center w-100">Download<i class="fa-solid fa-download fa-fw ms-auto"></i></span></button>
+                        </div>
+                        <!-- add to post -->
+                        <div v-if="assets">
+                            <button type="button" class="w-100 btn btn-sm btn-purp mb-1 mx-auto" @click="addToPost(file.f, contract.i, index)"><span class="d-flex align-items-center w-100">Add to Post<i class="fa-solid fa-plus fa-fw ms-auto"></i></span></button>
+                        </div>
+                        <!-- add to asset -->
+                        <div v-if="assets">
+                            <button type="button" class="w-100 btn btn-sm btn-purp mb-1 mx-auto" @click="addAsset(file, contract)"><span class="d-flex align-items-center w-100">Add asset<i class="fa-solid fa-plus fa-fw ms-auto"></i></span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="d-none table-responsive" v-if="viewOpts.list">
             <!-- item table -->
             <table class="table table-dark table-striped table-hover  align-middle mb-0">
                 <thead>
@@ -249,7 +524,7 @@ export default {
                             <div class="text-break">{{newMeta[file.i][file.f].name || file.f}}{{newMeta[file.i][file.f].thumb ? '.' + newMeta[file.i][file.f].type : ''}}</div>
                         </td>
                          <td class="col-2" v-if="owners.length > 1">
-                            <div class="text-break">@{{contrat[file.i].t}}</div>
+                            <div class="text-break">@{{contract[file.i].t}}</div>
                         </td>
                         <td class="col-2">
                             <div class="d-flex flex-wrap align-items-center">
@@ -262,21 +537,21 @@ export default {
 
                                 <div class="me-1" v-for="label in labelsDecode(file.ll)">
                                     <span class="d-flex align-items-center">
-                                        <pop-vue :id="'popperL-' + file.i + file.index + label.l" :title="label.l" trigger="hover">
+                                        <pop-vue :id="'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
                                             <i :class="label.fa"></i>
                                         </pop-vue>
                                     </span>
                                 </div>
 
                                 <div class="d-flex align-items-center">
-                                <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 2)" >
+                                <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 3)" >
                                         <!-- title="Labels"  -->
-                                        <pop-vue :id="'popper-' + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
+                                        <pop-vue :id="'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
                                             <i :class="flag.fa"></i>
                                         </pop-vue>
                                     </div>
                                 </div>
-                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
                                     <i :class="lic.fa"></i>
                                 </pop-vue> 
                             </div>
@@ -383,7 +658,7 @@ export default {
 
                             <div class="mx-auto" v-for="(label, index) in labelsDecode(file.ll, 0)">
                                 <span class="d-flex align-items-center w-100">
-                                    <pop-vue :id="'popperL-' + file.i + index + label.l" title="Labels" trigger="hover">
+                                    <pop-vue :id="'popperL-' + (cc ? 'cc' : '') + file.i + index + label.l" title="Labels" trigger="hover">
                                         <i :class="label.fa"></i>
                                     </pop-vue>
                                 </span>
@@ -392,7 +667,7 @@ export default {
                             <div class="d-flex align-items-center ms-auto ms-1">
                             <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags)" >
                                     <!-- title="Labels"  -->
-                                    <pop-vue :id="'popper-' + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
+                                    <pop-vue :id="'popper-' + (cc ? 'cc' : '') + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
                                         <i :class="flag.fa"></i>
                                     </pop-vue>
                                 </div>
@@ -402,7 +677,7 @@ export default {
                     </div>
                     
                     <div class="d-flex align-items-center justify-content-center text-break small text-muted">
-                                {{fancyBytes(file.s)}}<pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                {{fancyBytes(file.s)}}<pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
                             <i :class="lic.fa"></i>
                         </pop-vue>
                         </div>
@@ -443,19 +718,27 @@ export default {
         current: {
             type: Number,
             default: 85000000,
+        },
+        cc: {
+            default: false,
         }
     },
     data() {
         return {
             files: {},
             owners: [],
+            contractIDs: {},
+            newUser: '',
             filesArray: [],
             filterFlags: 0,
             filterLabels: "",
+            postBodyAdder: {},
             filesSelect: {
                 sort: "time",
                 dir: "dec",
                 search: "",
+                cc_only: false,
+                addusers: {},
             },
             contract: {},
             viewOpts: {
@@ -532,27 +815,27 @@ export default {
             },
             licenses: {
                 ["1"]: {
-                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License"},{ fa: "fa-brands fa-creative-commons-by", l: "Attribution Required"}],
+                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License" }, { fa: "fa-brands fa-creative-commons-by", l: "Attribution Required" }],
                     name: "CC BY",
                 },
                 ["2"]: {
-                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License"},{ fa: "fa-brands fa-creative-commons-by", l: "Attribution Required"},{ fa: "fa-brands fa-creative-commons-sa", l: "Share Alike"}],
+                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License" }, { fa: "fa-brands fa-creative-commons-by", l: "Attribution Required" }, { fa: "fa-brands fa-creative-commons-sa", l: "Share Alike" }],
                     name: "CC BY-SA",
                 },
                 ["3"]: {
-                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License"},{ fa: "fa-brands fa-creative-commons-by", l: "Attribution Required"},{ fa: "fa-brands fa-creative-commons-nd", l: "No Derivatives"}],
+                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License" }, { fa: "fa-brands fa-creative-commons-by", l: "Attribution Required" }, { fa: "fa-brands fa-creative-commons-nd", l: "No Derivatives" }],
                     name: "CC BY-ND",
                 },
                 ["4"]: {
-                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License"},{ fa: "fa-brands fa-creative-commons-by", l: "Attribution Required"},{ fa: "fa-brands fa-creative-commons-nc", l: "Non-Commerical"},{ fa: "fa-brands fa-creative-commons-nd", l: "No Derivatives"}],
+                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License" }, { fa: "fa-brands fa-creative-commons-by", l: "Attribution Required" }, { fa: "fa-brands fa-creative-commons-nc", l: "Non-Commerical" }, { fa: "fa-brands fa-creative-commons-nd", l: "No Derivatives" }],
                     name: "CC BY-NC-ND",
                 },
                 ["5"]: {
-                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License"},{ fa: "fa-brands fa-creative-commons0-by", l: "Attribution Required"},{ fa: "fa-brands fa-creative-commons-nc", l: "Non-Commerical"}],
+                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License" }, { fa: "fa-brands fa-creative-commons0-by", l: "Attribution Required" }, { fa: "fa-brands fa-creative-commons-nc", l: "Non-Commerical" }],
                     name: "CC BY-NC",
                 },
                 ["6"]: {
-                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License"},{ fa: "fa-brands fa-creative-commons-by", l: "Attribution Required"},{ fa: "fa-brands fa-creative-commons-nc", l: "Non-Commerical"},{ fa: "fa-brands fa-creative-commons-sa", l: "Share Alike"}],
+                    fa: [{ fa: "fa-brands fa-creative-commons", l: "Creative Commons License" }, { fa: "fa-brands fa-creative-commons-by", l: "Attribution Required" }, { fa: "fa-brands fa-creative-commons-nc", l: "Non-Commerical" }, { fa: "fa-brands fa-creative-commons-sa", l: "Share Alike" }],
                     name: "CC BY-NC-SA",
                 },
                 ["7"]: {
@@ -566,6 +849,149 @@ export default {
     methods: {
         addAsset(id, contract) {
             this.$emit("addassets", { id, contract });
+        },
+        cycleView(user){
+            const view = this.filesSelect.addusers[user]
+            switch(view){
+                case true:
+                    this.filesSelect.addusers[user] = 'cc'
+                    break
+                case false:
+                    this.filesSelect.addusers[user] = true
+                    break
+                case 'lock':
+                    this.filesSelect.addusers[user] = false
+                    break
+                case 'cc':
+                    this.filesSelect.addusers[user] = 'lock'
+                    break
+            }
+            this.render()
+        },
+        purge(user){
+            delete this.filesSelect.addusers[user]
+            this.owners = this.owners.filter(o => o != user)
+            this.render()
+        },
+        appendUserFiles() {
+            const newUser = this.newUser
+            this.newUser = ''
+            this.filesSelect.addusers[newUser] = true
+            if(newUser)fetch("https://spktest.dlux.io/@" + newUser)
+                .then((response) => response.json())
+                .then((data) => {
+                    this.contractIDs[newUser] = {}
+                    for (var node in data.file_contracts) {
+                        data.file_contracts[node].encryption = {
+                            input: "",
+                            key: "",
+                            accounts: {},
+                        }
+                        if (!data.file_contracts[node].m) {
+                            data.file_contracts[node].autoRenew = false
+                            data.file_contracts[node].m = ""
+                            this.newMeta[data.file_contracts[node].i] = {
+                                contract: {
+                                    autoRenew: false,
+                                    encrypted: false,
+                                    m: "",
+                                }
+                            }
+                            var filesNames = data.file_contracts[node]?.df ? Object.keys(data.file_contracts[node].df) : []
+                            filesNames = filesNames.sort((a, b) => {
+                                if (a > b) return 1
+                                else if (a < b) return -1
+                                else return 0
+                            })
+                            for (var i = 0; i < filesNames.length; i++) {
+                                this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
+                                    name: '',
+                                    type: '',
+                                    thumb: '',
+                                    flags: '',
+                                    is_thumb: false,
+                                    encrypted: false,
+                                    license: '',
+                                    labels: '',
+                                    size: data.file_contracts[node].df[filesNames[i]]
+                                }
+                            }
+                        } else {
+                            if (data.file_contracts[node].m.indexOf('"') >= 0) data.file_contracts[node].m = JSON.parse(data.file_contracts[node].m)
+                            var encData = data.file_contracts[node].m.split(',')[0] || ''
+                            var renew = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
+                            var encAccounts = []
+                            var encrypted = false
+                            if (encData) {
+                                encData = encData.split('#')
+                                renew = this.Base64toNumber(encData.shift()) & 1 ? true : false
+                                if (encData.length) {
+                                    encData = '#' + encData.join('#')
+                                    encAccounts = encData.split(';')
+                                    encrypted = true
+                                }
+                            }
+                            this.newMeta[data.file_contracts[node].i] = {
+                                contract: {
+                                    autoRenew: renew,
+                                    encrypted,
+                                    m: data.file_contracts[node].m,
+                                }
+                            }
+                            for (var i = 0; i < encAccounts.length; i++) {
+                                const encA = encAccounts[i].split('@')[1]
+                                data.file_contracts[node].autoRenew = renew
+                                data.file_contracts[node].encryption.accounts[encA] = {
+                                    enc_key: `#${encAccounts[i].split('@')[0].split('#')[1]}`,
+                                    key: '',
+                                    done: true,
+                                }
+                            }
+
+                            var filesNames = data.file_contracts[node]?.df ? Object.keys(data.file_contracts[node].df) : []
+                            filesNames = filesNames.sort((a, b) => {
+                                if (a > b) return 1
+                                else if (a < b) return -1
+                                else return 0
+                            })
+                            const slots = data.file_contracts[node].m.split(",")
+                            for (var i = 0; i < filesNames.length; i++) {
+                                const flags = slots[i * 4 + 4]
+                                this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
+                                    name: slots[i * 4 + 1],
+                                    type: slots[i * 4 + 2],
+                                    thumb: slots[i * 4 + 3],
+                                    thumb_data: slots[i * 4 + 3],
+                                    flags: flags.indexOf('-') >= 0 ? flags.split('-')[0] : flags[0],
+                                    license: flags.indexOf('-') >= 0 ? flags.split('-')[1] : '',
+                                    labels: flags.indexOf('-') >= 0 ? flags.split('-')[2] : flags.slice(1),
+                                }
+                                if (this.newMeta[data.file_contracts[node].i][filesNames[i]].thumb) this.getImgData(data.file_contracts[node].i, filesNames[i])
+                                if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 1) this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = true
+                                else this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = false
+                                if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 2) this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = true
+                                else this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = false
+                                if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 4) this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = true
+                                else this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = false
+                            }
+                        }
+                        this.contractIDs[newUser][data.file_contracts[node].i] = data.file_contracts[node];
+                        this.contractIDs[newUser][data.file_contracts[node].i].index = this.contracts.length - 1;
+                        this.postBodyAdder[data.file_contracts[node].i] = {}
+
+                    }
+                    for (var user in data.channels) {
+                        for (var node in data.channels[user]) {
+                            if (this.contractIDs[newUser][data.channels[user][node].i]) continue
+                            else {
+                                this.contractIDs[newUser][data.channels[user][node].i] = data.channels[user][node];
+                                this.contractIDs[newUser][data.channels[user][node].i].index = this.contracts.length - 1;
+                            }
+                        }
+                    }
+                    this.init()
+
+                });
         },
         AESDecrypt(encryptedMessage, key) {
             const bytes = CryptoJS.AES.decrypt(encryptedMessage, key);
@@ -783,6 +1209,20 @@ export default {
 
                     }
                 }
+                switch (this.filesSelect.addusers[file.o]){
+                    case false:
+                        return false
+                    case 'lock':
+                        if (!(file.lf & 1) && !this.contract[file.i].encryption.accounts[this.account]) return false
+                        break
+                    case 'cc':
+                        if (!file.lic) return false
+                    case true:
+                        break
+                    default:
+                        return false
+                }
+                if(this.filesSelect.cc_only && (!file.lic && file.o != this.account)) return false
                 if (this.filesSelect.search && file.n.toLowerCase().indexOf(this.filesSelect.search.toLowerCase()) == -1) return false
                 return true
             })
@@ -818,11 +1258,22 @@ export default {
             })
         },
         init() {
-            for (var i in this.contracts) {
-                if (this.contracts[i].c == 1) continue
-                const id = this.contracts[i].i
-                this.contract[id] = this.contracts[i];
-                this.owners.push(this.contracts[i].t)
+            var contracts = []
+            for (var user in this.contracts) {
+                for (var id in this.contracts) {
+                    contracts.push(this.contracts[id])
+                }
+            }
+            for (var user in this.filesSelect.addusers) {
+                for (var id in this.contractIDs[user]) {
+                    contracts.push(this.contractIDs[user][id])
+                }
+            }
+            for (var i in contracts) {
+                if (contracts[i].c == 1) continue
+                const id = contracts[i].i
+                this.contract[id] = contracts[i];
+                this.owners.push(contracts[i].t)
                 if (!this.contract[id].m) {
                     this.contract[id].autoRenew = false
                     this.contract[id].m = ""
@@ -928,6 +1379,7 @@ export default {
                                 e: this.contract[id].e.split(':')[0],
                                 n: this.newMeta[id][filesNames[i]].name || keys[j],
                                 y: this.newMeta[id][filesNames[i]].type || keys[j],
+                                o: this.contract[id].t,
                                 index: i,
                                 lf: this.newMeta[id][filesNames[i]].flags || 0,
                                 l: this.newMeta[id][filesNames[i]].labels,
@@ -991,7 +1443,17 @@ export default {
                 this.debounce = new Date().getTime()
             },
             deep: true
-        }
+        },
+        'account': {
+            handler: function (newValue) {
+                if(this.account)this.filesSelect.addusers[this.account] = true
+                this.init()
+            },
+            deep: false
+        },
+        
     },
-    mounted() { },
+    mounted() { 
+        if(this.account)this.filesSelect.addusers[this.account] = true
+    },
 };

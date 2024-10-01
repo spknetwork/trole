@@ -1,6 +1,6 @@
 export default {
   name: "MDE",
-  template: `<div><textarea ref="mde"/></div>`,
+  template: `<div><textarea placeholder="Enter a description" ref="mde"/></div>`,
   emits: ["data"],
   data() {
     return {
