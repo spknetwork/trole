@@ -62,6 +62,17 @@
                     </div>
                     <div role="tabpanel" ref="newTab" class="tab-pane fade show active" id="newTab" aria-labelledby="newtab">
                         <div class="card">
+                            <div class="mb-3">
+                                <h4>Usage: {{(stats.RepoSize / stats.StorageMax) * 100}}% of
+                                    {{humanFileSize(stats.StorageMax)}}</h4>
+                                <div class="progress" role="progressbar" aria-label="Upload progress"
+                                    aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar"
+                                        :style="'width: ' + ((stats.RepoSize / stats.StorageMax) * 100) + '%'">
+                                        {{(stats.RepoSize / stats.StorageMax) * 100}}%
+                                    </div>
+                                </div>
+                            </div>
                             <contract-vue :nodeview="true" :prop_contracts="newContracts" title="New Contracts"
                                 :account="account" @tosign="toSign=$event" :accountinfo="accountinfo" />
                         </div>
