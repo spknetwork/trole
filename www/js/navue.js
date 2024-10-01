@@ -983,7 +983,10 @@ export default {
       <div class="d-flex w-100 ms-auto me-auto align-items-center container" style="max-width: 1800px;" id="navbarSupportedContent">
 
         <!-- MAIN NAV -->
-        <ul class="navbar-nav me-auto align-items-center">
+        <div v-if ="node" class="me-auto">
+        <div class="fs-5">SPK Network</div>
+        </div>
+        <ul class="navbar-nav me-auto align-items-center" v-if="!node">
           <li><a class="navbar-brand d-md-flex" href="/"><img src="/img/dlux-hive-logo-alpha.svg" alt="dlux-logo" width="40" height="40"></a></li> 
           <li class="nav-item"><a class="nav-link text-center" href="/hub/"><i class="fa-solid fs-5 px-1 fa-mountain-sun"></i><br><span class="small">HUB</span></a></li>
           <li class="nav-item"><a class="nav-link text-center" href="/nfts/"><i class="fa-solid fs-5 px-1 fa-store"></i><br><span class="small">NFT</span></a></li>
@@ -1039,16 +1042,16 @@ export default {
               <img src="/img/sting_white.svg" alt="" width="20" height="20" class="img-fluid me-2">Chat
             </a>
           </li>
-			        <li class=""><a class="dropdown-item" :href="'/me#blog/'" @click="showTab('blog')"><i class="fas fa-user fa-fw me-2"></i>Profile</a></li>
-			        <li class=""><a class="dropdown-item" :href="'/me#wallet/'" @click="showTab('wallet')"><i class="fas fa-wallet fa-fw me-2"></i>Wallet</a></li>
-			        <li class=""><a class="dropdown-item" :href="'/me#inventory/'" @click="showTab('inventory')"><i class="fas fa-boxes fa-fw me-2"></i>Inventory</a></li>
-              <li class=""><a class="dropdown-item" :href="'/me#files/'" @click="showTab('files')"><i class="fas fa-cloud fa-fw me-2"></i>Cloud</a></li>
-              <li class=""><hr class="dropdown-divider"></li>
-              <li class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
+			        <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#blog/'" @click="showTab('blog')"><i class="fas fa-user fa-fw me-2"></i>Profile</a></li>
+			        <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#wallet/'" @click="showTab('wallet')"><i class="fas fa-wallet fa-fw me-2"></i>Wallet</a></li>
+			        <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#inventory/'" @click="showTab('inventory')"><i class="fas fa-boxes fa-fw me-2"></i>Inventory</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#files/'" @click="showTab('files')"><i class="fas fa-cloud fa-fw me-2"></i>Cloud</a></li>
+              <li class="" v-if="!node"><hr class="dropdown-divider"></li>
+              <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
               <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i class="fa-solid fa-book me-2 fa-fw"></i>Docs</a></li>
-              <li class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
               <li class=""><hr class="dropdown-divider"></li>
-              <li class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode me-2 fa-fw"></i>Invite</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode me-2 fa-fw"></i>Invite</a></li>
               <li><a class="dropdown-item" role="button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers"><i class="fas fa-user-friends me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .9em;"><i class="small fa-solid fa-arrows-rotate"></i><span class="visually-hidden">change user</span></span></i>Users</a></li>
 			        <li><a class="dropdown-item" role="button" @click="logout()"><i class="fas fa-power-off fa-fw me-2"></i>Logout</a></li>
 		      </ul>
