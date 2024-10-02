@@ -1419,6 +1419,136 @@ export default {
                 this.newMeta[id][cid].labels = this.newMeta[id][cid].labels.replace(m.item, '')
             }
         },
+        handlePropContracts(contract){
+            if(this.larynxbehind == 999999){
+                setTimeout(() => {
+                    this.handlePropContracts()
+                }, 1000)
+            } else {
+                const data = {
+                    file_contracts: [contract]
+                }
+                for (var node in data.file_contracts) {
+                    data.file_contracts[node].encryption = {
+                        input: "",
+                        key: "",
+                        accounts: {},
+                    }
+                    this.links[data.file_contracts[node].i] = ""
+                    var links = ""
+                    if (!data.file_contracts[node].m) {
+                        data.file_contracts[node].autoRenew = false
+                        data.file_contracts[node].m = ""
+                        this.newMeta[data.file_contracts[node].i] = {
+                            contract: {
+                                autoRenew: false,
+                                encrypted: false,
+                                m: "",
+                            }
+                        }
+                        var filesNames = data.file_contracts[node]?.df ? Object.keys(data.file_contracts[node].df) : []
+                        filesNames = filesNames.sort((a, b) => {
+                            if (a > b) return 1
+                            else if (a < b) return -1
+                            else return 0
+                        })
+                        for(var i = 0; i < filesNames.length; i++){
+                            this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
+                                name: '',
+                                type: '',
+                                thumb: '',
+                                flags: '',
+                                is_thumb: false,
+                                encrypted: false,
+                                license: '',
+                                labels: '',
+                                size: data.file_contracts[node].df[filesNames[i]]
+                            }
+                            this.usedBytes += data.file_contracts[node].df[filesNames[i]]
+                            links += `![File ${i + 1}](https://ipfs.dlux.io/ipfs/${filesNames[i]})\n`
+                        }
+                    } else {
+                        if (data.file_contracts[node].m.indexOf('"') >= 0) data.file_contracts[node].m = JSON.parse(data.file_contracts[node].m)
+                        var encData = data.file_contracts[node].m.split(',')[0] || ''
+                        var renew  = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
+                        var encAccounts = []
+                        var encrypted = false
+                        if(encData){
+                            encData = encData.split('#')
+                            renew = this.Base64toNumber(encData.shift()) & 1 ? true : false
+                            if(encData.length){
+                                encData = '#' + encData.join('#') 
+                                encAccounts = encData.split(';')
+                                encrypted = true
+                            }
+                        }
+                        this.newMeta[data.file_contracts[node].i] = {
+                            contract: {
+                                autoRenew: renew,
+                                encrypted,
+                                m: data.file_contracts[node].m,
+                            }
+                        }
+                        for (var i = 0; i < encAccounts.length; i++) {
+                            const encA = encAccounts[i].split('@')[1]
+                            data.file_contracts[node].autoRenew = renew
+                            data.file_contracts[node].encryption.accounts[encA] = {
+                                enc_key: `#${encAccounts[i].split('@')[0].split('#')[1]}`,
+                                key: '',
+                                done: true,
+                            }
+                        }
+                        
+                        var filesNames = data.file_contracts[node]?.df ? Object.keys(data.file_contracts[node].df) : []
+                        filesNames = filesNames.sort((a, b) => {
+                            if (a > b) return 1
+                            else if (a < b) return -1
+                            else return 0
+                        })
+                        const slots = data.file_contracts[node].m.split(",")
+                        for(var i = 0; i < filesNames.length; i++){
+                            this.usedBytes += data.file_contracts[node].df[filesNames[i]]
+                            const flags = slots[i * 4 + 4]
+                            this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
+                                name: slots[i * 4 + 1],
+                                type: slots[i * 4 + 2],
+                                thumb: slots[i * 4 + 3],
+                                thumb_data: slots[i * 4 + 3],
+                                flags: flags.indexOf('-') >= 0 ? flags.split('-')[0] : flags[0],
+                                license: flags.indexOf('-') >= 0 ? flags.split('-')[1] : '',
+                                labels: flags.indexOf('-') >= 0 ? flags.split('-')[2] : flags.slice(1),
+                            }
+                            if(this.newMeta[data.file_contracts[node].i][filesNames[i]].thumb)this.getImgData(data.file_contracts[node].i, filesNames[i])
+                            if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 1) this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = true
+                            else this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = false
+                            if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 2) this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = true
+                            else this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = false
+                            if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 4) this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = true
+                            else this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = false
+                            links += `![${this.newMeta[data.file_contracts[node].i][filesNames[i]].name}](https://ipfs.dlux.io/ipfs/${filesNames[i]})\n`
+                        }
+                    }
+                    this.links[data.file_contracts[node].i] = links
+                    this.contractIDs[data.file_contracts[node].i] = data.file_contracts[node];
+
+                    this.contracts.push(data.file_contracts[node]);
+                    this.contractIDs[data.file_contracts[node].i].index = this.contracts.length - 1;
+                    this.postBodyAdder[data.file_contracts[node].i] = {}
+
+                }
+                for (var user in data.channels) {
+                    for (var node in data.channels[user]) {
+                        if (this.contractIDs[data.channels[user][node].i]) continue
+                        else {
+                            this.contractIDs[data.channels[user][node].i] = data.channels[user][node];
+                            this.contracts.push(data.channels[user][node]);
+                            this.contractIDs[data.channels[user][node].i].index = this.contracts.length - 1;
+                        }
+                    }
+                }
+                this.sortContracts()
+            }
+        },
         handleLicense(id, cid, m) {
             if (m.action == 'added') {
                 this.newMeta[id][cid].license = m.item
@@ -1820,17 +1950,18 @@ export default {
                         .then((res) => {
                             res.result.extend = "7"
                             if (res.result) {
-                                this.contracts.splice(this.contractIDs[id].index, 1, res.result)
+                                this.handlePropContracts(res.result)
+                                //this.pcontracts.splice(this.contractIDs[id].index, 1, res.result)
                                 //this.extendcost[id] = parseInt(res.result.extend / 30 * res.result.r)
                             }
                         });
                 }
                 var i = 0
                 for (var node in this.prop_contracts) {
-                    this.contracts.push(this.prop_contracts[node]);
-                    this.contractIDs[this.prop_contracts[node].i] = this.prop_contracts[node];
-                    this.contractIDs[this.prop_contracts[node].i].index = i
-                    i++
+                    // this.pcontracts.push(this.prop_contracts[node]);
+                    // this.pcontractIDs[this.prop_contracts[node].i] = this.prop_contracts[node];
+                    // this.pcontractIDs[this.prop_contracts[node].i].index = i
+                    // i++
                     getContract(this.prop_contracts[node].i)
                 }
             }
@@ -1842,109 +1973,6 @@ export default {
         }
     },
     mounted() {
-        console.log('mounted', this.nodeview,  this.prop_contracts)
-        if (this.nodeview) {
-            for (var node in this.prop_contracts) {
-                console.log('node', node)
-                this.contracts.push(this.prop_contracts[node]);
-                if (!this.contracts[this.contracts.length - 1].m) {
-                    console.log("YAY")
-                    this.contracts[this.contracts.length - 1].autoRenew = false
-                    this.contracts[this.contracts.length - 1].m = ""
-                    this.newMeta[this.contracts[this.contracts.length - 1].i] = {
-                        contract: {
-                            autoRenew: false,
-                            encrypted: false,
-                            m: "",
-                        }
-                    }
-                    var filesNames = this.contracts[this.contracts.length - 1]?.df ? Object.keys(this.contracts[this.contracts.length - 1].df) : []
-                    filesNames = filesNames.sort((a, b) => {
-                        if (a > b) return 1
-                        else if (a < b) return -1
-                        else return 0
-                    })
-                    for(var i = 0; i < filesNames.length; i++){
-                        this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]] = {
-                            name: '',
-                            type: '',
-                            thumb: '',
-                            flags: '',
-                            is_thumb: false,
-                            encrypted: false,
-                            license: '',
-                            labels: '',
-                            size: this.contracts[this.contracts.length - 1].df[filesNames[i]]
-                        }
-                        this.usedBytes += this.contracts[this.contracts.length - 1].df[filesNames[i]]
-                        links += `![File ${i + 1}](https://ipfs.dlux.io/ipfs/${filesNames[i]})\n`
-                    }
-                } else {
-                    console.log('else')
-                    if (this.contracts[this.contracts.length - 1].m.indexOf('"') >= 0) this.contracts[this.contracts.length - 1].m = JSON.parse(this.contracts[this.contracts.length - 1].m)
-                    var encData = this.contracts[this.contracts.length - 1].m.split(',')[0] || ''
-                    var renew  = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
-                    var encAccounts = []
-                    var encrypted = false
-                    if(encData){
-                        encData = encData.split('#')
-                        renew = this.Base64toNumber(encData.shift()) & 1 ? true : false
-                        if(encData.length){
-                            encData = '#' + encData.join('#') 
-                            encAccounts = encData.split(';')
-                            encrypted = true
-                        }
-                    }
-                    this.newMeta[this.contracts[this.contracts.length - 1].i] = {
-                        contract: {
-                            autoRenew: renew,
-                            encrypted,
-                            m: this.contracts[this.contracts.length - 1].m,
-                        }
-                    }
-                    for (var i = 0; i < encAccounts.length; i++) {
-                        const encA = encAccounts[i].split('@')[1]
-                        this.contracts[this.contracts.length - 1].autoRenew = renew
-                        this.contracts[this.contracts.length - 1].encryption.accounts[encA] = {
-                            enc_key: `#${encAccounts[i].split('@')[0].split('#')[1]}`,
-                            key: '',
-                            done: true,
-                        }
-                    }
-                    
-                    var filesNames = this.contracts[this.contracts.length - 1]?.df ? Object.keys(this.contracts[this.contracts.length - 1].df) : []
-                    filesNames = filesNames.sort((a, b) => {
-                        if (a > b) return 1
-                        else if (a < b) return -1
-                        else return 0
-                    })
-                    const slots = this.contracts[this.contracts.length - 1].m.split(",")
-                    for(var i = 0; i < filesNames.length; i++){
-                        this.usedBytes += this.contracts[this.contracts.length - 1].df[filesNames[i]]
-                        const flags = slots[i * 4 + 4]
-                        this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]] = {
-                            name: slots[i * 4 + 1],
-                            type: slots[i * 4 + 2],
-                            thumb: slots[i * 4 + 3],
-                            thumb_data: slots[i * 4 + 3],
-                            flags: flags.indexOf('-') >= 0 ? flags.split('-')[0] : flags[0],
-                            license: flags.indexOf('-') >= 0 ? flags.split('-')[1] : '',
-                            labels: flags.indexOf('-') >= 0 ? flags.split('-')[2] : flags.slice(1),
-                        }
-                        if(this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].thumb)this.getImgData(this.contracts[this.contracts.length - 1].i, filesNames[i])
-                        if(this.Base64toNumber(this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].flags) & 1) this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].encrypted = true
-                        else this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].encrypted = false
-                        if(this.Base64toNumber(this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].flags) & 2) this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].is_thumb = true
-                        else this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].is_thumb = false
-                        if(this.Base64toNumber(this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].flags) & 4) this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].nsfw = true
-                        else this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].nsfw = false
-                        links += `![${this.newMeta[this.contracts[this.contracts.length - 1].i][filesNames[i]].name}](https://ipfs.dlux.io/ipfs/${filesNames[i]})\n`
-                    }
-                }
-                this.contractIDs[this.prop_contracts[node].i] = this.prop_contracts[node];
-                this.contractIDs[this.prop_contracts[node].i].index = this.prop_contracts.length - 1;
-            }
-        }
         this.getSpkStats()
         this.getIPFSproviders()
 
