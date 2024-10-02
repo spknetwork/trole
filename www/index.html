@@ -87,7 +87,7 @@
                                 </div>
                             </div>
                             <contract-vue :nodeview="true" :prop_contracts="newContracts" title="New Contracts"
-                                :account="account" @tosign="toSign=$event" :accountinfo="accountinfo" />
+                                :account="stats.node" @tosign="toSign=$event" :accountinfo="accountinfo" />
                         </div>
                     </div>
 
@@ -96,7 +96,7 @@
                         aria-labelledby="storagetab">
                         <div class="">
                             <contract-vue :nodeview="true" :prop_contracts="contracts" title="Stored Contracts"
-                                :account="account" @tosign="toSign=$event" :accountinfo="accountinfo" />
+                                :account="stats.node" @tosign="toSign=$event" :accountinfo="accountinfo" />
                         </div>
                     </div>
 
