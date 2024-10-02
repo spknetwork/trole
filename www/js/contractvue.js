@@ -467,7 +467,7 @@ export default {
                                                                                     <div class="fs-1 fw-bold align-items-start">SPK Network</div>
                                                                                    <div class="input-group-text">
                                                                                         <div class="form-check form-switch fs-5" :class="{'is-danger': !saccountapi.spk}">
-                                                                                            <input class="form-check-input" type="checkbox" checked="" role="switch" :id="contract.i + 'autoRenew'" v-model="newMeta[contract.i].contract.autoRenew">
+                                                                                            <input class="form-check-input" type="checkbox" checked="" role="switch" :id="contract.i + 'autoRenew'" v-model="newMeta[contract.i].contract.autoRenew" :class="{'disabled': contract.t != account}" :disabled="contract.t != account">
                                                                                             <label class="form-check-label ms-auto" :class="{'text-danger': !saccountapi.spk}" :for="contract.i + 'autoRenew'">Auto-Renew</label>
                                                                                         </div>
                                                                                     </div>
@@ -497,7 +497,7 @@ export default {
                                                                                 
                                                                                 
                                                                                 <div v-for="(size, cid, index) in contract.df">
-                                                                                    <div v-if="!newMeta[contract.i][cid].is_thumb" class="mt-2 rounded bg-dark p-2">
+                                                                                    <div v-if="!newMeta[contract.i][cid].is_thumb" class="mt-2 rounded card p-2">
 
                                                                                         <div class="row align-items-center"> 
 
@@ -558,34 +558,34 @@ export default {
                                                                                             </div>
 
                                                                                             <div class="col-md-8"> 
-                                                                        
+
                                                                                                 <div class="mb-1">    
                                                                                                     <label class="mb-1">File Name</label>
                                                                                                     <div class="input-group">
-                                                                                                        <input autocapitalize="off" v-model="newMeta[contract.i][cid].name" placeholder="File Name" pattern="[a-zA-Z0-9]{3,25}" class="form-control">
-                                                                                                        <span class="input-group-text">.</span>
-                                                                                                        <input autocapitalize="off" v-model="newMeta[contract.i][cid].type" placeholder="File Type" pattern="[a-zA-Z0-9]{1,4}" class="form-control">
+                                                                                                        <input autocapitalize="off" v-model="newMeta[contract.i][cid].name" placeholder="File Name" pattern="[a-zA-Z0-9]{3,25}" class="form-control bg-dark border-0" :class="{'text-info': contract.t == account, 'text-white': contract.t != account}" :disabled="contract.t != account">
+                                                                                                        <span class="input-group-text bg-dark border-0">.</span>
+                                                                                                        <input autocapitalize="off" v-model="newMeta[contract.i][cid].type" placeholder="File Type" pattern="[a-zA-Z0-9]{1,4}" class="form-control bg-dark border-0" :class="{'text-info': contract.t == account, 'text-white': contract.t != account}" :disabled="contract.t != account">
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <div class="mb-1">
                                                                                                     <label class="mb-1">Thumbnail</label>
                                                                                                     <div class="position-relative has-validation">
-                                                                                                        <input autocapitalize="off" v-model="newMeta[contract.i][cid].thumb" @change="getImgData(contract.i, cid)" placeholder="https://your-thumbnail-image.png" pattern="https:\/\/[a-z0-9.-\/]+|Qm[a-zA-Z0-9]+" class="form-control">
+                                                                                                        <input autocapitalize="off" v-model="newMeta[contract.i][cid].thumb" @change="getImgData(contract.i, cid)" placeholder="https://your-thumbnail-image.png" pattern="https:\/\/[a-z0-9.-\/]+|Qm[a-zA-Z0-9]+" class="form-control bg-dark border-0" :class="{'text-info': contract.t == account, 'text-white': contract.t != account}" :disabled="contract.t != account">
                                                                                                     </div>
                                                                                                 </div>
 
                                                                                                 <!-- choices-js-->
                                                                                                 <div class="mb-1">
                                                                                                     <label class="mb-1">Tags</label>
-                                                                                                    <choices-vue ref="select-tag" :prop_selections="newMeta[contract.i][cid].flags" prop_type="tags" @data="handleTag(contract.i, cid, $event)"></choices-vue>
+                                                                                                    <choices-vue ref="select-tag" :prop_selections="newMeta[contract.i][cid].flags" prop_type="tags" @data="handleTag(contract.i, cid, $event)" :class="{'text-info': contract.t == account, 'text-white disabled': contract.t != account}" :disabled="contract.t != account"></choices-vue>
                                                                                                 </div>
                                                                                                 <div class="mb-1">
                                                                                                     <label class="mb-1">License</label>
-                                                                                                    <choices-vue ref="select-tag" :prop_selections="newMeta[contract.i][cid].license" prop_type="license" @data="handleLicense(contract.i, cid, $event)"></choices-vue>
+                                                                                                    <choices-vue ref="select-tag" :prop_selections="newMeta[contract.i][cid].license" prop_type="license" @data="handleLicense(contract.i, cid, $event)" :class="{'text-info': contract.t == account, 'text-white': contract.t != account}" :disabled="contract.t != account"></choices-vue>
                                                                                                 </div>
                                                                                                 <div class="mb-1">
                                                                                                     <label class="mb-1">Labels</label>
-                                                                                                    <choices-vue ref="select-label" :prop_selections="newMeta[contract.i][cid].labels" prop_type="labels" @data="handleLabel(contract.i, cid, $event)"></choices-vue>
+                                                                                                    <choices-vue ref="select-label" :prop_selections="newMeta[contract.i][cid].labels" prop_type="labels" @data="handleLabel(contract.i, cid, $event)" :class="{'text-info': contract.t == account, 'text-white': contract.t != account}" :disabled="contract.t != account"></choices-vue>
                                                                                                 </div> 
                                                                                                 
                                                                                             </div>
