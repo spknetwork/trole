@@ -181,7 +181,8 @@ export default {
                     <div class="ms-auto me-auto d-flex justify-content-center">
                         <div class="card mx-1 px-3 py-2 mt-3 mb-4 bg-darker" style="max-width: 600px">
                             <h2 class="fw-light mt-1">No files found</h2>
-                            <p class="lead mb-1" v-show="saccountapi.spk_power">
+                            <p class="lead mb-1" v-if="nodeview && title == 'stored'">The TROLE API service can take up to 10 minutes to update data</p>
+                            <p class="lead mb-1" v-if="!nodeview || title == 'new'" v-show="saccountapi.spk_power">
                             Click 
                                 <a class="btn btn-sm btn-dark border-info text-info no-decoration small" style="font-size: 0.6em; width: 72px;" role="button" data-bs-toggle="modal" data-bs-target="#contractModal">
                                     <modal-vue type="build" token="BROCA"
@@ -229,7 +230,8 @@ export default {
                             <div class="ms-auto me-auto d-flex justify-content-center">
                                 <div class="card mx-1 px-3 py-2 mt-3 mb-4 bg-darker" style="max-width: 600px">
                                     <h2 class="fw-light mt-1">No contracts found</h2>
-                                    <p class="lead mb-1" v-show="saccountapi.spk_power">Click <a
+                                    <p class="lead mb-1" v-if="nodeview && title == 'stored'">The TROLE API service can take up to 10 minutes to update data</p>
+                                    <p class="lead mb-1" v-show="saccountapi.spk_power" v-if="!nodeview || title == 'new'">Click <a
                                                 class="btn btn-sm btn-dark border-info text-info no-decoration small" style="font-size: 0.6em; width: 72px;"
                                                 role="button" data-bs-toggle="modal" data-bs-target="#contractModal">
                                                 <modal-vue type="build" token="BROCA"
