@@ -354,7 +354,7 @@ export default {
           get() {
             var found = false
             for (var i in this.contract.n) {
-                if (this.contract.n[i] == this.spkapi.name) {
+                if (this.contract.n[i] == this.spkapi.name || this.contract.n[i] == this.saccountapi.name) {
                     found = true
                     break
                 }
