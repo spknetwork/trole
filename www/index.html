@@ -28,10 +28,24 @@
         </div>
         <main role="main" class="flex-shrink-0" v-cloak>
             <div class="container">
-                <div class="mb-3">
-                    <h2 class="fw-light">STORAGE NODE DASHBOARD</h2>
-                    <h4>@{{ stats.node }}</h4>
+                
+                <div class="p-2 mb-2">
+                    <div class="mb-3">
+                        <h2 class="fw-light">STORAGE NODE DASHBOARD</h2>
+                        <h4>@{{ stats.node }}</h4>
+                    </div>
+    
+                    <h4>Usage: {{formatNumber((stats.RepoSize / stats.StorageMax) * 100,'3','.',',')}}% of
+                        {{humanFileSize(stats.StorageMax)}}</h4>
+                    <div class="progress" role="progressbar" aria-label="Upload progress" aria-valuenow="25"
+                        aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar"
+                            :style="'width: ' + ((stats.RepoSize / stats.StorageMax) * 100) + '%'">
+                            {{(stats.RepoSize / stats.StorageMax) * 100}}%
+                        </div>
+                    </div>
                 </div>
+
                 <ul class="nav nav-tabs mb-3" role="tablist">
 
 
@@ -53,14 +67,14 @@
                     </li>
 
                 </ul>
-                <div class="tab-content">
+                <div class="tab-content rounded" style="background-color: rgba(0, 0, 0, 0.5);">
 
 
 
                     <!-- new contracts -->
                     <div role="tabpanel" ref="newTab" class="tab-pane fade show active" id="newTab"
                         aria-labelledby="newtab">
-                        <div class="card">
+                        <div class="">
                             <div class="p-2 mb-2 d-none">
                                 <h4>PoA Rate: <!--{{formatNumber(#) * 100,'3','.',',')}}% of
                                     {{humanFileSize(stats.StorageMax)}}--></h4>
@@ -80,18 +94,7 @@
                     <!-- stored contracts -->
                     <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
                         aria-labelledby="storagetab">
-                        <div class="card">
-                            <div class="p-2 mb-2">
-                                <h4>Usage: {{formatNumber((stats.RepoSize / stats.StorageMax) * 100,'3','.',',')}}% of
-                                    {{humanFileSize(stats.StorageMax)}}</h4>
-                                <div class="progress" role="progressbar" aria-label="Upload progress" aria-valuenow="25"
-                                    aria-valuemin="0" aria-valuemax="100">
-                                    <div class="progress-bar"
-                                        :style="'width: ' + ((stats.RepoSize / stats.StorageMax) * 100) + '%'">
-                                        {{(stats.RepoSize / stats.StorageMax) * 100}}%
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="">
                             <contract-vue :nodeview="true" :prop_contracts="contracts" title="Stored Contracts"
                                 :account="account" @tosign="toSign=$event" :accountinfo="accountinfo" />
                         </div>
@@ -101,7 +104,7 @@
 
                     <!-- stats -->
                     <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab" aria-labelledby="newtab">
-                        <div class="card">
+                        <div class="">
                             <h2 class="mt-2 ms-3 fw-light">Stats</h2>
                             <div class="p-3">
 
@@ -188,7 +191,7 @@
 
                     <!-- my contracts -->
                     <div role="tabpanel" ref="myTab" class="tab-pane fade" id="myTab" aria-labelledby="newtab">
-                        <div class="card">
+                        <div class="">
                             <contract-vue :nodeview="false" title="My Contracts" :account="account"
                                 @tosign="toSign=$event" :accountinfo="accountinfo" />
                         </div>
@@ -197,7 +200,7 @@
                     <!-- wallet -->
                     <div role="tabpanel" ref="walletTab" class="tab-pane fade" id="walletTab"
                         aria-labelledby="wallettab">
-                        <div class="card">
+                        <div class="">
                             <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)"
                                 :me="me" />
                         </div>
