@@ -246,18 +246,18 @@ function inventory() {
           ipfs.pin.ls(contract.df[j], (err, pinset) => {
             if (err && contract.df[j]) {
               try {
-                console.log('missing', contract.df[j])
-                ipfs.pin.add(contract.df[j], function (err, pin) {
+                console.log('missing', j)
+                ipfs.pin.add(j, function (err, pin) {
                   if (err) {
                     console.log(err);
                   }
-                  console.log(`pinned ${contract.df[j]}`)
+                  console.log(`pinned ${j}`)
                 })
               } catch(e){
                 console.log(e)
               }
-            } else if (!contract.df[j]) {
-              console.log('missing', contract)
+            } else if (!j) {
+              console.log('missing', j)
             }
             // setTimeout(() => { // slow it down, make a queue function
             //   console.log('inventory', contract.df[j])

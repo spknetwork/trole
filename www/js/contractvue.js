@@ -1424,7 +1424,7 @@ export default {
         handlePropContracts(contract){
             if(this.larynxbehind == 999999){
                 setTimeout(() => {
-                    this.handlePropContracts()
+                    this.handlePropContracts(contract)
                 }, 1000)
             } else {
                 const data = {
@@ -1977,6 +1977,27 @@ export default {
     mounted() {
         this.getSpkStats()
         this.getIPFSproviders()
-
+        this.contracts = []
+        this.contractIDs = {}
+        const getContract = (id) => {
+            fetch('https://spktest.dlux.io/api/fileContract/' + id)
+                .then((r) => r.json())
+                .then((res) => {
+                    res.result.extend = "7"
+                    if (res.result) {
+                        this.handlePropContracts(res.result)
+                        //this.pcontracts.splice(this.contractIDs[id].index, 1, res.result)
+                        //this.extendcost[id] = parseInt(res.result.extend / 30 * res.result.r)
+                    }
+                });
+        }
+        //var i = 0
+        for (var node in this.prop_contracts) {
+            // this.pcontracts.push(this.prop_contracts[node]);
+            // this.pcontractIDs[this.prop_contracts[node].i] = this.prop_contracts[node];
+            // this.pcontractIDs[this.prop_contracts[node].i].index = i
+            // i++
+            getContract(this.prop_contracts[node].i)
+        }
     },
 };
