@@ -130,11 +130,11 @@ export default {
                 <div class="mx-auto ">
                     <ul class="nav nav-tabs rounded mx-auto mt-3 fs-5 " style="background-color: rgb(0,0,0,0.3)">
                         <li class="nav-item">
-                            <a class="nav-link active px-4" href="#contractsTab" role="tab" data-bs-toggle="tab"
+                            <a class="nav-link active px-4" :href="'#contractsTab' + title" role="tab" data-bs-toggle="tab"
                                 aria-controls="contractstab" aria-expanded="true">CONTRACTS</a>
                         </li>
                         <li v-if="!cc" class="nav-item">
-                            <a class="nav-link px-4" aria-current="page" href="#filesTab" role="tab" data-bs-toggle="tab"
+                            <a class="nav-link px-4" aria-current="page" :href="'#filesTab' + title" role="tab" data-bs-toggle="tab"
                                 aria-controls="filestab" aria-expanded="false">FILES</a>
                         </li>
                         <li v-if="cc" class="nav-item">
@@ -174,7 +174,7 @@ export default {
         
             
             <!-- files -->
-            <div v-else role="tabpanel" class="tab-pane" id="filesTab" aria-labelledby="filestab">
+            <div v-else role="tabpanel" class="tab-pane" :id="'filesTab' + title" aria-labelledby="filestab">
                 
                 <!-- no files -->
                 <div v-show="!contracts.length"> 
@@ -218,7 +218,7 @@ export default {
             
             
             <!-- contracts -->
-            <div role="tabpanel" class="tab-pane show active" id="contractsTab" aria-labelledby="contractstab">
+            <div role="tabpanel" class="tab-pane show active" :id="'contractsTab' + title" aria-labelledby="contractstab">
                 
                 <div class="card-body p-0">
                     <!-- registered -->
