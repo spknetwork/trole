@@ -237,10 +237,6 @@ export default {
     methods: {
         store(contract, remove = false, acc = this.spkapi.name){
             // have a storage node?
-            if(acc != this.spkapi.name){
-                alert('Please log in as the storage node to store this contract')
-                return
-            }
             const toSign = {
                 type: "cja",
                 cj: {
