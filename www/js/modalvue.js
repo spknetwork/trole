@@ -505,7 +505,7 @@ export default {
           },
           id: `spkccT_channel_open`,
           msg: `Building Contract...`,
-          ops: ["getSapi"],
+          ops: ["getSapi", "refreshComponents"],
           api: "https://spktest.dlux.io",
           txid: "build_contract",
         };
