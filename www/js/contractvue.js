@@ -1792,7 +1792,7 @@ export default {
             for(var i = 0; i < this.contracts.length; i++){
                 if(this.contracts[i].sm == 1)contracts.push(this.contracts[i].i)
             }
-            this.store(this.contracts[i].i)
+            this.store(contracts)
         },
         filterSize(){
             for(var i = 0; i < this.contracts.length; i++){
