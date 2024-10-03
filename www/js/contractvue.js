@@ -638,7 +638,7 @@ export default {
                                                                                                         <button type="button" class="w-100 btn btn-sm btn-primary mb-1 mx-auto" @click="downloadFile(cid, contract.i, index)"><span class="d-flex align-items-center w-100">Download<i class="fa-solid fa-download fa-fw ms-auto"></i></span></button>
                                                                                                     </div>
                                                                                                         <!-- add to post -->
-                                                                                                    <div v-if="contract.c == 2">
+                                                                                                    <div v-if="contract.c == 2 && !nodeview">
                                                                                                         <button type="button" class="w-100 btn btn-sm btn-purp mb-1 mx-auto" @click="addToPost(cid, contract.i)"><span class="d-flex align-items-center w-100">Add to Post<i class="fa-solid fa-plus fa-fw ms-auto"></i></span></button>
                                                                                                     </div>
 
