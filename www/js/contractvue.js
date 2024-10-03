@@ -153,7 +153,7 @@ export default {
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
                                     </div>
                                 </div>
@@ -179,7 +179,7 @@ export default {
                 </div>
                 
                 <div class="btn-group mx-2" role="group" aria-label="Storage Actions" :class="{'invisible': title != 'new'}">
-                    <button role="button" class="btn btn-danger"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                    <button @click="storeAll()" role="button" class="btn btn-danger"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
                       <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
@@ -889,6 +889,9 @@ export default {
             filter: {
                 slots: true,
                 size: 0,
+                max: 0,
+                min: 999999999999,
+                step: 1,
             },
             postBodyAdder: {},
             newMeta: {},
@@ -1019,13 +1022,13 @@ export default {
         getdelimed(string, del = ',', index = 0) {
             return string.split(del)[index] ? string.split(del)[index] : ''
         },
-        sendIt(event){
+        sendIt(event) {
             this.$emit('tosign', event)
         },
         getImgData(id, cid) {
             var string = this.smartThumb(id, cid)
             fetch(string).then(response => response.text()).then(data => {
-                if(data.indexOf('data:image/') >= 0)this.newMeta[id][cid].thumb_data = data
+                if (data.indexOf('data:image/') >= 0) this.newMeta[id][cid].thumb_data = data
                 else this.newMeta[id][cid].thumb_data = string
             }).catch(e => {
                 this.newMeta[id][cid].thumb_data = string
@@ -1192,23 +1195,23 @@ export default {
         },
         metaMismatch(contract) {
             var enc_string = ''
-                for (var acc in this.contractIDs[contract].encryption.accounts) {
-                    if (this.contractIDs[contract].encryption.accounts[acc].enc_key) enc_string += `${this.contractIDs[contract].encryption.accounts[acc].enc_key}@${acc};`
+            for (var acc in this.contractIDs[contract].encryption.accounts) {
+                if (this.contractIDs[contract].encryption.accounts[acc].enc_key) enc_string += `${this.contractIDs[contract].encryption.accounts[acc].enc_key}@${acc};`
+            }
+            //remove last ;
+            enc_string = `${this.newMeta[contract].contract.autoRenew ? '1' : ''}${enc_string.slice(0, -1)}`
+            this.newMeta[contract].contract.enc_string = enc_string
+            var cids = Object.keys(this.newMeta[contract])
+            cids = cids.sort((a, b) => {
+                if (a > b) return 1
+                else if (a < b) return -1
+                else return 0
+            })
+            for (var i = 0; i < cids.length; i++) {
+                if (cids[i] != 'contract') {
+                    enc_string += `,${this.newMeta[contract][cids[i]].name},${this.newMeta[contract][cids[i]].type},${this.newMeta[contract][cids[i]].thumb},${this.newMeta[contract][cids[i]].flags}-${this.newMeta[contract][cids[i]].license}-${this.newMeta[contract][cids[i]].labels}`
                 }
-                //remove last ;
-                enc_string = `${this.newMeta[contract].contract.autoRenew ? '1' : ''}${enc_string.slice(0, -1)}`
-                this.newMeta[contract].contract.enc_string = enc_string
-                var cids = Object.keys(this.newMeta[contract])
-                cids = cids.sort((a, b) => {
-                    if (a > b) return 1
-                    else if (a < b) return -1
-                    else return 0
-                })
-                for (var i = 0; i < cids.length; i++) {
-                    if (cids[i] != 'contract') {
-                        enc_string += `,${this.newMeta[contract][cids[i]].name},${this.newMeta[contract][cids[i]].type},${this.newMeta[contract][cids[i]].thumb},${this.newMeta[contract][cids[i]].flags}-${this.newMeta[contract][cids[i]].license}-${this.newMeta[contract][cids[i]].labels}`
-                    }
-                }
+            }
             if (this.newMeta[contract].contract.m != enc_string) return true
         },
         update_meta(contract) {
@@ -1219,7 +1222,7 @@ export default {
                     if (this.contractIDs[contract].encryption.accounts[acc].enc_key) enc_string += `${this.contractIDs[contract].encryption.accounts[acc].enc_key}@${acc};`
                 }
                 //remove last ;
-                enc_string = `${this.newMeta[contract].contract.autoRenew ? '1' : '0' }${enc_string.slice(0, -1)}`
+                enc_string = `${this.newMeta[contract].contract.autoRenew ? '1' : '0'}${enc_string.slice(0, -1)}`
                 this.newMeta[contract].contract.enc_string = enc_string
                 var cids = Object.keys(this.newMeta[contract])
                 cids = cids.sort((a, b) => {
@@ -1361,7 +1364,7 @@ export default {
                                     else if (a < b) return -1
                                     else return 0
                                 })
-                                for(var i = 0; i < filesNames.length; i++){
+                                for (var i = 0; i < filesNames.length; i++) {
                                     this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
                                         name: '',
                                         type: '',
@@ -1379,14 +1382,14 @@ export default {
                             } else {
                                 if (data.file_contracts[node].m.indexOf('"') >= 0) data.file_contracts[node].m = JSON.parse(data.file_contracts[node].m)
                                 var encData = data.file_contracts[node].m.split(',')[0] || ''
-                                var renew  = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
+                                var renew = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
                                 var encAccounts = []
                                 var encrypted = false
-                                if(encData){
+                                if (encData) {
                                     encData = encData.split('#')
                                     renew = this.Base64toNumber(encData.shift()) & 1 ? true : false
-                                    if(encData.length){
-                                        encData = '#' + encData.join('#') 
+                                    if (encData.length) {
+                                        encData = '#' + encData.join('#')
                                         encAccounts = encData.split(';')
                                         encrypted = true
                                     }
@@ -1407,7 +1410,7 @@ export default {
                                         done: true,
                                     }
                                 }
-                                
+
                                 var filesNames = data.file_contracts[node]?.df ? Object.keys(data.file_contracts[node].df) : []
                                 filesNames = filesNames.sort((a, b) => {
                                     if (a > b) return 1
@@ -1415,7 +1418,7 @@ export default {
                                     else return 0
                                 })
                                 const slots = data.file_contracts[node].m.split(",")
-                                for(var i = 0; i < filesNames.length; i++){
+                                for (var i = 0; i < filesNames.length; i++) {
                                     this.usedBytes += data.file_contracts[node].df[filesNames[i]]
                                     const flags = slots[i * 4 + 4]
                                     this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
@@ -1427,12 +1430,12 @@ export default {
                                         license: flags.indexOf('-') >= 0 ? flags.split('-')[1] : '',
                                         labels: flags.indexOf('-') >= 0 ? flags.split('-')[2] : flags.slice(1),
                                     }
-                                    if(this.newMeta[data.file_contracts[node].i][filesNames[i]].thumb)this.getImgData(data.file_contracts[node].i, filesNames[i])
-                                    if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 1) this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = true
+                                    if (this.newMeta[data.file_contracts[node].i][filesNames[i]].thumb) this.getImgData(data.file_contracts[node].i, filesNames[i])
+                                    if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 1) this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = true
                                     else this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = false
-                                    if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 2) this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = true
+                                    if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 2) this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = true
                                     else this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = false
-                                    if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 4) this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = true
+                                    if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 4) this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = true
                                     else this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = false
                                     links += `![${this.newMeta[data.file_contracts[node].i][filesNames[i]].name}](https://ipfs.dlux.io/ipfs/${filesNames[i]})\n`
                                 }
@@ -1466,7 +1469,7 @@ export default {
                         (data.balance +
                             data.gov +
                             data.poweredUp +
-                            data.spk_power + 
+                            data.spk_power +
                             this.saccountapi.granting.t +
                             data.claim +
                             data.spk) /
@@ -1491,13 +1494,13 @@ export default {
         },
         handleLabel(id, cid, m) {
             if (m.action == 'added') {
-                if (this.newMeta[id][cid].labels.indexOf(m.item) == -1 ) this.newMeta[id][cid].labels += m.item
+                if (this.newMeta[id][cid].labels.indexOf(m.item) == -1) this.newMeta[id][cid].labels += m.item
             } else {
                 this.newMeta[id][cid].labels = this.newMeta[id][cid].labels.replace(m.item, '')
             }
         },
-        handlePropContracts(contract){
-            if(this.larynxbehind == 999999){
+        handlePropContracts(contract) {
+            if (this.larynxbehind == 999999) {
                 setTimeout(() => {
                     this.handlePropContracts(contract)
                 }, 1000)
@@ -1506,13 +1509,14 @@ export default {
                     file_contracts: [contract]
                 }
                 for (var node in data.file_contracts) {
-                    if(data.file_contracts[node].u > this.filter.size) {
+                    if (data.file_contracts[node].u > this.filter.size) {
                         this.filter.size = data.file_contracts[node].u
                         this.filter.max = data.file_contracts[node].u
-                    } else if ( data.file_contracts[node].u < this.filter.min ) {
+                    } 
+                    if (data.file_contracts[node].u < this.filter.min) {
                         this.filter.min = data.file_contracts[node].u
                     }
-                    
+
                     data.file_contracts[node].sm = 1
                     data.file_contracts[node].encryption = {
                         input: "",
@@ -1537,7 +1541,7 @@ export default {
                             else if (a < b) return -1
                             else return 0
                         })
-                        for(var i = 0; i < filesNames.length; i++){
+                        for (var i = 0; i < filesNames.length; i++) {
                             this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
                                 name: '',
                                 type: '',
@@ -1555,14 +1559,14 @@ export default {
                     } else {
                         if (data.file_contracts[node].m.indexOf('"') >= 0) data.file_contracts[node].m = JSON.parse(data.file_contracts[node].m)
                         var encData = data.file_contracts[node].m.split(',')[0] || ''
-                        var renew  = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
+                        var renew = this.Base64toNumber(encData[0] || '0') & 1 ? true : false
                         var encAccounts = []
                         var encrypted = false
-                        if(encData){
+                        if (encData) {
                             encData = encData.split('#')
                             renew = this.Base64toNumber(encData.shift()) & 1 ? true : false
-                            if(encData.length){
-                                encData = '#' + encData.join('#') 
+                            if (encData.length) {
+                                encData = '#' + encData.join('#')
                                 encAccounts = encData.split(';')
                                 encrypted = true
                             }
@@ -1583,7 +1587,7 @@ export default {
                                 done: true,
                             }
                         }
-                        
+
                         var filesNames = data.file_contracts[node]?.df ? Object.keys(data.file_contracts[node].df) : []
                         filesNames = filesNames.sort((a, b) => {
                             if (a > b) return 1
@@ -1591,7 +1595,7 @@ export default {
                             else return 0
                         })
                         const slots = data.file_contracts[node].m.split(",")
-                        for(var i = 0; i < filesNames.length; i++){
+                        for (var i = 0; i < filesNames.length; i++) {
                             this.usedBytes += data.file_contracts[node].df[filesNames[i]]
                             const flags = slots[i * 4 + 4]
                             this.newMeta[data.file_contracts[node].i][filesNames[i]] = {
@@ -1603,12 +1607,12 @@ export default {
                                 license: flags.indexOf('-') >= 0 ? flags.split('-')[1] : '',
                                 labels: flags.indexOf('-') >= 0 ? flags.split('-')[2] : flags.slice(1),
                             }
-                            if(this.newMeta[data.file_contracts[node].i][filesNames[i]].thumb)this.getImgData(data.file_contracts[node].i, filesNames[i])
-                            if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 1) this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = true
+                            if (this.newMeta[data.file_contracts[node].i][filesNames[i]].thumb) this.getImgData(data.file_contracts[node].i, filesNames[i])
+                            if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 1) this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = true
                             else this.newMeta[data.file_contracts[node].i][filesNames[i]].encrypted = false
-                            if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 2) this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = true
+                            if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 2) this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = true
                             else this.newMeta[data.file_contracts[node].i][filesNames[i]].is_thumb = false
-                            if(this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 4) this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = true
+                            if (this.Base64toNumber(this.newMeta[data.file_contracts[node].i][filesNames[i]].flags) & 4) this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = true
                             else this.newMeta[data.file_contracts[node].i][filesNames[i]].nsfw = false
                             links += `![${this.newMeta[data.file_contracts[node].i][filesNames[i]].name}](https://ipfs.dlux.io/ipfs/${filesNames[i]})\n`
                         }
@@ -1648,7 +1652,7 @@ export default {
                 if (num & m.item) { }
                 else num += m.item
                 this.newMeta[id][cid].flags = (this.NumberToBase64(num) || "0")
-                switch (m.item){
+                switch (m.item) {
                     case 1:
                         this.newMeta[id][cid].encrypted = true
                         break
@@ -1663,7 +1667,7 @@ export default {
             } else {
                 if (num & m.item) num -= m.item
                 this.newMeta[id][cid].flags = (this.NumberToBase64(num) || "0")
-                switch (m.item){
+                switch (m.item) {
                     case 1:
                         this.newMeta[id][cid].encrypted = false
                         break
@@ -1773,7 +1777,7 @@ export default {
         },
         store(contracts, remove = false) {
             // have a storage node?
-            if(typeof contracts == "string")contracts = [contracts]
+            if (typeof contracts == "string") contracts = [contracts]
             const toSign = {
                 type: "cja",
                 cj: {
@@ -1785,27 +1789,30 @@ export default {
                 api: "https://spktest.dlux.io",
                 txid: `${contract}_${!remove ? 'store' : 'remove'}`,
             }
+            console.log(toSign)
             this.$emit('tosign', toSign)
         },
-        storeAll(){
+        storeAll() {
+            console.log("store all")
             var contracts = []
-            for(var i = 0; i < this.contracts.length; i++){
-                if(this.contracts[i].sm == 1)contracts.push(this.contracts[i].i)
+            for (var i = 0; i < this.contracts.length; i++) {
+                if (this.contracts[i].sm == 1) contracts.push(this.contracts[i].i)
             }
+            console.log(contracts)
             this.store(contracts)
         },
-        filterSize(){
-            for(var i = 0; i < this.contracts.length; i++){
-                if(this.isStored(this.contracts[i].i))this.contracts[i].sm = 0
-                if(this.contracts[i].u < this.filter.size)this.contracts[i].sm = 1
+        filterSize() {
+            for (var i = 0; i < this.contracts.length; i++) {
+                if (this.isStored(this.contracts[i].i)) this.contracts[i].sm = 0
+                if (this.contracts[i].u < this.filter.size) this.contracts[i].sm = 1
                 else this.contracts[i].sm = 0
             }
             this.filterSlots
         },
-        filterSlots(){
-            if(this.filterSize.slot) for(var i = 0; i < this.contracts.length; i++){
-                if(this.isStored(this.contracts[i].i))this.contracts[i].sm = 0
-                if(!Object.keys(this.contracts[i].n).length < this.contracts[i].p && this.contracts[i].sm == 1)this.contracts[i].sm = 1
+        filterSlots() {
+            if (this.filterSize.slot) for (var i = 0; i < this.contracts.length; i++) {
+                if (this.isStored(this.contracts[i].i)) this.contracts[i].sm = 0
+                if (!Object.keys(this.contracts[i].n).length < this.contracts[i].p && this.contracts[i].sm == 1) this.contracts[i].sm = 1
                 else this.contracts[i].sm = 0
             }
         },
@@ -2020,14 +2027,14 @@ export default {
             this.$emit('tosign', toSign)
         },
         isStored(cid) {
-              var found = false
-              for (var i in this.contractIDs[cid].n) {
-                  if (this.contractIDs[cid].n[i] == this.account) {
-                      found = true
-                      break
-                  }
-              }
-              return found
+            var found = false
+            for (var i in this.contractIDs[cid].n) {
+                if (this.contractIDs[cid].n[i] == this.account) {
+                    found = true
+                    break
+                }
+            }
+            return found
         },
     },
     watch: {
