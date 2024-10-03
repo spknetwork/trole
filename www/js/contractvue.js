@@ -153,8 +153,8 @@ export default {
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
-                                        <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
+                                        <input @change="filterSlots()" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Open Slots</label>
                                     </div>
                                 </div>
                             </div>
@@ -205,7 +205,7 @@ export default {
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" @change="filterSlots()" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
-                                        <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Open Slots</label>
                                     </div>
                                 </div>
                             </div>
