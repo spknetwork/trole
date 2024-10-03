@@ -64,7 +64,7 @@ export default {
                             <div class="text-lead text-uppercase text-white-50 text-center pb-05 mt-2 border-bottom">Storage Nodes</div>
                             <ol type="1" class="my-1">
                                 <div v-for="(acc, prop, index) in contract.n">
-                                    <li><a :href="'/@' + acc " class="no-decoration text-info">@{{acc}}</a></li>
+                                    <li><a :href="'https://dlux.io/@' + acc " class="no-decoration text-info" target="_blank">@{{acc}}</a></li>
                                     <div v-if="index == Object.keys(contract.n).length - 1 && index + 1 < contract.p"
                                         v-for="i in (contract.p - (index + 1))">
                                         <li>Open</li>
