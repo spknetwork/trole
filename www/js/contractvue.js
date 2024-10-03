@@ -178,8 +178,42 @@ export default {
                     </ul>
                 </div>
                 
-                <div class="btn-group mx-2" role="group" aria-label="Storage Actions" :class="{'invisible': title != 'new'}">
-                    <button @click="storeAll()" role="button" class="btn btn-danger"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                <div class="btn-group mx-2" role="group" aria-label="Storage Actions" v-if="title == 'new'">
+                    <button @click="storeAll()" role="button" class="btn btn-primary"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                      <button type="button"
+                            class="btn btn-dark ms-0 me-0 ps-0 pe-0"
+                            disabled></button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="fa-solid fa-filter fa-fw"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark bg-dark">
+                            <div class="p-2" style="max-width: 200px">
+                                <div class="d-flex flex-column">
+                                    <div class="text-center mb-3">
+                                        <label for="fileSize" class="lead form-label">File Size</label>
+                                        <input required="required" type="range" @change="filterSize()" class="form-range" :min="filter.min" :max="filter.max" :step="filter.step" v-model="filter.size" id="fileSize">
+                                        <span>{{fancyBytes(filter.size)}}</span>
+                                    </div>
+                                    <div class="form-check form-switch d-none">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">NSFW</label>
+                                    </div>
+                                    <div class="form-check form-switch d-none">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" @change="filterSlots()" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Open Slots</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btn-group mx-2" role="group" aria-label="Deletion Actions" v-if="title == 'stored'">
+                    <button @click="storeAll()" role="button" class="btn btn-danger"><i class="fa-solid fa-trash-can fa-fw me-2"></i>Remove Selected</button>
                       <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
@@ -394,25 +428,29 @@ export default {
                                                             <!-- storage -->
                                                             <th class="border-0">
                                                                 <div class="d-flex align-items-center">
+                                                                    <!-- my contracts -->
                                                                     <div v-if="!nodeview" class="border border-1 border-light text-light rounded p-05 me-2">
                                                                             <i class="fa-solid fa-file fa-fw"></i>
                                                                     </div>
-                                                                    <div v-if="nodeview && title == 'new'" class="border border-1 rounded p-05 me-2"
-                                                                        :class="{'border-light text-light': !contract.sm, 'border-primary bg-primary text-white': contract.sm}">
-                                                                       <div class="d-flex align-items-center">
-                                                                            <i class="fa-solid fa-file fa-fw my-05"></i>
-                                                                            <span class="my-0 mx-1 d-none d-lg-block">
-                                                                                <span v-if="!contract.sm">Available</span> 
-                                                                                <span v-if="contract.sm">Selected</span>
-                                                                            </span>
-                                                                        </div>
+                                                                    <!-- new available contracts -->
+                                                                    <div v-if="nodeview && title == 'new'">
+                                                                        <button type="button" class="btn btn-sm d-flex align-items-center me-2" :class="{'btn-outline-light': !contract.sm, 'btn-primary': contract.sm}">
+                                                                            <i class="fa-solid fa-file fa-fw"></i>
+                                                                            <span v-if="!contract.sm" class="ms-1 d-none d-lg-block">Available</span> 
+                                                                            <span v-if="contract.sm" class="ms-1 d-none d-lg-block">Selected</span>
+                                                                        </button>
                                                                     </div>
-                                                                     <div v-if="nodeview && title == 'stored'" class="border border-1 border-success text-success rounded p-05 me-2">
-                                                                      <div class="d-flex align-items-center">
-                                                                            <i class="fa-solid fa-file fa-fw my-05"></i>
-                                                                            <span class="my-0 mx-1 d-none d-lg-block">Stored</span>
-                                                                            </div>
-                                                                     </div>
+
+                                                                    <!-- stored contracts -->
+                                                                    <div v-if="nodeview && title == 'stored'">
+                                                                        <button type="button" class="btn btn-sm d-flex align-items-center me-2" :class="{'btn-danger': !contract.sm, 'btn-outline-success': contract.sm}">
+                                                                            <i class="fa-solid fa-file fa-fw"></i>
+                                                                            <span v-if="!contract.sm" class="ms-1 d-none d-lg-block">Selected</span> 
+                                                                            <span v-if="contract.sm" class="ms-1 d-none d-lg-block">Stored</span>
+                                                                        </button>
+                                                                    </div>
+                                                                    
+                                                                   
                                                                     <div>
                                                                         {{contract.c > 1 ? fancyBytes(contract.u) : fancyBytes(contract.a)}}
                                                                     </div>
