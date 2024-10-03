@@ -100,7 +100,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <contract-vue :nodeview="true" :prop_contracts="newContracts" title="new"
+                                <contract-vue v-if="!refresh" :nodeview="true" :prop_contracts="newContracts" title="new"
                                     :account="stats.node" @tosign="toSign=$event" :accountinfo="accountinfo" />
                             </div>
                         </div>
@@ -109,7 +109,7 @@
                         <div role="tabpanel" ref="storageTab" class="tab-pane fade" id="storageTab"
                             aria-labelledby="storagetab">
                             <div class="">
-                                <contract-vue :nodeview="true" :prop_contracts="contracts" title="stored"
+                                <contract-vue v-if="!refresh"  :nodeview="true" :prop_contracts="contracts" title="stored"
                                     :account="stats.node" @tosign="toSign=$event" :accountinfo="accountinfo" />
                             </div>
                         </div>
@@ -206,7 +206,7 @@
                         <!-- my contracts -->
                         <div role="tabpanel" ref="myTab" class="tab-pane fade" id="myTab" aria-labelledby="newtab">
                             <div class="">
-                                <contract-vue :nodeview="false" title="my" :account="account" @tosign="toSign=$event"
+                                <contract-vue v-if="!refresh"  :nodeview="false" title="my" :account="account" @tosign="toSign=$event"
                                     :accountinfo="accountinfo" />
                             </div>
                         </div>

@@ -11,6 +11,7 @@ createApp({
   data() {
     return {
       account: '',
+      refresh: false,
       node: true,
       toSign: {},
       stats: {},
@@ -49,6 +50,12 @@ createApp({
       if (this.toSign.txid == txid) {
         this.toSign = {};
       }
+    },
+    refreshComponents(){
+      this.refresh = !this.refresh
+      setTimeout(() => {
+        this.refresh = !this.refresh
+      },100)
     },
     log(msg) {
       console.log(msg);

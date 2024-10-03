@@ -1300,7 +1300,7 @@ export default {
                 cj: cja,
                 id: `spkccT_register_authority`,
                 msg: `Registering: ${this.account}:${this.accountinfo.posting.key_auths[0][0]}`,
-                ops: ["getSapi"],
+                ops: ["getSapi", "refreshComponents"],
                 api: this.sapi,
                 txid: `spkccT_register_authority`,
             };
@@ -1815,7 +1815,7 @@ export default {
                 },
                 id: `spkccT_${!remove ? 'store' : 'remove'}`,
                 msg: `Storing ${contract}...`,
-                ops: ["getTokenUser", "getContracts"],
+                ops: ["getTokenUser", "refreshComponents"],
                 api: "https://spktest.dlux.io",
                 txid: `${contract}_${!remove ? 'store' : 'remove'}`,
             }
