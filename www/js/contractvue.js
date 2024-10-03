@@ -1799,7 +1799,7 @@ export default {
                 },
                 id: `spkccT_extend`,
                 msg: `Extending ${contract.i}...`,
-                ops: ["getTokenUser"],
+                ops: ["getTokenUser", "refreshComponents"],
                 api: "https://spktest.dlux.io",
                 txid: "extend",
             }
@@ -2050,7 +2050,7 @@ export default {
                 },
                 id: `spkccT_contract_close`,
                 msg: `Canceling ${contract.i}...`,
-                ops: ["getTokenUser", "getSapi"],
+                ops: ["getTokenUser", "getSapi", "refreshComponents"],
                 api: "https://spktest.dlux.io",
                 txid: "cancel_contract",
             }
