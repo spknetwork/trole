@@ -803,7 +803,14 @@ export default {
                                                                             <i class="fa-solid fa-fw mx-1" :class="{'fa-lock-open': !newMeta[contract.i].contract.encrypted, 'fa-lock': newMeta[contract.i].contract.encrypted}" aria-hidden="true"></i>
                                                                             <div>{{newMeta[contract.i].contract.encrypted ? 'Private' : 'Public'}}</div>
                                                                         </div>
-                            
+                                                                         <div class="d-flex align-items-center px-3 py-1 m-1 rounded-pill border border-white">
+                                                                            <div> Nodes </div>
+                                                                            <i class="fa-solid fa-tower-broadcast mx-1 fa-fw"></i>
+                                                                            <div>{{contract.nt}} /
+                                                                                {{contract.p}} </div>
+                                                                        </div>
+
+                                                                  
                                                                     </div>
 
                                                                     <div class="d-flex">
