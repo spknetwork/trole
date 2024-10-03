@@ -51,7 +51,14 @@ createApp({
         this.toSign = {};
       }
     },
+    run(op) {
+      console.log('Refreshing:', op)
+      if (typeof this[op] == "function" && this.account != "GUEST") {
+        this[op](this.account);
+      }
+    },
     refreshComponents(){
+      console.log('refreshing')
       this.refresh = !this.refresh
       setTimeout(() => {
         this.refresh = !this.refresh
