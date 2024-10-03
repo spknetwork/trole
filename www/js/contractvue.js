@@ -128,7 +128,7 @@ export default {
         <div class="pb-1">
             <div class="d-flex flex-wrap align-items-center my-3">
                <div class="btn-group invisible mx-2" role="group" aria-label="Storage Actions">
-                    <button role="button" class="btn btn-danger" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                    <button @click="storeAll()" role="button" class="btn btn-danger" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
                       <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
