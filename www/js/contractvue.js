@@ -1915,7 +1915,7 @@ export default {
         isStored(cid) {
               var found = false
               for (var i in this.contractIDs[cid].n) {
-                  if (this.contractIDs[cid].n == this.account) {
+                  if (this.contractIDs[cid].n[i] == this.account) {
                       found = true
                       break
                   }
