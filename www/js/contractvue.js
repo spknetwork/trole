@@ -1285,6 +1285,8 @@ export default {
             else this.$emit('addasset', { id, contract });
         },
         sortContracts(on = 'c', dir = 'asc') {
+            //filter duplicates
+            this.contracts = this.contracts.filter((v, i, a) => a.findIndex(t => (t.i === v.i)) === i)
             this.contracts.sort((a, b) => {
                 if (a[on] > b[on]) {
                     return dir == 'asc' ? 1 : -1
