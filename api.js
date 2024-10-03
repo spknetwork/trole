@@ -243,8 +243,8 @@ function inventory() {
       DB.read(keys[i]).then(contract => {
         contract = JSON.parse(contract)
         for (var j in contract.df) {
-          ipfs.pin.ls(contract.df[j], (err, pinset) => {
-            if (err && contract.df[j]) {
+          ipfs.pin.ls(j, (err, pinset) => {
+            if (err && j) {
               try {
                 console.log('missing', j)
                 ipfs.pin.add(j, function (err, pin) {
