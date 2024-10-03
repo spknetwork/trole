@@ -40,7 +40,7 @@ export default {
 
 
 
-                <div class="my-2 bg-dark rounded" v-if="!FileInfo[file.name].is_thumb">
+                <div class="my-2 card " v-if="!FileInfo[file.name].is_thumb">
 
                     <div class="d-flex flex-wrap align-items-center px-2 py-1">
                         <div>
@@ -49,7 +49,9 @@ export default {
                                         class="fa-solid fa-lock-open fa-fw"></i></span>{{file.name}}</div>
                         </div>
 
-                        <div class="flex-grow-1 mx-5" v-if="File[FileInfo[file.name].index].actions.cancel">
+                        <div class="flex-grow-1 mx-5" >
+                        {{File[FileInfo[file.name].index].progress}}
+                         <!--v-if="File[FileInfo[file.name].index].actions.cancel"-->
                             <div class="progress" role="progressbar" aria-label="Upload progress" aria-valuenow="25"
                                 aria-valuemin="0" aria-valuemax="100">
                                 <div class="progress-bar"
@@ -149,11 +151,11 @@ export default {
                                         <label class="mb-1">File Name</label>
                                         <div class="input-group">
                                             <input autocapitalize="off" placeholder="File Name"
-                                                pattern="[a-zA-Z0-9]{3,25}" class="form-control"
+                                                pattern="[a-zA-Z0-9]{3,25}" class="form-control bg-dark border-0 text-info"
                                                 v-model="FileInfo[file.name].meta.name">
                                             <span class="input-group-text">.</span>
                                             <input autocapitalize="off" placeholder="File Type"
-                                                pattern="[a-zA-Z0-9]{1,4}" class="form-control"
+                                                pattern="[a-zA-Z0-9]{1,4}" class="form-control bg-dark border-0 text-info"
                                                 v-model="FileInfo[file.name].meta.ext">
                                         </div>
                                     </div>
@@ -165,7 +167,7 @@ export default {
                                                 :disabled="FileInfo['thumb' + file.name].use_thumb"
                                                 placeholder="https://your-thumbnail-image.png"
                                                 pattern="https:\/\/[a-z0-9.-\/]+|Qm[a-zA-Z0-9]+"
-                                                class="form-control disabled" v-model="FileInfo[file.name].meta.thumb">
+                                                class="form-control disabled bg-dark border-0" v-model="FileInfo[file.name].meta.thumb">
                                         </div>
                                         <div v-if="!FileInfo['thumb' + file.name]"
                                             class="position-relative has-validation">

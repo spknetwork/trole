@@ -832,7 +832,7 @@ export default {
                                                                     </div>
 
                                                                     <div class="d-flex">
-                                                                        <button type="button" class="btn btn-sm btn-danger my-2 mx-auto" @click="cancel_contract(contract)">
+                                                                        <button type="button" class="btn btn-sm btn-danger my-2 mx-auto" :class="{'disabled': contract.t != account}" :disabled="contract.t != account" @click="cancel_contract(contract)">
                                                                         <i class="fa-solid fa-file-circle-xmark fa-fw me-1"></i>End Contract</button>
                                                                     </div>
                                                                 </div>
