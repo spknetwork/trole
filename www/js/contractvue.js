@@ -397,7 +397,7 @@ export default {
                                                                     <div class="border border-1 border-light text-light rounded p-05 me-2" v-if="!nodeview">
                                                                             <i class="fa-solid fa-file fa-fw"></i>
                                                                     </div>
-                                                                    <div v-if="nodeview" class="border border-1 rounded p-05 me-2" :class="{'border-light text-light': !isStored(contract.i), 'border-success text-success': isStored(contract.i)}">
+                                                                    <div v-if="nodeview" class="border border-1 rounded p-05 me-2" :class="{'border-light text-light': !isStored(contract.i) && !contract.sm, 'border-success text-success': isStored(contract.i), 'border-primary bg-primary text-white': contract.sm && !isStored(contract.i)}">
                                                                        <div class="d-flex align-items-center"><i class="fa-solid fa-file fa-fw my-05"></i><span class="my-0 mx-1 d-none d-lg-block"><span v-if="nodeview && !contract.sm">{{isStored(contract.i) ? 'Stored' : 'Available'}}</span><span v-if="nodeview && contract.sm">Selected</span></span></div>
                                                                     </div>
                                                                     <div>
