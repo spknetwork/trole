@@ -326,8 +326,11 @@ export default {
                                                             <!-- storage -->
                                                             <th class="border-0">
                                                                 <div class="d-flex align-items-center">
-                                                                    <div class="border border-1 border-light text-light rounded p-05 me-2">
-                                                                        <i class="fa-solid fa-file fa-fw"></i> {{isStored(contract.i) ? 'Stored' : 'Available'}}
+                                                                    <div class="border border-1 border-light text-light rounded p-05 me-2" v-if="!nodeview">
+                                                                            <i class="fa-solid fa-file fa-fw"></i>
+                                                                    </div>
+                                                                    <div v-if="nodeview" class="border border-1 rounded p-05 me-2" :class="{'border-light text-light': !isStored(contract.i), 'border-success text-success': isStored(contract.i)}">
+                                                                        <i class="fa-solid fa-file fa-fw"></i><span class="mx-1" v-if="nodeview">{{isStored(contract.i) ? 'Stored' : 'Available'}}</span>
                                                                     </div>
                                                                     <div>
                                                                         {{contract.c > 1 ? fancyBytes(contract.u) : fancyBytes(contract.a)}}
