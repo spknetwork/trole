@@ -824,6 +824,10 @@ export default {
     data() {
         return {
             contracts: [],
+            filter: {
+                slots: true,
+                size: 0,
+            },
             postBodyAdder: {},
             newMeta: {},
             state2contracts: [],
@@ -1440,6 +1444,8 @@ export default {
                     file_contracts: [contract]
                 }
                 for (var node in data.file_contracts) {
+                    if(data.file_contracts[node].u > this.filter.size) this.filter.size = data.file_contracts[node].u
+                    data.file_contracts[node].sm = 1
                     data.file_contracts[node].encryption = {
                         input: "",
                         key: "",
@@ -1696,12 +1702,13 @@ export default {
             }
             this.$emit('tosign', toSign)
         },
-        store(contract, remove = false) {
+        store(contracts, remove = false) {
             // have a storage node?
+            if(typeof contracts == "string")contracts = [contracts]
             const toSign = {
                 type: "cja",
                 cj: {
-                    items: [contract]
+                    items: contracts
                 },
                 id: `spkccT_${!remove ? 'store' : 'remove'}`,
                 msg: `Storing ${contract}...`,
@@ -1710,6 +1717,28 @@ export default {
                 txid: `${contract}_${!remove ? 'store' : 'remove'}`,
             }
             this.$emit('tosign', toSign)
+        },
+        storeAll(){
+            var contracts = []
+            for(var i = 0; i < this.contracts.length; i++){
+                if(this.contracts[i].sm == 1)contracts.push(this.contracts[i].i)
+            }
+            this.store(this.contracts[i].i)
+        },
+        filterSize(){
+            for(var i = 0; i < this.contracts.length; i++){
+                if(this.isStored(this.contracts[i].i))this.contracts[i].sm = 0
+                if(this.contracts[i].u < this.filter.size)this.contracts[i].sm = 1
+                else this.contracts[i].sm = 0
+            }
+            this.filterSlots
+        },
+        filterSlots(){
+            if(this.filterSize.slot) for(var i = 0; i < this.contracts.length; i++){
+                if(this.isStored(this.contracts[i].i))this.contracts[i].sm = 0
+                if(!Object.keys(this.contracts[i].n).length < this.contracts[i].p && this.contracts[i].sm == 1)this.contracts[i].sm = 1
+                else this.contracts[i].sm = 0
+            }
         },
         getContracts() {
             var contracts = [],
