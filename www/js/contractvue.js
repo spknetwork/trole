@@ -1911,7 +1911,17 @@ export default {
                 txid: "cancel_contract",
             }
             this.$emit('tosign', toSign)
-        }
+        },
+        isStored(cid) {
+              var found = false
+              for (var i in this.contractIDs[cid].n) {
+                  if (this.contractIDs[cid].n == this.spkapi.name || this.contractIDs[cid].n == this.saccountapi.name) {
+                      found = true
+                      break
+                  }
+              }
+              return found
+        },
     },
     watch: {
         'account'(newValue) {
@@ -1972,7 +1982,7 @@ export default {
     computed: {
         hasFiles() {
             return Object.keys(this.files).length > 0;
-        }
+        },
     },
     mounted() {
         this.getSpkStats()
