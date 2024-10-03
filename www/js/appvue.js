@@ -241,7 +241,7 @@ createApp({
           this.File[this.FileInfo[f.name].index].actions.cancel = false
           this.FileInfo[f.name].progress = 1
           this.FileInfo[f.name].status = 'done'
-
+          this.getContracts()
         }
       };
       const uploadFileChunks = (file, options) => {
