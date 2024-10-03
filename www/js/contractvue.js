@@ -1806,7 +1806,7 @@ export default {
         filterSize() {
             for (var i = 0; i < this.contracts.length; i++) {
                 if (this.isStored(this.contracts[i].i)) this.contracts[i].sm = 0
-                if (this.contracts[i].u < this.filter.size) this.contracts[i].sm = 1
+                if (this.contracts[i].u <= this.filter.size) this.contracts[i].sm = 1
                 else this.contracts[i].sm = 0
             }
             this.filterSlots
