@@ -434,7 +434,7 @@ export default {
                                                                     </div>
                                                                     <!-- new available contracts -->
                                                                     <div v-if="nodeview && title == 'new'">
-                                                                        <button type="button" class="btn btn-sm d-flex align-items-center me-2" :class="{'btn-outline-light': !contract.sm, 'btn-primary': contract.sm}">
+                                                                        <button type="button" @click="contract.sm = !contract.sm" class="btn btn-sm d-flex align-items-center me-2" :class="{'btn-outline-light': !contract.sm, 'btn-primary': contract.sm}">
                                                                             <i class="fa-solid fa-file fa-fw"></i>
                                                                             <span v-if="!contract.sm" class="ms-1 d-none d-lg-block">Available</span> 
                                                                             <span v-if="contract.sm" class="ms-1 d-none d-lg-block">Selected</span>
@@ -443,7 +443,7 @@ export default {
 
                                                                     <!-- stored contracts -->
                                                                     <div v-if="nodeview && title == 'stored'">
-                                                                        <button type="button" class="btn btn-sm d-flex align-items-center me-2" :class="{'btn-danger': !contract.sm, 'btn-outline-success': contract.sm}">
+                                                                        <button @click="contract.sm = !contract.sm" type="button" class="btn btn-sm d-flex align-items-center me-2" :class="{'btn-danger': !contract.sm, 'btn-outline-success': contract.sm}">
                                                                             <i class="fa-solid fa-file fa-fw"></i>
                                                                             <span v-if="!contract.sm" class="ms-1 d-none d-lg-block">Selected</span> 
                                                                             <span v-if="contract.sm" class="ms-1 d-none d-lg-block">Stored</span>
