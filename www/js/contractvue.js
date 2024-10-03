@@ -1815,7 +1815,7 @@ export default {
                 },
                 id: `spkccT_${!remove ? 'store' : 'remove'}`,
                 msg: `Storing ${contract}...`,
-                ops: ["getTokenUser"],
+                ops: ["getTokenUser", "getContracts"],
                 api: "https://spktest.dlux.io",
                 txid: `${contract}_${!remove ? 'store' : 'remove'}`,
             }
