@@ -147,7 +147,7 @@ export default {
                     </ul>
                 </div>
                 <div>
-                    <button role="button" class="btn btn-danger mx-2"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
+                    <button role="button" class="btn btn-danger mx-2" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
                 </div>
             </div>
         </div>
