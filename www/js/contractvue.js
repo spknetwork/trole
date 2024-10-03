@@ -126,9 +126,40 @@ export default {
 
         <!-- top menu -->
         <div class="pb-1">
-            <div class="d-flex flex-wrap align-items-center mt-3">
-                <div>
-                    <button role="button" class="btn btn-danger mx-2 invisible"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
+            <div class="d-flex flex-wrap align-items-center my-3">
+               <div class="btn-group invisible mx-2" role="group" aria-label="Storage Actions">
+                    <button role="button" class="btn btn-danger" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                      <button type="button"
+                            class="btn btn-dark ms-0 me-0 ps-0 pe-0"
+                            disabled></button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="fa-solid fa-filter fa-fw"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark bg-dark">
+                            <div class="card-body" style="max-width: 200px">
+                                <div class="d-flex flex-column">
+                                    <div class="text-center mb-3">
+                                        <label for="fileSize" class="lead form-label">File Size</label>
+                                        <input required="required" type="range" class="form-range" min="0" max="7" step="1" value="3" id="fileSize">
+                                        <span>5 GB</span>
+                                    </div>
+                                    <div class="form-check form-switch d-none">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">NSFW</label>
+                                    </div>
+                                    <div class="form-check form-switch d-none">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                    </div>
                 </div>
                 <div class="mx-auto ">
                     <ul class="nav nav-tabs rounded mx-auto fs-5 " style="background-color: rgb(0,0,0,0.3)">
@@ -146,37 +177,41 @@ export default {
                         </li>
                     </ul>
                 </div>
-                <div>
-                    <button role="button" class="btn btn-danger mx-1" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
-                    <button class="btn btn-primary mx-1" type="button" data-bs-toggle="collapse" data-bs-target="#storeOptions" aria-expanded="false" aria-controls="storeOptions">
-                        Selection Options
-                    </button>
+                
+                <div class="btn-group mx-2" role="group" aria-label="Storage Actions" :class="{'invisible': title != 'new'}">
+                    <button role="button" class="btn btn-danger"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                      <button type="button"
+                            class="btn btn-dark ms-0 me-0 ps-0 pe-0"
+                            disabled></button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="fa-solid fa-filter fa-fw"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark bg-dark">
+                            <div class="p-2" style="max-width: 200px">
+                                <div class="d-flex flex-column">
+                                    <div class="text-center mb-3">
+                                        <label for="fileSize" class="lead form-label">File Size</label>
+                                        <input required="required" type="range" class="form-range" min="0" max="7" step="1" value="3" id="fileSize">
+                                        <span>5 GB</span>
+                                    </div>
+                                    <div class="form-check form-switch d-none">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">NSFW</label>
+                                    </div>
+                                    <div class="form-check form-switch d-none">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="collapse" id="storeOptions">
-        <div class="d-flex">
-            <div class="ms-auto card card-body" style="max-width: 200px">
-            <div class="d-flex flex-column">
-                    <div class="text-center mb-2">
-                        <label for="fileSize" class="lead form-label">File Size</label>
-                        <input required="required" type="range" class="form-range" min="0" max="7" step="1" value="3" id="fileSize">
-                        <span>5 GB</span>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                        <label class="form-check-label" for="flexSwitchCheckChecked">NSFW</label>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                        <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
-                        <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
-                    </div>
-                </div>
-            </div>
             </div>
         </div>
         <!-- tabs -->
