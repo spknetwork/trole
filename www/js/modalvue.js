@@ -956,7 +956,7 @@ export default {
   computed:{
     difVote: {
       get() {
-        return typeof this.current == 'string' ? this.current.split(',')[0] : '' == this.voteString ? false : true
+        return ((typeof this.current == 'string' ? this.current.split(',')[1] : '') == this.voteString) ? false : true
       }
     },
     voteString: {
