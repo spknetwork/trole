@@ -119,8 +119,7 @@
                         <!-- stats -->
                         <div role="tabpanel" ref="statsTab" class="tab-pane fade" id="statsTab"
                             aria-labelledby="newtab">
-                            <div class="">
-                                <h2 class="mt-2 ms-3 fw-light">Stats</h2>
+                            <div class="card">
                                 <div class="p-3">
 
                                     <div>
@@ -215,7 +214,7 @@
                         <!-- wallet -->
                         <div role="tabpanel" ref="walletTab" class="tab-pane fade" id="walletTab"
                             aria-labelledby="wallettab">
-                            <div class="">
+                            <div class="card p-2">
                                 <spk-vue :node="stats.node" :account="account" @tosign="toSign=$event;log($event)"
                                     :me="me" />
                             </div>
