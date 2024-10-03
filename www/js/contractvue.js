@@ -126,9 +126,12 @@ export default {
 
         <!-- top menu -->
         <div class="pb-1 mb-3">
-            <div class="d-flex flex-wrap align-items-center ">
+            <div class="d-flex flex-wrap align-items-center mt-3">
+                <div>
+                    <button role="button" class="btn btn-danger mx-2 invisible"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
+                </div>
                 <div class="mx-auto ">
-                    <ul class="nav nav-tabs rounded mx-auto mt-3 fs-5 " style="background-color: rgb(0,0,0,0.3)">
+                    <ul class="nav nav-tabs rounded mx-auto fs-5 " style="background-color: rgb(0,0,0,0.3)">
                         <li class="nav-item">
                             <a class="nav-link active px-4" :href="'#contractsTab' + title" role="tab" data-bs-toggle="tab"
                                 aria-controls="contractstab" aria-expanded="true">CONTRACTS</a>
@@ -142,6 +145,9 @@ export default {
                                 aria-controls="cctab" aria-expanded="false">Files</a>
                         </li>
                     </ul>
+                </div>
+                <div>
+                    <button role="button" class="btn btn-danger mx-2"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
                 </div>
             </div>
         </div>
