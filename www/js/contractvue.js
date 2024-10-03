@@ -192,7 +192,7 @@ export default {
                                 <div class="d-flex flex-column">
                                     <div class="text-center mb-3">
                                         <label for="fileSize" class="lead form-label">File Size</label>
-                                        <input required="required" type="range" @change="filterSize()" class="form-range" :min="filter.min" :max="filter.max" :step="filter.step" :value="filter.size" id="fileSize">
+                                        <input required="required" type="range" @change="filterSize()" class="form-range" :min="filter.min" :max="filter.max" :step="filter.step" v-model="filter.size" id="fileSize">
                                         <span>{{fancyBytes(filter.size)}}</span>
                                     </div>
                                     <div class="form-check form-switch d-none">
