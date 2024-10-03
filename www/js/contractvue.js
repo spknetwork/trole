@@ -327,7 +327,7 @@ export default {
                                                             <th class="border-0">
                                                                 <div class="d-flex align-items-center">
                                                                     <div class="border border-1 border-light text-light rounded p-05 me-2">
-                                                                        <i class="fa-solid fa-file fa-fw"></i> {{isStored(cid)}}
+                                                                        <i class="fa-solid fa-file fa-fw"></i> {{isStored(contract.i) ? 'Stored' : 'Available'}}
                                                                     </div>
                                                                     <div>
                                                                         {{contract.c > 1 ? fancyBytes(contract.u) : fancyBytes(contract.a)}}
