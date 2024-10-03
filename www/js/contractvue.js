@@ -192,8 +192,8 @@ export default {
                                 <div class="d-flex flex-column">
                                     <div class="text-center mb-3">
                                         <label for="fileSize" class="lead form-label">File Size</label>
-                                        <input required="required" type="range" class="form-range" min="0" max="7" step="1" value="3" id="fileSize">
-                                        <span>5 GB</span>
+                                        <input required="required" type="range" @change="filterSize()" class="form-range" :min="filter.min" :max="filter.max" :step="filter.step" :value="filter.size" id="fileSize">
+                                        <span>{{fancyBytes(filter.size)}}</span>
                                     </div>
                                     <div class="form-check form-switch d-none">
                                         <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
@@ -204,7 +204,7 @@ export default {
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                                        <input class="form-check-input" @change="filterSlots()" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
                                     </div>
                                 </div>
@@ -1506,7 +1506,13 @@ export default {
                     file_contracts: [contract]
                 }
                 for (var node in data.file_contracts) {
-                    if(data.file_contracts[node].u > this.filter.size) this.filter.size = data.file_contracts[node].u
+                    if(data.file_contracts[node].u > this.filter.size) {
+                        this.filter.size = data.file_contracts[node].u
+                        this.filter.max = data.file_contracts[node].u
+                    } else if ( data.file_contracts[node].u < this.filter.min ) {
+                        this.filter.min = data.file_contracts[node].u
+                    }
+                    
                     data.file_contracts[node].sm = 1
                     data.file_contracts[node].encryption = {
                         input: "",
@@ -1615,6 +1621,7 @@ export default {
                     this.postBodyAdder[data.file_contracts[node].i] = {}
 
                 }
+                this.filter.step = (this.filter.max - this.filter.min) / 100
                 for (var user in data.channels) {
                     for (var node in data.channels[user]) {
                         if (this.contractIDs[data.channels[user][node].i]) continue
