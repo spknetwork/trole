@@ -125,7 +125,7 @@ export default {
     <div v-if="saccountapi.pubKey != 'NA'" class="d-flex flex-column card p-0"  >
 
         <!-- top menu -->
-        <div class="pb-1 mb-3">
+        <div class="pb-1">
             <div class="d-flex flex-wrap align-items-center mt-3">
                 <div>
                     <button role="button" class="btn btn-danger mx-2 invisible"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
@@ -147,11 +147,38 @@ export default {
                     </ul>
                 </div>
                 <div>
-                    <button role="button" class="btn btn-danger mx-2" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store All</button>
+                    <button role="button" class="btn btn-danger mx-1" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                    <button class="btn btn-primary mx-1" type="button" data-bs-toggle="collapse" data-bs-target="#storeOptions" aria-expanded="false" aria-controls="storeOptions">
+                        Selection Options
+                    </button>
                 </div>
             </div>
         </div>
-        
+        <div class="collapse" id="storeOptions">
+        <div class="d-flex">
+            <div class="ms-auto card card-body" style="max-width: 200px">
+            <div class="d-flex flex-column">
+                    <div class="text-center mb-2">
+                        <label for="fileSize" class="lead form-label">File Size</label>
+                        <input required="required" type="range" class="form-range" min="0" max="7" step="1" value="3" id="fileSize">
+                        <span>5 GB</span>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                        <label class="form-check-label" for="flexSwitchCheckChecked">NSFW</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                        <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+                        <label class="form-check-label" for="flexSwitchCheckChecked">Full Slots</label>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
         <!-- tabs -->
         <div class="tab-content">
 
