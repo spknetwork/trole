@@ -446,10 +446,15 @@ export default {
                                                                             <span class="d-none d-lg-flex">Ready for
                                                                                 upload</span>
                                                                     </div>
-                                                                    <div v-if="contract.c == 2">
+                                                                    <div v-if="contract.c == 2 && !nodeview">
                                                                             <span class="d-lg-none">Post</span>
                                                                             <span class="d-none d-lg-flex">Post
                                                                                 {{split(contract.s, ',', 1)/100}}% to @{{split(contract.s, ',', 0)}}</span>
+                                                                    </div>
+                                                                    <div v-if="contract.c == 2 && nodeview">
+                                                                            <span class="d-lg-none">Extend</span>
+                                                                            <span class="d-none d-lg-flex align-items-center"> {{contract.nt}} /
+                                                                                {{contract.p}}  <i class="fa-solid fa-tower-broadcast mx-1 fa-fw"></i> nodes </span>
                                                                     </div>
                                                                     <div v-if="contract.c == 3">
                                                                             <span class="d-lg-none">Extend</span>
@@ -503,7 +508,7 @@ export default {
                                                                     </div>
 
                                                                     <!-- post time banner -->
-                                                                    <div v-if="contract.c == 2" class="mx-1 mx-lg-5 mb-3">
+                                                                    <div v-if="contract.c == 2 && !nodeview" class="mx-1 mx-lg-5 mb-3">
                                                                         <div class="alert alert-warning d-flex align-items-center ">
                                                                             <div class="d-flex flex-grow-1 flex-wrap me-1 align-items-center">
                                                                                 <div class="mx-1">
