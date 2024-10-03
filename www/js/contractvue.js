@@ -1535,7 +1535,10 @@ export default {
                 const data = {
                     file_contracts: [contract]
                 }
-                for (var node in data.file_contracts) {
+                file: for (var node in data.file_contracts) {
+                    if(this.title == 'new')for (var i in data.file_contracts[node].n) {
+                        if (data.file_contracts[node].n[i] == this.account)continue file
+                    }
                     if (data.file_contracts[node].u > this.filter.size) {
                         this.filter.size = data.file_contracts[node].u
                         this.filter.max = data.file_contracts[node].u
