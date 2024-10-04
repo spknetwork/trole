@@ -9,9 +9,7 @@ export default {
     template: `
     <div class="container">
         <div class="mt-3">
-        <vote-params :spk="saccountapi.spk"><button class="dropdown-item trigger" type="button"><i
-                                        class="fas fa-angle-double-down fa-fw me-2"></i>Vote
-                                    Paramaters</button></vote-params>
+        
             <div class="alert alert-danger text-start bg-dark" role="alert">
                 <h3 class="text-center"><i
                         class="fa-solid fa-triangle-exclamation me-2"></i>Mirror
@@ -143,25 +141,22 @@ export default {
                         {{formatNumber((saccountapi.spk_power)/1000, 3, '.', ',')}}
                         SPK
                     </h5>
-                    <!-- Button trigger modal -->
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                    Launch demo modal
-                    </button>
+                   
 
-
+                    <!-- vote button -->
                     <div class="btn-group" role="group"
                         aria-label="Power Actions">
-                        <button class="dropdown btn btn-primary p-2"
-                            data-bs-auto-close="outside" href="#" role="button"
-                            id="settingsDropdownBtn" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i
-                                class="me-2 fa-solid fa-person-booth"></i>Vote</button>
-                        <ul class="dropdown-menu dropdown-menu-dark p-4 text-white-50 text-left bg-black dropdown-menu-end"
-                            aria-labelledby="settingsDropdownBtn"
-                            style="width: 300px">
-                            
-                        </ul>
+                        <!--<modal-vue type="vote" token="SPK" 
+                                    func="Election"
+                                    :test="test"
+                                    :balance="saccountapi.spk_power"
+                                    :account="account" :smarkets="smarkets.node"
+                                    :current="saccountapi.spk_vote"
+                                    @modalsign="sendIt($event)" v-slot:trigger>
+                                    <button class="dropdown-item trigger"
+                                        type="button"><i
+                                            class="fa-solid fa-plug fa-fw me-2"></i>Vote</button>
+                        </modal-vue>-->
                         <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
