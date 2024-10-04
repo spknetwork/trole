@@ -11872,6 +11872,11 @@ body {
   --bs-table-hover-color: $white;
 }
 
+.hover:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  border: #033efd;
+}
+
 .btn-secondary {
   color: #fff;
   border: none;

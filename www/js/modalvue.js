@@ -244,27 +244,27 @@ export default {
                     <div v-if="func == 'Election'">
                       <div class="modal-body">
                         <h3 class="mb-2">Chosen Validators ({{d.valWorkable.length}}/30)</h3>
-                        <div class="d-flex mx-5 justify-content-between align-items-center border-bottom border-secondary py-2 mb-3">
+                        <div class="d-flex justify-content-between align-items-center border-bottom border-secondary py-2 mb-3">
                           <button class="btn btn-success invisible" type="button">Save</button>
                           <h5 class="m-0"> Node (Weight)</h5>
                           <button :class="{'invisible': !difVote}" class="btn btn-success" type="button" @click="valVote()">Save</button>
                         </div>
                         <div class="mb-5">
-                          <div v-if="!d.valWorkable.length">
-                            <p>No Validators Added</p>
+                          <div class="d-flex justify-content-center" v-if="!d.valWorkable.length">
+                            No Validators Added
                           </div>
-                          <ul class="mx-5 p-0">
+                          <ul class=" p-0">
                             <div v-for="(node, index) in d.valWorkable">
-                              <li @dragstart="pick($event, node, index)" @dragover.prevent @dragenter.prevent @drop="move($event, node, index)" class="border border-secondary rounded d-flex align-items-center justify-content-between p-2 my-2 drop-zone" draggable="true" style="cursor: move;">
-                                <i class="fa-solid fa-grip-lines ms-3"></i>  
-                                <h5 class="m-0">@{{node.self}} ({{formatNumber(((30 - index )/ 30)* 100, 1,  '.', ',')}}%)</h5>
-                                <button class="btn btn-primary" @click="sub(node)" type="button"><i class="fa-solid fa-minus"></i></button>
+                              <li @dragstart="pick($event, node, index)" @dragover.prevent @dragenter.prevent @drop="move($event, node, index)" class="hover border border-secondary rounded d-flex align-items-center justify-content-between my-2 drop-zone" draggable="true" style="cursor: move;">
+                                <i class="fa-solid fa-grip-lines m-1 ms-3"></i>  
+                                <div class="lead m-1">@{{node.self}} ({{formatNumber(((30 - index )/ 30)* 100, 1,  '.', ',')}}%)</div>
+                                <button class="btn btn-danger m-1" @click="sub(node)" type="button"><i class="fa-solid fa-minus"></i></button>
                               </li>
                             </div>
                           </ul>
                         </div>
                         <h3 class="mb-3">Validators</h3>
-                        <ul class="mx-5 p-0">
+                        <ul class="p-0">
                           <div v-for="node in smarkets">
                             <li v-if="isVal(node)" class="border border-secondary rounded d-flex align-items-center justify-content-between p-2 my-2">
                               <button class="btn btn-primary invisible" type="button"><i class="fa-solid fa-plus"></i></button>
