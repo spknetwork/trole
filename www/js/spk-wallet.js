@@ -1,17 +1,12 @@
 import ModalVue from './modalvue.js'
-import VoteParams from './vote-params.js'
 
 export default {
     components: {
-        "modal-vue": ModalVue,
-        "vote-params": VoteParams
+        "modal-vue": ModalVue
     },
     template: `
     <div class="container">
         <div class="mt-3">
-        <vote-params :spk="saccountapi.spk"><button class="dropdown-item trigger" type="button"><i
-                                        class="fas fa-angle-double-down fa-fw me-2"></i>Vote
-                                    Paramaters</button></vote-params>
             <div class="alert alert-danger text-start bg-dark" role="alert">
                 <h3 class="text-center"><i
                         class="fa-solid fa-triangle-exclamation me-2"></i>Mirror

@@ -2114,7 +2114,6 @@ export default {
                     fetch('https://spktest.dlux.io/api/fileContract/' + id)
                         .then((r) => r.json())
                         .then((res) => {
-                            if(res.result == 'Contract Not Found')return
                             res.result.extend = "7"
                             if (res.result) {
                                 this.handlePropContracts(res.result)

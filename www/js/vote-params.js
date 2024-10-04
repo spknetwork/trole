@@ -4,14 +4,6 @@ export default {
   name: "VoteParams",
   data() {
     return {
-      valCodeDict: {},
-      spkprefix: "spkcc",
-      valid: false,
-      d: {
-        spkprefix: "spkcc",
-        valWorkable: [],
-        test: false
-      },
     };
   },
   template: `
