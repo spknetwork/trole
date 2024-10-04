@@ -122,27 +122,29 @@ export default {
     </div>
 
     <!-- tabs nav -->
-    <div v-if="saccountapi.pubKey != 'NA'" class="d-flex flex-column card p-0"  >
+    <div v-if="saccountapi.pubKey != 'NA'" class="d-flex flex-column card p-0">
+        
 
         <!-- top menu -->
         <div class="pb-1">
             <div class="d-flex flex-wrap align-items-center my-3">
-               <div class="btn-group invisible mx-2" role="group" aria-label="Storage Actions">
-                    <button @click="storeAll()" role="button" class="btn btn-danger" :class="{'invisible': title != 'new'}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
-                      <button type="button"
+                <!--fake invisible button -->
+                <div class="btn-group m-2 d-none d-lg-block invisible" role="group" aria-label="Storage Actions" v-if="title == 'new'">
+                    <button @click="storeAll()" role="button" class="btn btn-primary"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                        <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                          <i class="fa-solid fa-filter fa-fw"></i>
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-filter fa-fw"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark bg-dark">
-                            <div class="card-body" style="max-width: 200px">
+                            <div class="p-2" style="max-width: 200px">
                                 <div class="d-flex flex-column">
                                     <div class="text-center mb-3">
                                         <label for="fileSize" class="lead form-label">File Size</label>
-                                        <input required="required" type="range" class="form-range" min="0" max="7" step="1" value="3" id="fileSize">
-                                        <span>5 GB</span>
+                                        <input required="required" type="range" @change="filterSize()" class="form-range" :min="filter.min" :max="filter.max" :step="filter.step" v-model="filter.size" id="fileSize">
+                                        <span>{{fancyBytes(filter.size)}}</span>
                                     </div>
                                     <div class="form-check form-switch d-none">
                                         <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
@@ -153,7 +155,7 @@ export default {
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Encrypted</label>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input @change="filterSlots()" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
+                                        <input class="form-check-input" @change="filterSlots()" type="checkbox" role="switch" id="flexSwitchCheckChecked" :checked="filter.slots" v-model="filter.slots">
                                         <label class="form-check-label" for="flexSwitchCheckChecked">Open Slots</label>
                                     </div>
                                 </div>
@@ -161,8 +163,9 @@ export default {
                         </ul>
                     </div>
                 </div>
+               
                 <div class="mx-auto ">
-                    <ul class="nav nav-tabs rounded mx-auto fs-5 " style="background-color: rgb(0,0,0,0.3)">
+                    <ul class="nav nav-tabs rounded mx-auto my-2 fs-5 " style="background-color: rgb(0,0,0,0.3)">
                         <li class="nav-item">
                             <a class="nav-link active px-4" :href="'#contractsTab' + title" role="tab" data-bs-toggle="tab"
                                 aria-controls="contractstab" aria-expanded="true">CONTRACTS</a>
@@ -178,13 +181,14 @@ export default {
                     </ul>
                 </div>
                 
-                <div class="btn-group mx-2" role="group" aria-label="Storage Actions" :class="{'invisible': title != 'new'}">
-                    <button @click="storeAll()" role="button" class="btn btn-primary"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                <div class="btn-group m-2" role="group" aria-label="Storage Actions" v-if="title == 'new'">
+                <!-- real visible button -->
+                    <button @click="storeAll()" role="button" class="btn btn-danger"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
                       <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                           <i class="fa-solid fa-filter fa-fw"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark bg-dark">
