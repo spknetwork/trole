@@ -135,7 +135,6 @@ export default {
 
             </div>
         </div>
-    bid: {{bid}}
         
         <!-- change view list / grid -->
         <div class="d-flex align-items-center my-1 mx-1">
