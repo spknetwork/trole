@@ -721,6 +721,10 @@ export default {
         },
         cc: {
             default: false,
+        },
+        nodeview: {
+            type: Boolean,
+            default: false,
         }
     },
     data() {
@@ -1259,11 +1263,12 @@ export default {
         },
         init() {
             var contracts = []
-            for (var user in this.contracts) {
+            //for (var user in this.contracts) {
                 for (var id in this.contracts) {
                     contracts.push(this.contracts[id])
+                    if(this.nodeview)this.filesSelect.addusers[this.contracts[id].t] = true
                 }
-            }
+            //}
             for (var user in this.filesSelect.addusers) {
                 for (var id in this.contractIDs[user]) {
                     contracts.push(this.contractIDs[user][id])
@@ -1437,6 +1442,9 @@ export default {
         'contracts': {
             handler: function (newValue) {
                 if (this.debounce && new Date().getTime() - this.debounce < 1000) {
+                    setTimeout(() => {
+                        this.init()
+                    },1000)
                     return
                 }
                 this.init()
@@ -1455,5 +1463,6 @@ export default {
     },
     mounted() { 
         if(this.account)this.filesSelect.addusers[this.account] = true
+        if(!this.nodeview)this.filesSelect.cc_only = false
     },
 };
