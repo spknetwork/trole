@@ -1,3 +1,4 @@
+import { type } from 'express/lib/response';
 import ChoicesVue from '/js/choices-vue.js';
 import Pop from "/js/pop-min.js";
 
@@ -142,12 +143,12 @@ export default {
             <h5 class="mb-0"> {{filesArray.length}} File{{filesArray.length == 1 ? '' : 's'}}</h5>
             <div class="ms-auto">
                 <div class="btn-group">
-                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id="'setSingle' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = true" :checked="viewOpts.list" />
-                    <label class="btn btn-outline-warning" :for="'setSingle' + (cc ? 'cc' : '')"><i
+                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id=" bid + 'setSingle' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = true" :checked="viewOpts.list" />
+                    <label class="btn btn-outline-warning" :for=" bid + 'setSingle' + (cc ? 'cc' : '')"><i
                             class="fa-solid fa-table-list fa-fw"></i></label>
-                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id="'setDouble' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = false"
+                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id=" bid + 'setDouble' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = false"
                         :checked="!viewOpts.list" />
-                    <label class="btn btn-outline-warning" :for="'setDouble' + (cc ? 'cc' : '')"><i
+                    <label class="btn btn-outline-warning" :for=" bid + 'setDouble' + (cc ? 'cc' : '')"><i
                             class="fa-solid fa-table-cells-large fa-fw"></i></label>
                 </div>
             </div>
@@ -216,7 +217,7 @@ export default {
                             <!-- labels -->
                             <div class="me-1" v-for="label in labelsDecode(file.ll)">
                                 <span class="d-flex align-items-center">
-                                    <pop-vue :id="'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
+                                    <pop-vue :id=" bid + 'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
                                         <i :class="label.fa"></i>
                                     </pop-vue>
                                 </span>
@@ -225,13 +226,13 @@ export default {
                             <div class="d-flex align-items-center">
                             <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 3)" >
                                     <!-- title="Labels"  -->
-                                    <pop-vue :id="'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
+                                    <pop-vue :id=" bid + 'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
                                         <i :class="flag.fa"></i>
                                     </pop-vue>
                                 </div>
                             </div>
                             <div>
-                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id=" bid + 'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
                                     <i :class="lic.fa"></i>
                                 </pop-vue>
                             </div>
@@ -326,7 +327,7 @@ export default {
                         <!-- labels -->
                         <div class="me-1" v-for="label in labelsDecode(file.ll)">
                             <span class="d-flex align-items-center">
-                                <pop-vue :id="'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
+                                <pop-vue :id=" bid + 'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
                                     <i :class="label.fa"></i>
                                 </pop-vue>
                             </span>
@@ -335,13 +336,13 @@ export default {
                         <div class="d-flex align-items-center">
                         <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 3)" >
                                 <!-- title="Labels"  -->
-                                <pop-vue :id="'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
+                                <pop-vue :id=" bid + 'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
                                     <i :class="flag.fa"></i>
                                 </pop-vue>
                             </div>
                         </div>
                         <div>
-                            <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                            <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id=" bid + 'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
                                 <i :class="lic.fa"></i>
                             </pop-vue>
                         </div>
@@ -537,7 +538,7 @@ export default {
 
                                 <div class="me-1" v-for="label in labelsDecode(file.ll)">
                                     <span class="d-flex align-items-center">
-                                        <pop-vue :id="'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
+                                        <pop-vue :id=" bid + 'popperL-' + file.i + file.index + label.l + (cc ? 'cc' : '')" :title="label.l" trigger="hover">
                                             <i :class="label.fa"></i>
                                         </pop-vue>
                                     </span>
@@ -546,12 +547,12 @@ export default {
                                 <div class="d-flex align-items-center">
                                 <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags, 0, 3)" >
                                         <!-- title="Labels"  -->
-                                        <pop-vue :id="'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
+                                        <pop-vue :id=" bid + 'popper-' + file.i + file.index + flag.l + (cc ? 'cc' : '')" :title="flag.l" trigger="hover">
                                             <i :class="flag.fa"></i>
                                         </pop-vue>
                                     </div>
                                 </div>
-                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id=" bid + 'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
                                     <i :class="lic.fa"></i>
                                 </pop-vue> 
                             </div>
@@ -658,7 +659,7 @@ export default {
 
                             <div class="mx-auto" v-for="(label, index) in labelsDecode(file.ll, 0)">
                                 <span class="d-flex align-items-center w-100">
-                                    <pop-vue :id="'popperL-' + (cc ? 'cc' : '') + file.i + index + label.l" title="Labels" trigger="hover">
+                                    <pop-vue :id=" bid + 'popperL-' + (cc ? 'cc' : '') + file.i + index + label.l" title="Labels" trigger="hover">
                                         <i :class="label.fa"></i>
                                     </pop-vue>
                                 </span>
@@ -667,7 +668,7 @@ export default {
                             <div class="d-flex align-items-center ms-auto ms-1">
                             <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags)" >
                                     <!-- title="Labels"  -->
-                                    <pop-vue :id="'popper-' + (cc ? 'cc' : '') + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
+                                    <pop-vue :id=" bid + 'popper-' + (cc ? 'cc' : '') + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
                                         <i :class="flag.fa"></i>
                                     </pop-vue>
                                 </div>
@@ -677,7 +678,7 @@ export default {
                     </div>
                     
                     <div class="d-flex align-items-center justify-content-center text-break small text-muted">
-                                {{fancyBytes(file.s)}}<pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id="'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                {{fancyBytes(file.s)}}<pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id=" bid + 'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
                             <i :class="lic.fa"></i>
                         </pop-vue>
                         </div>
@@ -692,6 +693,10 @@ export default {
         assets: {
             type: Boolean,
             default: false,
+        },
+        bid: {
+            type: String,
+            default: "",
         },
         contracts: {
             type: Object,

@@ -239,7 +239,7 @@ export default {
                 <!-- has files -->
                 <div v-if="!hasFiles" class="d-flex flex-wrap justify-content-center">
                         <files-vue :assets="assets" @addassets="addAssets($event)" :account="saccountapi.name" :current="saccountapi.head_block" :cc="true"
-                            :contracts="contracts" :nodeview="nodeview"></files-vue>
+                            :contracts="contracts" :nodeview="nodeview" :bid="title"></files-vue>
                    
                 </div>
             </div>
