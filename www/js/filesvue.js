@@ -79,7 +79,7 @@ export default {
                 </div> 
 
                 <!-- Sort -->
-                <div class="dropdown mb-1">
+                <div class="dropdown ms-1 mb-1">
                     <button class="btn btn-dark w-100" style="padding-top: 11px !important; padding-bottom: 11px !important;" type="button" data-bs-toggle="dropdown"
                         aria-expanded="false"><i class="fa-solid fa-sort fa-fw ms-1"></i>
                         {{filesSelect.sort.charAt(0).toUpperCase() + filesSelect.sort.slice(1)}} {{filesSelect.dir == 'asc' ? 'Ascending' : 'Descending'}}
@@ -135,20 +135,17 @@ export default {
 
             </div>
         </div>
-
+    bid: {{bid}}
         
         <!-- change view list / grid -->
         <div class="d-flex align-items-center my-1 mx-1">
             <h5 class="mb-0"> {{filesArray.length}} File{{filesArray.length == 1 ? '' : 's'}}</h5>
             <div class="ms-auto">
-                <div class="btn-group">
-                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id=" bid + 'setSingle' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = true" :checked="viewOpts.list" />
-                    <label class="btn btn-outline-warning" :for=" bid + 'setSingle' + (cc ? 'cc' : '')"><i
-                            class="fa-solid fa-table-list fa-fw"></i></label>
-                    <input type="radio" class="btn-check" :name="'smView' + (cc ? 'cc' : '')" :id=" bid + 'setDouble' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = false"
-                        :checked="!viewOpts.list" />
-                    <label class="btn btn-outline-warning" :for=" bid + 'setDouble' + (cc ? 'cc' : '')"><i
-                            class="fa-solid fa-table-cells-large fa-fw"></i></label>
+                <div class="btn-group"> 
+                    <input type="radio" class="btn-check" :name=" bid + 'smView' + (cc ? 'cc' : '')" :id=" bid + 'setSingle' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = true" :checked="viewOpts.list" />
+                    <label class="btn btn-outline-warning" :for=" bid + 'setSingle' + (cc ? 'cc' : '')"><i class="fa-solid fa-table-list fa-fw"></i></label>
+                    <input type="radio" class="btn-check" :name=" bid + 'smView' + (cc ? 'cc' : '')" :id=" bid + 'setDouble' + (cc ? 'cc' : '')" autocomplete="off" @click="viewOpts.list = false" :checked="!viewOpts.list" />
+                    <label class="btn btn-outline-warning" :for=" bid + 'setDouble' + (cc ? 'cc' : '')"><i class="fa-solid fa-table-cells-large fa-fw"></i></label>
                 </div>
             </div>
         </div>
