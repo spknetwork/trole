@@ -266,10 +266,11 @@ export default {
                         <h3 class="mb-3">Validators</h3>
                         <ul class="p-0">
                           <div v-for="node in smarkets">
-                            <li v-if="isVal(node)" class="border border-secondary rounded d-flex align-items-center justify-content-between p-2 my-2">
-                              <button class="btn btn-primary invisible" type="button"><i class="fa-solid fa-plus"></i></button>
-                              <h5 class="m-0">@{{node.self}}</h5>
-                              <button :disable="d.valWorkable.length == 30" class="btn btn-primary" @click="add(node)" type="button"><i class="fa-solid fa-plus"></i></button>
+                            <li v-if="isVal(node)" class="border border-secondary rounded d-flex align-items-center justify-content-between my-2">
+                              <button class="btn btn-primary invisible" type="button">
+                              <i class="fa-solid fa-plus"></i></button>
+                              <div class="lead m-1">@{{node.self}}</div>
+                              <button :disable="d.valWorkable.length == 30" class="btn btn-primary m-1" @click="add(node)" type="button"><i class="fa-solid fa-plus"></i></button>
                             </li>
                           </div>
                         </ul>
