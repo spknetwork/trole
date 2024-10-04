@@ -262,6 +262,9 @@ export default {
                                             class="fas fa-angle-double-down fa-fw me-2"></i>Power
                                         Down</button>
                                 </modal-vue>
+                                <vote-params :spk="saccountapi.spk"><button class="dropdown-item trigger"
+                                        type="button"><i
+                                            class="fas fa-angle-double-down fa-fw me-2"></i>Vote Paramaters</button></vote-params>
                                 <div class="dropdown-divider"></div>
                                 <modal-vue type="power" token="SPK" 
                                     func="Election"
