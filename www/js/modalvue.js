@@ -1097,7 +1097,7 @@ export default {
               smart = true
             }
           }
-          smart = (smart && this.current.indexOf(',') > -1) ? true : false
+          smart = (smart && .indexOf(',') > -1) ? true : false
           const current = this.current.split(',')[1]
           if (smart) for (var i = 0; i < current.length; i++) {
             console.log(i, current.substr(i, 2), this.valCodeDict[current.substr(i, 2)])
