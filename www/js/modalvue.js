@@ -266,7 +266,7 @@ export default {
                         <h3 class="mb-3">Validators</h3>
                         <ul class="p-0">
                           <div v-for="node in smarkets">
-                            <li v-if="isVal(node)" class="border border-secondary rounded d-flex align-items-center justify-content-between my-2">
+                            <li v-if="isVal(node) && !isSelected(node.self)" class="border border-secondary rounded d-flex align-items-center justify-content-between my-2">
                               <button class="btn btn-primary invisible" type="button">
                               <i class="fa-solid fa-plus"></i></button>
                               <div class="lead m-1">@{{node.self}}</div>
@@ -412,7 +412,14 @@ export default {
         });
     },
     isVal(node){
+      if(!node.self)return false
       return typeof node.val_code == 'string' ? true : false
+    },
+    isSelected(node){
+      for(var i = 0; i < this.d.valWorkable.length; i++){
+        if(this.d.valWorkable[i].self == node)return true
+      }
+      return false
     },
     add(node){
       if (this.d.valWorkable.indexOf(node) == -1)this.d.valWorkable.push(node)
