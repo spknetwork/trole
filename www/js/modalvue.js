@@ -999,21 +999,6 @@ export default {
         };
       },
     },
-    tokenGov: {
-      default: function () {
-        return {
-          options: [],
-          title: "",
-        };
-      },
-    },
-    spkStats: {
-      default: function () {
-        return {
-          spk_cycle_length: 0,
-        };
-      },
-    },
     smarkets: {
       default: function () {
         return {
