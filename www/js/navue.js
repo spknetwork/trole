@@ -973,362 +973,290 @@ export default {
   },
   template: `
 <div>
-<div class="navbar navbar-expand navbar-dark dnav fixed-top">
-  <div class="container-fluid">
-    <!--pwa nav toggle-->
-    <a class="d-none text-white d-sm-none" style="font-size: 1.5em;" data-bs-toggle="offcanvas" href="#offcanvasNav" role="button" aria-controls="offcanvasExample">
-      <i class="fa-solid fa-bars"></i>
-    </a>
-    <!-- nav -->
-      <div class="d-flex w-100 ms-auto me-auto align-items-center container" style="max-width: 1800px;" id="navbarSupportedContent">
+  <div class="navbar navbar-expand navbar-dark dnav fixed-top">
+    <div class="container-fluid">
+      <!--pwa nav toggle-->
+      <a class="d-none text-white d-sm-none" style="font-size: 1.5em;" data-bs-toggle="offcanvas" href="#offcanvasNav"
+        role="button" aria-controls="offcanvasExample">
+        <i class="fa-solid fa-bars"></i>
+      </a>
+      <!-- nav -->
+      <div class="d-flex w-100 ms-auto me-auto align-items-center container" style="max-width: 1800px;"
+        id="navbarSupportedContent">
 
         <!-- MAIN NAV -->
         <ul class="navbar-nav me-auto align-items-center">
-          <li v-if="node" class="d-flex align-items-center"><a class="navbar-brand d-md-flex" href="/"><img src="/img/logo.svg" alt="spk-logo" width="40" height="40"></a><div class="fs-5">SPK Network</div></li>
-          <li v-if="!node"><a class="navbar-brand d-md-flex" href="/"><img src="/img/dlux-hive-logo-alpha.svg" alt="dlux-logo" width="40" height="40"></a></li> 
-          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/hub/"><i class="fa-solid fs-5 px-1 fa-mountain-sun"></i><br><span class="small">HUB</span></a></li>
-          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/nfts/"><i class="fa-solid fs-5 px-1 fa-store"></i><br><span class="small">NFT</span></a></li>
-          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/dex/"><i class="fa-solid fs-5 px-1 fa-building-columns"></i><br><span class="small">DEX</span></a></li>
+          <li v-if="node" class="d-flex align-items-center"><a class="navbar-brand d-md-flex" href="/"><img
+                src="/img/logo.svg" alt="spk-logo" width="40" height="40"></a>
+            <div class="fs-5">SPK Network</div>
+          </li>
+          <li v-if="!node"><a class="navbar-brand d-md-flex" href="/"><img src="/img/dlux-hive-logo-alpha.svg"
+                alt="dlux-logo" width="40" height="40"></a></li>
+          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/hub/"><i
+                class="fa-solid fs-5 px-1 fa-mountain-sun"></i><br><span class="small">HUB</span></a></li>
+          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/nfts/"><i
+                class="fa-solid fs-5 px-1 fa-store"></i><br><span class="small">NFT</span></a></li>
+          <li v-if="!node" class="nav-item"><a class="nav-link text-center" href="/dex/"><i
+                class="fa-solid fs-5 px-1 fa-building-columns"></i><br><span class="small">DEX</span></a></li>
         </ul>
 
         <!-- LOGIN MENU -->
         <ul class="navbar-nav" id="loginMenu" v-show="!user">
           <li class="nav-item">
             <div class="btn-group rounded-3 p-05" style="background: linear-gradient(145deg, #8E8E8E, #6C6C6C); ">
-              <button class="py-05 px-1 fs-6 btn btn-success text-black e-radius-hotfix" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers" style="font-family:'Lucida Console', Monaco, monospace;">login</button>
+              <button class="py-05 px-1 fs-6 btn btn-success text-black e-radius-hotfix" type="button"
+                data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers"
+                style="font-family:'Lucida Console', Monaco, monospace;">login</button>
               <button class="btn border-0 px-2" data-bs-toggle="dropdown">
-              <span class="d-flex align-items-center"> 
-               <i class="fa-solid fa-bars"></i>
-              </span>
+                <span class="d-flex align-items-center">
+                  <i class="fa-solid fa-bars"></i>
+                </span>
               </button>
-              <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black" aria-labelledby="infoDropdown" style="position: absolute;"> 
-                  <li v-if="!node" class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode fa-fw me-2"></i>Invite</a></li>
-                  <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
-                  <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i class="fa-solid fa-book fa-fw me-2"></i>Docs</a></li>
-                  <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
-                </ul>
+              <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black" aria-labelledby="infoDropdown"
+                style="position: absolute;">
+                <li v-if="!node" class=""><a class="dropdown-item" href="/qr/"><i
+                      class="fa-solid fa-qrcode fa-fw me-2"></i>Invite</a></li>
+                <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i
+                      class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
+                <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i
+                      class="fa-solid fa-book fa-fw me-2"></i>Docs</a></li>
+                <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i
+                      class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
+              </ul>
             </div>
-                
-            
+
+
           </li>
         </ul>
 
         <!-- USER MENU -->
-	      <ul class="navbar-nav" v-if="user" id="userMenu">
-          <li v-if="!node" class="nav-item d-flex align-items-center"><a class="nav-link" href="/new/advanced"><i class="fa-solid fa-plus fa-fw me-1"></i></a></li>
+        <ul class="navbar-nav" v-if="user" id="userMenu">
+          <li v-if="!node" class="nav-item d-flex align-items-center"><a class="nav-link" href="/new/advanced"><i
+                class="fa-solid fa-plus fa-fw me-1"></i></a></li>
           <li class="nav-item d-flex align-items-center d-none">
-            <a class="nav-link" role="button" @click="toggleChat" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
+            <a class="nav-link" role="button" @click="toggleChat" data-bs-toggle="offcanvas"
+              data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
               <img src="/img/sting_white.svg" alt="" width="30" height="30" class="img-fluid me-2">
             </a>
           </li>
           <li class="nav-item d-flex align-items-center">
-            <a role="button" v-show="user" class="position-relative p-0 m-0 d-none d-md-flex nav-link align-items-center text-white-50" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers">
-              <span class="position-absolute top-100 start-50 bg-dark bg-opacity-75 translate-middle rounded-circle" style="font-size: .7em;"><i class=" fa-solid fa-arrows-rotate p-05"></i><span class="visually-hidden">change user</span></span>
-              <img :src="avatar" id="userImage" alt="" width="40" height="40" class="img-fluid rounded-circle cover bg-light">  
+            <a role="button" v-show="user"
+              class="position-relative p-0 m-0 d-none d-md-flex nav-link align-items-center text-white-50"
+              data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers">
+              <span class="position-absolute top-100 start-50 bg-dark bg-opacity-75 translate-middle rounded-circle"
+                style="font-size: .7em;"><i class=" fa-solid fa-arrows-rotate p-05"></i><span
+                  class="visually-hidden">change user</span></span>
+              <img :src="avatar" id="userImage" alt="" width="40" height="40"
+                class="img-fluid rounded-circle cover bg-light">
             </a>
           </li>
           <div class="btn-group dropdown">
-		      <a class="nav-link mt-auto mb-auto d-flex align-items-center dropdown-toggle dropdown-bs-toggle text-white-50" id="userDropdown" role="button" aria-expanded="false" data-bs-toggle="dropdown" href="#">
-            <div v-show="user" class="p-0 d-md-none me-1 nav-link d-flex align-items-center text-white-50">
-              <img :src="avatar" id="userImage" alt="" width="40" height="40" class="img-fluid rounded-circle bg-light cover"> 
-            </div>  
-            <span id="userName" class="mx-1 d-none d-md-flex">{{user}}</span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black mt-2" aria-labelledby="userDropdown" >
-          <li class="">
-            <a class="dropdown-item" role="button" @click="toggleChat" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
-              <img src="/img/sting_white.svg" alt="" width="20" height="20" class="img-fluid me-2">Chat
+            <a class="nav-link mt-auto mb-auto d-flex align-items-center dropdown-toggle dropdown-bs-toggle text-white-50"
+              id="userDropdown" role="button" aria-expanded="false" data-bs-toggle="dropdown" href="#">
+              <div v-show="user" class="p-0 d-md-none me-1 nav-link d-flex align-items-center text-white-50">
+                <img :src="avatar" id="userImage" alt="" width="40" height="40"
+                  class="img-fluid rounded-circle bg-light cover">
+              </div>
+              <span id="userName" class="mx-1 d-none d-md-flex">{{user}}</span>
             </a>
-          </li>
-			        <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#blog/'" @click="showTab('blog')"><i class="fas fa-user fa-fw me-2"></i>Profile</a></li>
-			        <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#wallet/'" @click="showTab('wallet')"><i class="fas fa-wallet fa-fw me-2"></i>Wallet</a></li>
-			        <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#inventory/'" @click="showTab('inventory')"><i class="fas fa-boxes fa-fw me-2"></i>Inventory</a></li>
-              <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#files/'" @click="showTab('files')"><i class="fas fa-cloud fa-fw me-2"></i>Cloud</a></li>
-              <li class="" v-if="!node"><hr class="dropdown-divider"></li>
-              <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
-              <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i class="fa-solid fa-book me-2 fa-fw"></i>Docs</a></li>
-              <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
-              <li class=""><hr class="dropdown-divider"></li>
-              <li v-if="!node" class=""><a class="dropdown-item" href="/qr/"><i class="fa-solid fa-qrcode me-2 fa-fw"></i>Invite</a></li>
-              <li><a class="dropdown-item" role="button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers"><i class="fas fa-user-friends me-2 position-relative"><span class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle" style="font-size: .9em;"><i class="small fa-solid fa-arrows-rotate"></i><span class="visually-hidden">change user</span></span></i>Users</a></li>
-			        <li><a class="dropdown-item" role="button" @click="logout()"><i class="fas fa-power-off fa-fw me-2"></i>Logout</a></li>
-		      </ul>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black mt-2" aria-labelledby="userDropdown">
+              <li class="">
+                <a class="dropdown-item" role="button" @click="toggleChat" data-bs-toggle="offcanvas"
+                  data-bs-target="#offcanvasSting" aria-controls="offcanvasSting">
+                  <img src="/img/sting_white.svg" alt="" width="20" height="20" class="img-fluid me-2">Chat
+                </a>
+              </li>
+              <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#blog/'" @click="showTab('blog')"><i
+                    class="fas fa-user fa-fw me-2"></i>Profile</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#wallet/'" @click="showTab('wallet')"><i
+                    class="fas fa-wallet fa-fw me-2"></i>Wallet</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#inventory/'"
+                  @click="showTab('inventory')"><i class="fas fa-boxes fa-fw me-2"></i>Inventory</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" :href="'/me#files/'" @click="showTab('files')"><i
+                    class="fas fa-cloud fa-fw me-2"></i>Cloud</a></li>
+              <li class="" v-if="!node">
+                <hr class="dropdown-divider">
+              </li>
+              <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i
+                    class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
+              <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i
+                    class="fa-solid fa-book me-2 fa-fw"></i>Docs</a></li>
+              <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i
+                    class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
+              <li class="">
+                <hr class="dropdown-divider">
+              </li>
+              <li v-if="!node" class=""><a class="dropdown-item" href="/qr/"><i
+                    class="fa-solid fa-qrcode me-2 fa-fw"></i>Invite</a></li>
+              <li><a class="dropdown-item" role="button" type="button" data-bs-toggle="offcanvas"
+                  data-bs-target="#offcanvasUsers" aria-controls="offcanvasUsers"><i
+                    class="fas fa-user-friends me-2 position-relative"><span
+                      class="small position-absolute top-100 start-100 translate-middle text-white bg-darkg rounded-circle"
+                      style="font-size: .9em;"><i class="small fa-solid fa-arrows-rotate"></i><span
+                        class="visually-hidden">change user</span></span></i>Users</a></li>
+              <li><a class="dropdown-item" role="button" @click="logout()"><i
+                    class="fas fa-power-off fa-fw me-2"></i>Logout</a></li>
+            </ul>
           </div>
         </ul>
-      
+
       </div>
-      </div>
-    
-      <div>
+    </div>
+
+    <div>
+    </div>
   </div>
-</div>
-<div class="position-fixed bottom-0 end-0 p-3 toast-container" style="z-index: 11">
-  <div v-for="op in ops">  
-    <toast-vue :alert="op"/>
+  <div class="position-fixed bottom-0 end-0 p-3 toast-container" style="z-index: 11">
+    <div v-for="op in ops">
+      <toast-vue :alert="op" />
+    </div>
   </div>
-</div>
 
-<!-- sting chat -->
-<div class="offcanvas offcanvas-end bg-blur-darkg bg-img-none text-white-50" tabindex="-1" id="offcanvasSting" aria-labelledby="offcanvasStingLabel">
-  <div class="offcanvas-header d-flex align-items-center justify-content-between">
-    <div class="d-flex">
-      <h5 id="offcanvasRightLabel" class="m-0 p-0">Sting Chat</h5>
-      <div class="d-flex"><span class="small badge border border-warning ms-1 mb-auto" style="font-size: 0.5em;">BETA</span></div>
+  <!-- sting chat -->
+  <div class="offcanvas offcanvas-end bg-blur-darkg bg-img-none text-white-50" tabindex="-1" id="offcanvasSting"
+    aria-labelledby="offcanvasStingLabel">
+    <div class="offcanvas-header d-flex align-items-center justify-content-between">
+      <div class="d-flex">
+        <h5 id="offcanvasRightLabel" class="m-0 p-0">Sting Chat</h5>
+        <div class="d-flex"><span class="small badge border border-warning ms-1 mb-auto"
+            style="font-size: 0.5em;">BETA</span></div>
+      </div>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>  
-  <div class="offcanvas-body p-0">
-    <div id="stingChat" class=""></div>
+    <div class="offcanvas-body p-0">
+      <div id="stingChat" class=""></div>
+    </div>
   </div>
-</div>
 
-<!-- off canvas user login -->
-<div class="offcanvas offcanvas-end bg-blur-darkg bg-img-none text-white-50" tabindex="-1" id="offcanvasUsers" aria-labelledby="offcanvasRightLabel">
-  <div class="offcanvas-header d-flex align-items-center justify-content-between">
-    <h5 id="offcanvasRightLabel" class="m-0 p-0">User Management</h5>
-    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <div class="d-flex flex-column">
-      <div class="row mb-3">
+  <!-- off canvas user login -->
+  <div class="offcanvas offcanvas-end bg-blur-darkg bg-img-none text-white-50" tabindex="-1" id="offcanvasUsers"
+    aria-labelledby="offcanvasRightLabel">
+    <div class="offcanvas-header d-flex align-items-center justify-content-between">
+      <h5 id="offcanvasRightLabel" class="m-0 p-0">User Management</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
 
-        <div class="dropdown">
-          <button class="btn btn-secondary w-100 p-0" role="button" id="authDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false" >
-            <button v-if="HKC" class="btn btn-hivekeychain h-100 w-100 dropdown-toggle"><img src="/img/keychain.png" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
-            <button v-if="HAS" class="btn btn-hiveauth h-100 w-100 dropdown-toggle"><img src="/img/hiveauth.svg" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
-            <button v-if="HSR" class="btn btn-hivesigner h-100 w-100 dropdown-toggle"><img src="/img/hivesigner.svg" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
-            <button v-if="PEN" class="btn btn-pen h-100 w-100 dropdown-toggle"><img src="/img/dlux-pen.png" style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-dark text-center bg-black p-2" aria-labelledby="authDropdown">
-            <li class="p-2"><button class="btn btn-hivekeychain h-100 w-100" @click="useKC()"><img src="/img/keychain.png" class="img-responsive" style="height:50px !important;" ></button></li>
-            <li class="p-2"><button class="btn btn-hiveauth h-100 w-100" @click="useHAS()"><img src="/img/hiveauth.svg" class="img-responsive" style="height:50px !important;" ></button></li>
-            <li class="p-2"><button class="btn btn-hivesigner h-100 w-100" @click="useHS()"><img src="/img/hivesigner.svg" class="img-responsive" style="height:50px !important;" ></button></li>
-            <li class="p-2"><button class="btn btn-pen h-100 w-100" @click="usePEN()"><img src="/img/dlux-pen.png" class="img-responsive" style="height:50px !important;" ></button></li>
-          </ul>
-        </div>
-
-
-        <div class="small text-muted text-center mt-2">
-          <span v-if="HKC">Hive Keychain requires a Firefox or Chrome extension</span>
-          <span v-if="HAS">Hive Auth requires websockets and a PKSA Application</span>
-          <span v-if="HSR">Hive Signer generates a link</span>
-          <span v-if="PEN">dlux Pen stores your active key locally</span>
-        </div>
-          
-
-      </div>
-    </div>
-
-    <div v-if="!decrypted.pin">
-      <label class="form-label">Add user</label>
-      <div class="position-relative has-validation">
-        <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
-          <i class="fa-solid fa-at fa-fw"></i>
-        </span>
-        <input v-model="userField" autocapitalize="off" placeholder="username" @keyup.enter="setUser()" class="px-4 form-control bg-dark border-dark text-info">
-        <span v-if="userField" class="position-absolute end-0 top-50 translate-middle-y pe-2">
-          <a role="button" @click="queueUser()" class="text-info"><i class="fa-solid fa-circle-plus fa-fw"></i></a>
-        </span>
-      </div>
-      <p v-if="userPinFeedback"></p>
-      <div class="small text-muted text-center mt-1 mb-2">
-        Usernames are stored locally. <a class="no-decoration text-info" target="_blank" href="https://signup.hive.io/">Get Account</a>
-      </div>
-    </div>
-
-   <!-- <div v-if="false">
-      <div>
-      <div>
-      <div class="d-flex justify-content-center align-items-center">
-        <div><a role="button" class="no-decoration">Lock<i class="fa-solid fa-lock ms-1"></i></a></div>
-        <div class="form-check form-switch ms-2 fs-2">
-          <div><input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked></div>
-        </div>
-        <div><a role="button" class="no-decoration"><i class="fa-solid fa-lock-open me-1"></i>Unlock</a></div>
-      </div>
-    
-    <label class="form-label">Add user</label>
-    <div class="position-relative has-validation">
-      <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
-        <i class="fa-solid fa-at fa-fw"></i>
-      </span>
-      <input v-model="userField" autocapitalize="off" placeholder="username" @keyup.enter="setUser()" class="px-4 form-control bg-dark border-dark text-info">
-      <span v-if="userField" class="position-absolute end-0 top-50 translate-middle-y pe-2">
-        <a role="button" @click="setUser()" class="text-info"><i class="fa-solid fa-circle-plus fa-fw"></i></a>
-      </span>
-    </div>
-    <div class="small text-muted text-center mt-1 mb-2">
-      Usernames are stored locally. <a class="no-decoration text-info" target="_blank" href="https://signup.hive.io/">Get Account</a>
-    </div>
-  <label class="form-label">Key Type</label>
-    <select :value="level" class="form-select bg-dark border-dark text-info mb-2" aria-label="Default select example">
-      <option selected value="owner">Owner Private Key</option>
-      <option value="master">Master Password</option>
-      <option value="active">Active Private Key</option>
-      <option value="posting">Posting Private Key</option>
-      <option value="memo">Memo Private Key</option>
-    </select>
-    <label class="form-label">Key</label>
-    <div class="position-relative has-validation">
-      <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
-        <i class="fa-solid fa-key fa-fw"></i>
-      </span>
-      <input v-model="passwordField" autocapitalize="off" placeholder="key" class="px-4 form-control bg-dark border-dark text-info">
-    </div>
-    <div class="small text-muted text-center mt-1 mb-3">
-      Keys are stored locally. Only enter your keys on websites you trust.
-    </div>
-        <div class="fs-4 mb-1 text-center">
-        Set a PIN
-        </div>
-        
-        <table class="w-100 fs-5 mb-2">
-          <tr class="text-center border-bottom row">
-            <td class="p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                1
-                </div>
-              </a>
-            </td>
-            <td class="border-start border-end p-0 pin-number col">
-            <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                2
-                </div>
-              </a></td>
-            <td class="p-0 pin-number col">
-            <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                3
-                </div>
-              </a>
-            </td>
-          </tr>
-          <tr class="text-center border-bottom row">
-            <td class="p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                4
-                </div>
-              </a>
-            </td>
-            <td class="border-start border-end p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                5
-                </div>
-              </a>
-            </td>
-            <td class="p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                6
-                </div>
-              </a>
-            </td>
-          </tr>
-          <tr class="text-center border-bottom row">
-            <td class="p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                7
-                </div>
-              </a>
-            </td>
-            <td class="border-start border-end p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                8
-                </div>
-              </a>
-            </td>
-            <td class="p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                9
-                </div>
-              </a>
-            </td>
-          </tr>
-          <tr class="text-center row">
-            <td class="p-0  pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                <i class="fa-solid fa-delete-left fa-fw fa-1x force-parent-lh"></i>
-                </div>
-              </a>
-            </td>
-            <td class="border-start border-end p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                0
-                </div>
-              </a>
-            </td>
-            <td class="p-0 pin-number col">
-              <a role="button" class="no-decoration">
-                <div class="p-2" style="height:100%; width:100%">
-                <i class="fa-solid fa-check fa-fw fa-1x force-parent-lh"></i>
-                </div>
-              </a>
-            </td>
-          </tr>
-        </table>
-        <div class="fs-5 mb-2 text-center">
-        to encrypt and decrypt your keys
-        </div>
-      </div>
-    </div>
-    </div>
-
-    -->
-      
-    <div class="mb-3">
-      <div>
-        <label class="form-label">Current user</label>
-        <div v-if="!user" class="bg-darkest rounded px-4 py-2 mx-2">
-          <img src="#" alt="" width="50" height="50" class="img-fluid rounded-circle bg-light me-1 cover">
-          <span>NONE SELECTED</span>
-        </div>
-        <div v-if="user" class="bg-darkest rounded d-flex align-items-center p-2">
-          <img :src="avatar" id="userImage" alt="" width="50" height="50" class="img-fluid rounded-circle bg-light me-2 cover">
-          <span id="userName">{{user}}</span>
-          <div class="ms-auto">
-            <a class="btn btn-outline-secondary btn-sm me-1" :class="[{'btn-outline-success':HAS_.wsconn && HAS_.token},{'btn-outline-warning':!HAS_.wsconn && HAS_.token},{'btn-outline-secondary':!HAS_.token}]" :href="HAS_.uri" v-if="HAS"><i class="fa-solid fa-satellite-dish"></i></a>
-            <a class="btn btn-outline-danger btn-sm" role="button" @click="logout()"><i class="fas fa-power-off fa-fw"></i></a>
+      <!-- login method selector -->
+      <div class="d-flex flex-column">
+        <div class="row mb-3">
+          <div class="dropdown">
+            <button class="btn btn-secondary w-100 p-0" :class="{'disabled': node}" :disabled="node" role="button" id="authDropdown" data-bs-toggle="dropdown"
+              data-bs-auto-close="true" aria-expanded="false">
+              <button v-if="HKC" class="btn btn-hivekeychain h-100 w-100 dropdown-toggle"><img src="/img/keychain.png"
+                  style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+              <button v-if="HAS" class="btn btn-hiveauth h-100 w-100 dropdown-toggle"><img src="/img/hiveauth.svg"
+                  style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+              <button v-if="HSR" class="btn btn-hivesigner h-100 w-100 dropdown-toggle"><img src="/img/hivesigner.svg"
+                  style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+              <button v-if="PEN" class="btn btn-pen h-100 w-100 dropdown-toggle"><img src="/img/dlux-pen.png"
+                  style="height:50px !important;" class="img-responsive p-2 mx-3"></button>
+            </button>
+            <!-- login method options -->
+            <ul class="dropdown-menu dropdown-menu-dark text-center bg-black p-2" aria-labelledby="authDropdown">
+              <li class="p-2"><button class="btn btn-hivekeychain h-100 w-100" @click="useKC()"><img
+                    src="/img/keychain.png" class="img-responsive" style="height:50px !important;"></button></li>
+              <li class="p-2" v-if="!node"><button class="btn btn-hiveauth h-100 w-100" @click="useHAS()"><img
+                    src="/img/hiveauth.svg" class="img-responsive" style="height:50px !important;"></button></li>
+              <li class="p-2" v-if="!node"><button class="btn btn-hivesigner h-100 w-100" @click="useHS()"><img
+                    src="/img/hivesigner.svg" class="img-responsive" style="height:50px !important;"></button></li>
+              <li class="p-2 d-none"><button class="btn btn-pen h-100 w-100" @click="usePEN()"><img
+                    src="/img/dlux-pen.png" class="img-responsive" style="height:50px !important;"></button></li>
+            </ul>
+          </div>
+          <!-- login method description -->
+          <div class="small text-muted text-center mt-2">
+            <span v-if="HKC">Hive Keychain requires a Firefox or Chrome extension</span>
+            <span v-if="HAS">Hive Auth requires websockets and a PKSA Application</span>
+            <span v-if="HSR">Hive Signer generates a link</span>
+            <span v-if="PEN">dlux Pen stores your active key locally</span>
           </div>
         </div>
       </div>
-      <div class="mt-2" v-if="HAS && haspich > 100">
-      <div>
-        <div class="bg-white rounded text-center">
-          <a class="no-decoration" :href="HAS_.uri"><img :src="haspic" :height="haspich + 'px'" class="img-responsive p-2 mx-3"><p v-show="haspich > 100" class="text-dark">Tap or scan with PKSA App for {{user}}</p></a>
+
+      <!-- current user -->
+      <div class="mb-3">
+        <div>
+          <label class="form-label">Current user</label>
+
+          <div v-if="!user" class="bg-darkest rounded d-flex align-items-center p-2">
+            <img src="/img/no-user.png" alt="" width="50" height="50" class="img-fluid rounded-circle me-2 cover">
+            <span class="flex-grow-1 text-center">NONE SELECTED</span>
+
+          </div>
+          <div v-if="user" class="bg-darkest rounded d-flex align-items-center p-2">
+            <img :src="avatar" id="userImage" alt="" width="50" height="50"
+              class="img-fluid rounded-circle bg-light me-2 cover">
+            <span id="userName">{{user}}</span>
+            <div class="ms-auto">
+              <a class="btn btn-outline-secondary btn-sm me-1"
+                :class="[{'btn-outline-success':HAS_.wsconn && HAS_.token},{'btn-outline-warning':!HAS_.wsconn && HAS_.token},{'btn-outline-secondary':!HAS_.token}]"
+                :href="HAS_.uri" v-if="HAS"><i class="fa-solid fa-satellite-dish"></i></a>
+              <a class="btn btn-outline-danger btn-sm" role="button" @click="logout()"><i
+                  class="fas fa-power-off fa-fw"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2" v-if="HAS && haspich > 100">
+          <div>
+            <div class="bg-white rounded text-center">
+              <a class="no-decoration" :href="HAS_.uri"><img :src="haspic" :height="haspich + 'px'"
+                  class="img-responsive p-2 mx-3">
+                <p v-show="haspich > 100" class="text-dark">Tap or scan with PKSA App for {{user}}</p>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    </div>
 
-    
-
-    <div class="mt-1" v-if="recentUsers.length">
-        <label class="form-label">Recent users</label>
+      <!-- add user-->
+      <div v-if="!decrypted.pin">
+        <label class="form-label">Add user</label>
         <div class="position-relative has-validation">
-      <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
-      <i class="fa-solid fa-at fa-fw"></i>
-   </span>
-          <input type="search" v-model="filterUsers" autocapitalize="off" placeholder="search" @keyup="searchRecents()" class="ps-4 form-control bg-dark border-dark text-info">
+          <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
+            <i class="fa-solid fa-at fa-fw"></i>
+          </span>
+          <input v-model="userField" autocapitalize="off" placeholder="username" @keyup.enter="setUser()"
+            class="px-4 form-control bg-dark border-dark text-info">
+          <span v-if="userField" class="position-absolute end-0 top-50 translate-middle-y pe-2">
+            <button type="button" @click="setUser()" class="btn btn-sm btn-primary"><i
+                class="fa-solid fa-plus fa-fw"></i></button>
+          </span>
+        </div>
+        <p v-if="userPinFeedback"></p>
+        <div class="small text-muted text-center mt-1 mb-2">
+          Usernames are stored locally. <a class="no-decoration text-info" target="_blank"
+            href="https://signup.hive.io/">Get Account</a>
         </div>
       </div>
-      <div class="d-flex justify-content-between align-items-center py-3 border-light border-bottom" v-if="!filterUsers" v-for="name in recentUsers">
-        <div class="flex-fill text-center"><a class="text-info" role="button" @click="setUser(name);toggleAccountMenu()">@{{name}}</a></div>
-        <div class="flex-shrink me-2"><i class="fa-solid fa-feather-pointed fa-fw"></i></div>
-        <div class="flex-shrink"><a class="text-danger ms-auto" role="button" @click="deleteRecentUser(name)" alt="Remove username"><i class="fa-solid fa-trash-can"></i></a></div>
+
+      <!-- recent users -->
+      <div class="mt-1" v-if="recentUsers.length">
+        <label class="form-label">Recent users</label>
+        <div class="d-none position-relative has-validation">
+          <span class="position-absolute top-50 translate-middle-y ps-2 text-white">
+            <i class="fa-solid fa-at fa-fw"></i>
+          </span>
+          <input type="search" v-model="filterUsers" autocapitalize="off" placeholder="search" @keyup="searchRecents()"
+            class="ps-4 form-control bg-dark border-dark text-info">
+        </div>
       </div>
-      <div class="d-flex justify-content-between align-items-center py-3 border-light border-bottom" v-if="filterUsers" v-for="name in filterRecents">
-        <div class="flex-fill text-center"><a class="text-info" role="button" @click="setUser(name);toggleAccountMenu()">@{{name}}</a></div>
-        <div class="flex-shrink me-2"><i class="fa-solid fa-feather-pointed fa-fw"></i></div>
-        <div class="flex-shrink"><a class="text-danger ms-auto" role="button" @click="deleteRecentUser(name);searchRecents()" alt="Remove username"><i class="fa-solid fa-trash-can"></i></a></div>
+      <div class="d-flex justify-content-between align-items-center py-3 border-light-50 border-top" v-if="!filterUsers"
+        v-for="name in recentUsers">
+        <div class="flex-fill text-center"><a class="text-info" role="button"
+            @click="setUser(name);toggleAccountMenu()">@{{name}}</a></div>
+        <div class="flex-shrink me-2 d-none"><i class="fa-solid fa-feather-pointed fa-fw"></i></div>
+        <div class="flex-shrink"><a class="text-danger ms-auto" role="button" @click="deleteRecentUser(name)"
+            alt="Remove username"><i class="fa-solid fa-trash-can"></i></a></div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center py-3 border-light-50 border-top" v-if="filterUsers"
+        v-for="name in filterRecents">
+        <div class="flex-fill text-center"><a class="text-info" role="button"
+            @click="setUser(name);toggleAccountMenu()">@{{name}}</a></div>
+        <div class="flex-shrink me-2 d-none"><i class="fa-solid fa-feather-pointed fa-fw"></i></div>
+        <div class="flex-shrink"><a class="text-danger ms-auto" role="button"
+            @click="deleteRecentUser(name);searchRecents()" alt="Remove username"><i
+              class="fa-solid fa-trash-can"></i></a></div>
       </div>
     </div>
   </div>
