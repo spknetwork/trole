@@ -138,6 +138,12 @@ export default {
                         {{formatNumber((saccountapi.spk_power)/1000, 3, '.', ',')}}
                         SPK
                     </h5>
+                    <!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+  Launch demo modal
+</button>
+
+
                     <div class="btn-group" role="group"
                         aria-label="Power Actions">
                         <button class="dropdown btn btn-primary p-2"
@@ -761,6 +767,7 @@ export default {
             </div>
         </div>
     </div>
+    
    `,
     props: {
         account: {
