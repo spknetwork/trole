@@ -64,7 +64,7 @@ export default {
                     <span class="position-absolute top-50 translate-middle-y ps-2"><i
                             class="fa-solid fa-magnifying-glass fa-fw"></i></span>
                     <input @keyup="render()" @change="render()" @search="render()"
-                        class="ps-4 form-control border-white" type="search"
+                        class="ps-4 form-control border-0 bg-dark text-info" type="search"
                         placeholder="Search filename" v-model="filesSelect.search">
                 </div>
 
@@ -80,11 +80,11 @@ export default {
 
                 <!-- Sort -->
                 <div class="dropdown mb-1">
-                    <button class="btn btn-outline-light w-100" type="button" data-bs-toggle="dropdown"
+                    <button class="btn btn-dark w-100" style="padding-top: 11px !important; padding-bottom: 11px !important;" type="button" data-bs-toggle="dropdown"
                         aria-expanded="false"><i class="fa-solid fa-sort fa-fw ms-1"></i>
                         {{filesSelect.sort.charAt(0).toUpperCase() + filesSelect.sort.slice(1)}} {{filesSelect.dir == 'asc' ? 'Ascending' : 'Descending'}}
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end bg-black">
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end bg-black">
                         <li>
                             <a @click="filesSelect.dir='asc';filesSelect.sort='time';render()"
                                 class="dropdown-item d-flex align-items-center" role="button"><i class="fa-solid fa-calendar-days fa-fw me-1"></i>Created<i class="fa-solid fa-caret-up fa-fw ms-auto"></i></a>
@@ -137,7 +137,7 @@ export default {
         </div>
 
         
-
+        <!-- change view list / grid -->
         <div class="d-flex align-items-center my-1 mx-1">
             <h5 class="mb-0"> {{filesArray.length}} File{{filesArray.length == 1 ? '' : 's'}}</h5>
             <div class="ms-auto">
