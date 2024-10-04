@@ -1,10 +1,8 @@
 import ModalVue from './modalvue.js'
-import VoteParams from './vote-params.js'
 
 export default {
     components: {
-        "modal-vue": ModalVue,
-        "vote-params": VoteParams
+        "modal-vue": ModalVue
     },
     template: `
     <div class="container">
