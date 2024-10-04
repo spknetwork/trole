@@ -1,4 +1,3 @@
-import { type } from 'express/lib/response';
 import ChoicesVue from '/js/choices-vue.js';
 import Pop from "/js/pop-min.js";
 
