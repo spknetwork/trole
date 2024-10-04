@@ -139,9 +139,9 @@ export default {
                         SPK
                     </h5>
                     <!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-  Launch demo modal
-</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    Launch demo modal
+                    </button>
 
 
                     <div class="btn-group" role="group"
@@ -155,95 +155,7 @@ export default {
                         <ul class="dropdown-menu dropdown-menu-dark p-4 text-white-50 text-left bg-black dropdown-menu-end"
                             aria-labelledby="settingsDropdownBtn"
                             style="width: 300px">
-                            <li>
-                                <h6 class="dropdown-header text-center">
-                                    {{tokenGov.title}}
-                                </h6>
-                            </li>
-                            <li>
-                                <h4 class="text-center text-white-50">
-                                    @{{account}}</h4>
-                            </li>
-                            <li>
-                                <form name="nodeSettings"
-                                    class="needs-validation" novalidate>
-                                    <div class="row mb-3"
-                                        v-for="opt in tokenGov.options">
-                                        <label :for="opt.json"
-                                            class="form-label d-flex">{{opt.title}}:
-                                            {{opt.val}}
-                                            {{opt.unit}}
-                                            <div
-                                                class="dropdown show d-flex align-items-center p-0 m-0">
-                                                <a class="text-white" href="#"
-                                                    role="button"
-                                                    data-bs-toggle="dropdown"
-                                                    aria-haspopup="true"
-                                                    aria-expanded="false">
-                                                    <h5 class="m-0">
-                                                        <i
-                                                            class="fas fa-info-circle ms-2"></i>
-                                                    </h5>
-                                                </a>
-                                                <div
-                                                    class="dropdown-menu dropdown-menu-dark bg-black dropdown-menu-end p-4 text-white-50 text-left bg-black">
-                                                    <p>{{opt.info}}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </label>
-                                        <div class="input-group">
-                                            <input type="range"
-                                                v-model="opt.val"
-                                                class="slider form-control bg-darkg border-secondary text-info"
-                                                :id="opt.id"
-                                                :max="opt.range_high"
-                                                :min="opt.range_low"
-                                                :step="opt.step" />
-                                            <span v-if="opt.unit"
-                                                class="input-group-text bg-darkg border-secondary text-secondary">{{opt.unit}}</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-center mt-3">
-                                        <button id="saveSettingsBtn"
-                                            type="button"
-                                            class="btn btn-primary mb-2"
-                                            @click="saveNodeSettings()">
-                                            Vote<i
-                                                class="ms-2 fa-solid fa-check-to-slot"></i>
-                                        </button>
-                                        <p class="small">Your
-                                            vote cannot be
-                                            changed or
-                                            cancelled once
-                                            submitted.</p>
-                                    </div>
-                                    <div class="text-start">
-                                        <p class="lead mb-1 text-center">
-                                            VOTE POWER (VP)</p>
-                                        <div class="progress mb-2"
-                                            role="progressbar"
-                                            aria-label="Vote Power"
-                                            aria-valuenow="75" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                            <div class="progress-bar"
-                                                style="width: 75%">
-                                                75%
-                                            </div>
-                                        </div>
-                                        <ul class="small">
-                                            <li>Recharge rate:
-                                                14 days</li>
-                                            <li>Voting will
-                                                drain VP to 0%
-                                            </li>
-                                            <li>Full Recharge:
-                                                {{formatNumber((spkStats.spk_cycle_length * 4)/28800, '.', ',', 2)}}
-                                                days</li>
-                                        </ul>
-                                    </div>
-                                </form>
-                            </li>
+                            
                         </ul>
                         <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
