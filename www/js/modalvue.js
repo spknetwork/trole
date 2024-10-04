@@ -967,6 +967,7 @@ export default {
       handler: function (val, oldVal) {
         console.log('current')
         if (val != oldVal) {
+          if (typeof this.current != 'string') return
           var smart = false
           for (var node in this.smarkets) {
             if (this.smarkets[node]?.val_code) {
@@ -974,7 +975,7 @@ export default {
               smart = true
             }
           }
-          smart = (smart && this.current.indexOf(',') > -1) ? true : false
+          smart = (smart && .indexOf(',') > -1) ? true : false
           const current = this.current.split(',')[1]
           if (smart) for (var i = 0; i < current.length; i++) {
             console.log(i, current.substr(i, 2), this.valCodeDict[current.substr(i, 2)])
@@ -990,6 +991,7 @@ export default {
     handler: function (val, oldVal) {
       console.log('smarkets')
       if (val != oldVal) {
+        if (typeof this.current != 'string') return
         var smart = false
         for (var node in this.smarkets) {
           if (this.smarkets[node]?.val_code) {
@@ -1028,19 +1030,21 @@ export default {
       this.d[props[i]] = options[props[i]];
     }
     this.d.to = this.account
-    var smart = false
-    for (var node in this.smarkets) {
-      if (this.smarkets[node]?.val_code) {
-        this.valCodeDict[this.smarkets[node].val_code] = this.smarkets[node]
-        smart = true
+    if (typeof this.current == 'string') {
+      var smart = false
+      for (var node in this.smarkets) {
+        if (this.smarkets[node]?.val_code) {
+          this.valCodeDict[this.smarkets[node].val_code] = this.smarkets[node]
+          smart = true
+        }
       }
-    }
-    smart = (smart && this.current.indexOf(',') > -1) ? true : false
-    const current = this.current.split(',')[1]
-    if (smart) for (var i = 0; i < current.length; i++) {
-      console.log(i, current.substr(i, 2), this.valCodeDict[current.substr(i, 2)])
-      this.add(this.valCodeDict[current.substr(i, 2)])
-      i++
+      smart = (smart && this.current.indexOf(',') > -1) ? true : false
+      const current = this.current.split(',')[1]
+      if (smart) for (var i = 0; i < current.length; i++) {
+        console.log(i, current.substr(i, 2), this.valCodeDict[current.substr(i, 2)])
+        this.add(this.valCodeDict[current.substr(i, 2)])
+        i++
+      }
     }
     if (!this.$slots["trigger"]) {
       //console.log(options)
