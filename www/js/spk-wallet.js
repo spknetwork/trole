@@ -112,61 +112,86 @@ export default {
                 </div>
             </div>
             <!-- SPK Power -->
-            <div
-                class="d-flex align-items-center border-bottom border-secondary py-5">
-                <div class="text-start">
-                    <div class="d-flex align-items-start">
-                        <h4 class="m-0">SPK Power</h4><small
-                            v-if="sapi == 'https://spktest.dlux.io'"><span
-                                class="badge ms-1 me-2 bg-warning">TEST</span></small>
+            <div class="d-flex flex-column border-bottom border-secondary py-5">
+                <div class="d-flex align-items-center">
+                    <div class="text-start">
+                        <div class="d-flex align-items-start">
+                            <h4 class="m-0">SPK Power</h4><small
+                                v-if="sapi == 'https://spktest.dlux.io'"><span
+                                    class="badge ms-1 me-2 bg-warning">TEST</span></small>
+                        </div>
+                        <p class="text-white-50">Powered SPK for
+                            Voting.</p>
+                        <p class="text-white-50">Benefits of SPK
+                            Power:</p>
+                        <ul class="text-white-50">
+                            <li>Enables voting</li>
+                            <li>Instant Power Up | 4 Week Power Down
+                            </li>
+                            <li>Grants BROCA at 1:1,000,000</li>
+                            <li>Your max BROCA:
+                                {{formatNumber((saccountapi.spk_power * 1000 ), 0, '', ',')}}</li>
+                        </ul>
                     </div>
-                    <p class="text-white-50">Powered SPK for
-                        Voting.</p>
-                    <p class="text-white-50">Benefits of SPK
-                        Power:</p>
-                    <ul class="text-white-50">
-                        <li>Enables voting</li>
-                        <li>Instant Power Up | 4 Week Power Down
-                        </li>
-                        <li>Grants BROCA at 1:1,000,000</li>
-                        <li>Your max BROCA:
-                            {{formatNumber((saccountapi.spk_power * 1000 ), 0, '', ',')}}</li>
-                    </ul>
+                    <div class="ms-auto text-end">
+                        <h5>
+                            {{formatNumber((saccountapi.spk_power)/1000, 3, '.', ',')}}
+                            SPK
+                        </h5>
+                        <div class="btn-group" role="group"
+                            aria-label="Power Actions">
+                            <button class="dropdown btn btn-primary p-2" href="#" role="button" id="settingsDropdownBtn" data-bs-toggle="collapse" data-bs-target="#collapseVote" aria-expanded="false" aria-controls="collapseVote">
+                                <i class="me-2 fa-solid fa-person-booth"></i>Vote</button>
+                            
+                            <button type="button"
+                                class="btn btn-dark ms-0 me-0 ps-0 pe-0"
+                                disabled></button>
+                            <div class="btn-group" role="group" v-if="me">
+                                <button type="button"
+                                    class="btn btn-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false"></button>
+                                <ul class="dropdown-menu dropdown-menu-dark bg-black dropdown-menu-end text-white"
+                                    aria-labelledby="btnGroupDrop1">
+                                    <modal-vue type="power" token="SPK" 
+                                        func="Power Down"
+                                        :balance="saccountapi.spk_power"
+                                        :account="account"
+                                        :test="test"
+                                        @modalsign="sendIt($event)" v-slot:trigger>
+                                        <button class="dropdown-item trigger"
+                                            type="button"><i
+                                                class="fas fa-angle-double-down fa-fw me-2"></i>Power
+                                            Down</button>
+                                    </modal-vue>
+                                    <div class="dropdown-divider"></div>
+                                    <modal-vue type="power" token="SPK" 
+                                        func="Election"
+                                        :test="test"
+                                        :balance="saccountapi.spk_power"
+                                        :account="account" :smarkets="smarkets.node"
+                                        :current="saccountapi.spk_vote"
+                                        @modalsign="sendIt($event)" v-slot:trigger>
+                                        <button class="dropdown-item trigger"
+                                            type="button"><i
+                                                class="fa-solid fa-plug fa-fw me-2"></i>Elect
+                                            Validators</button>
+                                    </modal-vue>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="ms-auto text-end">
-                    <h5>
-                        {{formatNumber((saccountapi.spk_power)/1000, 3, '.', ',')}}
-                        SPK
-                    </h5>
-                    <div class="btn-group" role="group"
-                        aria-label="Power Actions">
-                        <button class="dropdown btn btn-primary p-2"
-                            data-bs-auto-close="outside" href="#" role="button"
-                            id="settingsDropdownBtn" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i
-                                class="me-2 fa-solid fa-person-booth"></i>Vote</button>
-                        <ul class="dropdown-menu dropdown-menu-dark p-4 text-white-50 text-left bg-black dropdown-menu-end"
-                            aria-labelledby="settingsDropdownBtn"
-                            style="width: 300px">
-                            <li>
-                                <h6 class="dropdown-header text-center">
-                                    {{tokenGov.title}}
-                                </h6>
-                            </li>
-                            <li>
-                                <h4 class="text-center text-white-50">
-                                    @{{account}}</h4>
-                            </li>
-                            <li>
-                                <form name="nodeSettings"
-                                    class="needs-validation" novalidate>
-                                    <div class="row mb-3"
-                                        v-for="opt in tokenGov.options">
-                                        <label :for="opt.json"
-                                            class="form-label d-flex">{{opt.title}}:
-                                            {{opt.val}}
-                                            {{opt.unit}}
+                <div class="collapse bg-dark rounded" id="collapseVote">
+                    <div class="card card-body">
+                        <div class="fs-4 text-center">{{tokenGov.title}}</div>
+                        <div class="lead text-center text-white-50">  @{{account}}</div>
+                        <form name="nodeSettings" class="needs-validation" novalidate>
+                            <div class="row mb-3" v-for="opt in tokenGov.options">
+                                <label :for="opt.json" class="form-label d-flex">
+                                    {{opt.title}}: 
+                                    {{opt.val}} 
+                                    {{opt.unit}}
                                             <div
                                                 class="dropdown show d-flex align-items-center p-0 m-0">
                                                 <a class="text-white" href="#"
@@ -180,7 +205,7 @@ export default {
                                                     </h5>
                                                 </a>
                                                 <div
-                                                    class="dropdown-menu dropdown-menu-dark bg-black dropdown-menu-end p-4 text-white-50 text-left bg-black">
+                                                    class="dropdown-menu dropdown-menu-dark bg-black dropdown-menu-end text-white-50 text-left bg-black">
                                                     <p>{{opt.info}}
                                                     </p>
                                                 </div>
@@ -189,13 +214,13 @@ export default {
                                         <div class="input-group">
                                             <input type="range"
                                                 v-model="opt.val"
-                                                class="slider form-control bg-darkg border-secondary text-info"
+                                                class="slider form-control bg-dark border-dark text-info"
                                                 :id="opt.id"
                                                 :max="opt.range_high"
                                                 :min="opt.range_low"
                                                 :step="opt.step" />
                                             <span v-if="opt.unit"
-                                                class="input-group-text bg-darkg border-secondary text-secondary">{{opt.unit}}</span>
+                                                class="input-group-text bg-dark text-secondary">{{opt.unit}}</span>
                                         </div>
                                     </div>
                                     <div class="text-center mt-3">
@@ -237,44 +262,8 @@ export default {
                                         </ul>
                                     </div>
                                 </form>
-                            </li>
+                          
                         </ul>
-                        <button type="button"
-                            class="btn btn-dark ms-0 me-0 ps-0 pe-0"
-                            disabled></button>
-                        <div class="btn-group" role="group" v-if="me">
-                            <button type="button"
-                                class="btn btn-primary dropdown-toggle"
-                                data-bs-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false"></button>
-                            <ul class="dropdown-menu dropdown-menu-dark bg-black dropdown-menu-end text-white"
-                                aria-labelledby="btnGroupDrop1">
-                                <modal-vue type="power" token="SPK" 
-                                    func="Power Down"
-                                    :balance="saccountapi.spk_power"
-                                    :account="account"
-                                    :test="test"
-                                    @modalsign="sendIt($event)" v-slot:trigger>
-                                    <button class="dropdown-item trigger"
-                                        type="button"><i
-                                            class="fas fa-angle-double-down fa-fw me-2"></i>Power
-                                        Down</button>
-                                </modal-vue>
-                                <div class="dropdown-divider"></div>
-                                <modal-vue type="power" token="SPK" 
-                                    func="Election"
-                                    :test="test"
-                                    :balance="saccountapi.spk_power"
-                                    :account="account" :smarkets="smarkets.node"
-                                    :current="saccountapi.spk_vote"
-                                    @modalsign="sendIt($event)" v-slot:trigger>
-                                    <button class="dropdown-item trigger"
-                                        type="button"><i
-                                            class="fa-solid fa-plug fa-fw me-2"></i>Elect
-                                        Validators</button>
-                                </modal-vue>
-                            </ul>
-                        </div>
                     </div>
                 </div>
             </div>
