@@ -211,16 +211,20 @@ export default {
                                                 </div>
                                             </div>
                                         </label>
-                                        <div class="input-group">
+                                        
+                     
+                        
+       
+                                        <div class="position-relative mb-3">
                                             <input type="range"
                                                 v-model="opt.val"
-                                                class="slider form-control bg-dark border-dark text-info"
+                                                class="slider form-range"
                                                 :id="opt.id"
                                                 :max="opt.range_high"
                                                 :min="opt.range_low"
                                                 :step="opt.step" />
-                                            <span v-if="opt.unit"
-                                                class="input-group-text bg-dark text-secondary">{{opt.unit}}</span>
+                                                <span v-if="opt.unit" class="d-none position-absolute end-0 top-50 translate-middle-y px-3 fw-bold">{{opt.unit}}</span>  
+                                            
                                         </div>
                                     </div>
                                     <div class="text-center mt-3">
@@ -235,9 +239,9 @@ export default {
                                             vote cannot be
                                             changed or
                                             cancelled once
-                                            submitted.</p>
+                                            submitted. Your vote power will recharge after 14 days.</p>
                                     </div>
-                                    <div class="text-start">
+                                    <div class="text-start d-none">
                                         <p class="lead mb-1 text-center">
                                             VOTE POWER (VP)</p>
                                         <div class="progress mb-2"
@@ -365,7 +369,7 @@ export default {
                     <div v-show="saccountapi.gov > 0" class="text-white">
                         <div class="input-group my-3">
                             <span
-                                class="input-group-text border-info text-info">
+                                class="input-group-text bg-dark border-info text-info">
                                 <div class="form-check form-switch ">
                                     <input class="form-check-input"
                                         type="checkbox" role="switch"
