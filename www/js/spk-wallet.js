@@ -239,7 +239,7 @@ export default {
                                             vote cannot be
                                             changed or
                                             cancelled once
-                                            submitted. Your vote power will recharge after 14 days.</p>
+                                            submitted. Your vote power will recharge after 14 days</p>
                                     </div>
                                     <div class="text-start d-none">
                                         <p class="lead mb-1 text-center">
