@@ -183,12 +183,12 @@ export default {
                 
                 <div class="btn-group m-2" role="group" aria-label="Storage Actions" v-if="title == 'new'">
                 <!-- real visible button -->
-                    <button @click="storeAll()" role="button" class="btn btn-danger"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
+                    <button @click="storeAll()" role="button" class="btn btn-danger" :disabled="!contracts.length" :class="{'disabled': !contracts.length}"><i class="fa-solid fa-download fa-fw me-2"></i>Store Selected</button>
                       <button type="button"
                             class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                             disabled></button>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-danger dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn btn-danger dropdown-toggle" type="button" :disabled="!contracts.length" :class="{'disabled': !contracts.length}" data-bs-toggle="dropdown" aria-expanded="false">
                           <i class="fa-solid fa-filter fa-fw"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dark bg-dark">
@@ -518,15 +518,33 @@ export default {
                                                                     </div>
 
                                                                     <!-- post time banner -->
-                                                                    <div v-if="contract.c == 2 && !nodeview" class="mx-1 mx-lg-5 mb-3">
-                                                                        <div class="alert alert-warning d-flex align-items-center ">
-                                                                            <div class="d-flex flex-grow-1 flex-wrap me-1 align-items-center">
-                                                                                <div class="mx-1">
-                                                                                    <div class="fs-3 fw-lighter">You have {{exp_to_time(contract.e)}} to publish this contract</div>
+                                                                    <div v-if="contract.c == 2" class="mx-1 mx-lg-5 mb-3">
+                                                                        <div class="alert alert-warning d-flex align-items-center">
+                                                                            <div v-if="!nodeview" class="d-flex flex-grow-1 flex-wrap me-1 align-items-center mx-1">
+                                                                                <div class="fs-3 fw-lighter">You have {{exp_to_time(contract.e)}} to publish this contract</div>
+                                                                                <div class="ms-auto d-flex flex-wrap align-items-center fs-1 text-warning justify-content-center me-2 mx-1">
+                                                                                    <i class="fa-solid fa-bell fa-fw ms-2"></i>
                                                                                 </div>
                                                                             </div>
-                                                                            <div class="ms-auto d-flex flex-wrap align-items-center fs-1 text-warning justify-content-center me-2 mx-1">
-                                                                                <i class="fa-solid fa-bell fa-fw ms-2"></i>
+                                                                            <div v-if="nodeview" class="d-flex flex-grow-1 flex-wrap me-1 align-items-center mx-1">
+                                                                                <div class="fs-3 fw-lighter">
+                                                                                    <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
+                                                                                    <span class="mx-1">Contract pending terms,</span>
+                                                                                    <span v-if="contract.i.isStored">node is storing</span>
+                                                                                    <span v-if="!contract.i.isStored">available to store</span>
+                                                                                </div>
+                                                                                <div class="ms-auto d-flex flex-wrap align-items-center justify-content-center mb-1">
+                                                                                    <button type="button" class="flex-grow-1 btn btn-warning ms-1 mt-1"
+                                                                                        @click="">
+                                                                                        <i class="fa-solid fa-flag fa-fw me-1"></i>Flag
+                                                                                    </button>
+                                                                                    <button type="button" @click="store(contract.i, isStored, hasStorage)"
+                                                                                        class="flex-grow-1 ms-1 mt-1 btn text-nowrap"
+                                                                                        :class="{'btn-success': !contract.i.isStored, 'btn-danger': contract.i.isStored}">
+                                                                                        <span v-if="!contract.i.isStored"><i class="fa-solid fa-square-plus fa-fw me-1"></i>Add</span>
+                                                                                        <span v-if="contract.i.isStored"><i class="fa-solid fa-trash-can fa-fw me-1"></i>Remove</span>
+                                                                                    </button>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -841,8 +859,8 @@ export default {
                                                                   
                                                                     </div>
 
-                                                                    <div class="d-flex">
-                                                                        <button type="button" class="btn btn-sm btn-danger my-2 mx-auto" :class="{'disabled': contract.t != account}" :disabled="contract.t != account" @click="cancel_contract(contract)">
+                                                                    <div class="d-flex" >
+                                                                        <button type="button" class="btn btn-sm btn-danger my-2 mx-auto" :class="{'invisible': contract.t != account}" :disabled="contract.t != account" @click="cancel_contract(contract)">
                                                                         <i class="fa-solid fa-file-circle-xmark fa-fw me-1"></i>End Contract</button>
                                                                     </div>
                                                                 </div>
