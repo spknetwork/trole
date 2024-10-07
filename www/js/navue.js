@@ -1018,7 +1018,7 @@ export default {
                       class="fa-solid fa-qrcode fa-fw me-2"></i>Invite</a></li>
                 <li v-if="!node" class=""><a class="dropdown-item" href="/new/"><i
                       class="fa-solid fa-shapes fa-fw me-2"></i>Build</a></li>
-                <li class=""><a class="dropdown-item" href="/docs/" target="_blank"><i
+                <li class=""><a class="dropdown-item" href="https://www.dlux.io/docs/" target="_blank"><i
                       class="fa-solid fa-book fa-fw me-2"></i>Docs</a></li>
                 <li v-if="!node" class=""><a class="dropdown-item" href="/about/"><i
                       class="fas fa-info-circle fa-fw me-2"></i>About</a></li>
@@ -1241,20 +1241,20 @@ export default {
             class="ps-4 form-control bg-dark border-dark text-info">
         </div>
       </div>
-      <div class="d-flex justify-content-between align-items-center py-3 border-light-50 border-top" v-if="!filterUsers"
+      <div class="d-flex hover justify-content-between align-items-center py-3 border-light-50 border-top" v-if="!filterUsers"
         v-for="name in recentUsers">
         <div class="flex-fill text-center"><a class="text-info" role="button"
             @click="setUser(name);toggleAccountMenu()">@{{name}}</a></div>
         <div class="flex-shrink me-2 d-none"><i class="fa-solid fa-feather-pointed fa-fw"></i></div>
-        <div class="flex-shrink"><a class="text-danger ms-auto" role="button" @click="deleteRecentUser(name)"
+        <div class="flex-shrink me-2"><a class="text-danger ms-auto" role="button" @click="deleteRecentUser(name)"
             alt="Remove username"><i class="fa-solid fa-trash-can"></i></a></div>
       </div>
-      <div class="d-flex justify-content-between align-items-center py-3 border-light-50 border-top" v-if="filterUsers"
+      <div class="d-flex hover justify-content-between align-items-center py-3 border-light-50 border-top" v-if="filterUsers"
         v-for="name in filterRecents">
         <div class="flex-fill text-center"><a class="text-info" role="button"
             @click="setUser(name);toggleAccountMenu()">@{{name}}</a></div>
         <div class="flex-shrink me-2 d-none"><i class="fa-solid fa-feather-pointed fa-fw"></i></div>
-        <div class="flex-shrink"><a class="text-danger ms-auto" role="button"
+        <div class="flex-shrink me-2"><a class="text-danger ms-auto" role="button"
             @click="deleteRecentUser(name);searchRecents()" alt="Remove username"><i
               class="fa-solid fa-trash-can"></i></a></div>
       </div>
