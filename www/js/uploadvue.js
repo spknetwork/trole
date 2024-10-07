@@ -37,20 +37,14 @@ export default {
 
             <div id="listOfImgs" v-if="!encryption.encrypted" v-for="(file, key,index) in FileInfo"
                 class="rounded px-1 p-lg-2">
-
-
-
                 <div class="my-2 card " v-if="!FileInfo[file.name].is_thumb">
-
                     <div class="d-flex flex-wrap align-items-center px-2 py-1">
                         <div>
                             <div class="fs-4 fw-light m-0 text-break"><span
                                     class="px-2 py-1 me-2 border border-light text-white rounded-pill"><i
                                         class="fa-solid fa-lock-open fa-fw"></i></span>{{file.name}}</div>
                         </div>
-
                         <div class="flex-grow-1 mx-5" >
-                        {{File[FileInfo[file.name].index].progress}}
                          <!--v-if="File[FileInfo[file.name].index].actions.cancel"-->
                             <div class="progress" role="progressbar" aria-label="Upload progress" aria-valuenow="25"
                                 aria-valuemin="0" aria-valuemax="100">
