@@ -168,7 +168,7 @@ export default {
                     <div style="width: 70px;">
                         
                             
-                        <div class="bg-light position-relative rounded first m-1" style="width: 50px;">
+                        <div class="d-flex bg-light position-relative rounded first m-1" style="width: 50px;">
                             <div v-if="flagsDecode(newMeta[file.i][file.f].flags, 1).length" class="position-absolute bottom-0 end-0 bg-dark rounded-circle small px-05">
                                 <i class="fa-solid fa-lock"></i>
                             </div>
@@ -583,13 +583,14 @@ export default {
                 </tbody>
             </table>
         </div>
+
         <!-- item grid -->
         <div class="d-flex flex-wrap" v-if="!viewOpts.list">
             <div class="file-grid" v-for="file in filesArray">
                 <div class="card bg-blur-darkg m-05 p-05 text-start">
                     <a :href="'https://ipfs.dlux.io/ipfs/' + file.f" target="_blank" class="no-decoration"><div class="text-black text-truncate">{{newMeta[file.i][file.f].name || file.f}}</div></a>
                     <h5 class="m-0 ms-auto align-self-end"><span class="d-none badge square rounded-top border border-bottom-0 bg-info border-light-50" :class="smartColor(file.lc)"><i :class="smartIcon(file.l)"></i>{{ newMeta[file.i][file.f].type }}</span></h5>
-                    <div class="bg-light">
+                    <div class="bg-light d-flex ratio ratio-1x1 rounded">
                         <img v-if="newMeta[file.i][file.f].thumb" class="mx-auto img-fluid rounded bg-light" :src="newMeta[file.i][file.f].thumb_data" width="128px" >    
                         <svg v-else version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                                 viewBox="0 0 800 800" style="enable-background:new 0 0 800 800;" xml:space="preserve">
@@ -639,13 +640,13 @@ export default {
                     
 
                     <div class="d-flex flex-column rounded p-1" style="background-color: rgba(0, 0, 0, 0.6);">
-    <!-- Edit Button -->
+                        <!-- Edit Button -->
                         <div v-if="!(file.l.length || file.lf)" class="ms-auto me-auto text-muted">
                             
                         </div>
 
                         <div class="d-flex align-items-center justify-content-between">
-
+                            &nbsp;
                             <div class="me-1">
                                 <div class="d-flex align-items-center" style="margin-left: 15px">
                                         <i v-for="(color, num) in labelsDecode(file.lc)" :class="color.fa" :style="'margin-left: ' + -15 +'px !important;'"></i>
