@@ -209,9 +209,9 @@ export default {
 
 
 
-            <div id="listOfEncs" v-if="encryption.encrypted" v-for="(file, key,index) in FileInfo">
-                <div class="p-3 mb-2 bg-dark" v-if="!FileInfo[file.name].is_thumb">
-                    <div class="d-flex flex-wrap align-items-center pb-2 mb-2">
+            <div id="listOfEncs" v-if="encryption.encrypted" v-for="(file, key,index) in FileInfo" class="rounded px-1 p-lg-2">
+                <div class="my-2 card card-body" v-if="!FileInfo[file.name].is_thumb">
+                    <div class="d-flex flex-wrap align-items-center px-2 py-1">
                         <div>
                             <h6 class="m-0 text-break"><span class="px-2 py-1 me-2 bg-darkg rounded"><i
                                         class="fa-solid fa-lock fa-fw"></i></span>{{file.name}}</h6>
@@ -242,15 +242,15 @@ export default {
                                     class="fas fa-fw fa-trash-alt"></i></button>
                         </div>
                     </div>
-                    <div class="d-flex flex-column w-100" v-if="FileInfo[file.name]">
+                    <div class="d-flex flex-column justify-content-center w-100" v-if="FileInfo[file.name]">
 
                         <div class="">Bytes: {{fancyBytes(FileInfo[file.name].enc_size)}}</div>
-                        <div class="">CID:
+                        <div class="text-break">CID:
                             {{FileInfo[file.name].enc_hash}}</div>
                         <div class="">Status:
                             {{FileInfo[file.name].status}}
                         </div>
-                        <div class=""><a :href="'https://ipfs.dlux.io/ipfs/' + FileInfo[file.name].enc_hash"
+                        <div class="my-2"><a :href="'https://ipfs.dlux.io/ipfs/' + FileInfo[file.name].enc_hash"
                                 target="_blank" class="btn btn-primary">Copy URL<i
                                     class="fa-solid fa-up-right-from-square fa-fw ms-1"></i></a>
                         </div>
