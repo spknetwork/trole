@@ -4,7 +4,7 @@ export default {
 
      <!-- node banner -->
             <div v-if="hasStorage && !nodeview" :class="{'alert-success' : isStored, 'alert-danger' : !isStored}" class="alert d-flex align-items-center py-1 ps-2 pe-1 mx-2 mt-2 mb-1">
-                <div class="me-1">{{isStored ? 'Your node is storing this contract' : 'Your node is not storing this contract'}}</div>
+                <div class="me-1 lead">{{isStored ? 'Your node is storing this contract' : 'Your node is not storing this contract'}}</div>
                 <div class="ms-auto d-flex flex-wrap align-items-center justify-content-center mb-1">
                     <button style="max-width:100px;" type="button" class="flex-grow-1 btn btn-sm btn-warning ms-1 mt-1"
                         @click="">
