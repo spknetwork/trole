@@ -501,10 +501,37 @@ export default {
                                                                         <div class="text-center"> Contract ID <i class="fa-solid fa-file-contract fa-fw mx-1" aria-hidden="true"></i><span class="text-break">{{contract.i}}</span>
                                                                         </div>
                                                                     </div>
+
+                                                                    <!-- node storage -->
+                                                                    <div class="mx-1 mx-lg-5 mb-3" v-if="contract.c == 2">
+                                                                        <div class="alert alert-warning d-flex align-items-center">
+                                                                            <div class="d-flex flex-grow-1 flex-wrap me-1 align-items-center mx-1">
+                                                                                <div class="fs-3 fw-lighter">
+                                                                                    <i class="d-none fa-solid fa-triangle-exclamation fa-fw"></i>
+                                                                                    <span class="mx-1">Pending contract</span>
+                                                                                    <span v-if="contract.i.isStored">is being stored</span>
+                                                                                    <span v-if="!contract.i.isStored">is available to store</span>
+                                                                                </div>
+                                                                                <div class="ms-auto d-flex flex-wrap align-items-center justify-content-center mb-1">
+                                                                                    <button type="button" class="flex-grow-1 btn btn-warning ms-1 mt-1"
+                                                                                        @click="">
+                                                                                        <i class="fa-solid fa-flag fa-fw me-1"></i>Flag
+                                                                                    </button>
+                                                                                    <button type="button" @click="store(contract.i, isStored, hasStorage)"
+                                                                                        class="flex-grow-1 ms-1 mt-1 btn text-nowrap"
+                                                                                        :class="{'btn-success': !contract.i.isStored, 'btn-danger': contract.i.isStored}">
+                                                                                        <span v-if="!contract.i.isStored"><i class="fa-solid fa-square-plus fa-fw me-1"></i>Add</span>
+                                                                                        <span v-if="contract.i.isStored"><i class="fa-solid fa-trash-can fa-fw me-1"></i>Remove</span>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
                                                                
 
                                                                     <!-- upload time banner -->
-                                                                    <div v-if="contract.c == 1" class="mx-1 mb-3">
+                                                                    <div v-if="contract.c == 1" class="mx-1 mx-lg-5 mb-3">
                                                                         <div class="alert alert-warning d-flex align-items-center mx-lg-5">
                                                                             <div class="d-flex flex-grow-1 flex-wrap me-1 align-items-center">
                                                                                 <div class="mx-1">
@@ -519,31 +546,11 @@ export default {
 
                                                                     <!-- post time banner -->
                                                                     <div v-if="contract.c == 2" class="mx-1 mx-lg-5 mb-3">
-                                                                        <div class="alert alert-warning d-flex align-items-center">
-                                                                            <div v-if="!nodeview" class="d-flex flex-grow-1 flex-wrap me-1 align-items-center mx-1">
+                                                                        <div v-if="!nodeview" class="alert alert-warning d-flex align-items-center">
+                                                                            <div class="d-flex flex-grow-1 flex-wrap me-1 align-items-center mx-1">
                                                                                 <div class="fs-3 fw-lighter">You have {{exp_to_time(contract.e)}} to publish this contract</div>
                                                                                 <div class="ms-auto d-flex flex-wrap align-items-center fs-1 text-warning justify-content-center me-2 mx-1">
                                                                                     <i class="fa-solid fa-bell fa-fw ms-2"></i>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div v-if="nodeview" class="d-flex flex-grow-1 flex-wrap me-1 align-items-center mx-1">
-                                                                                <div class="fs-3 fw-lighter">
-                                                                                    <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-                                                                                    <span class="mx-1">Contract pending terms,</span>
-                                                                                    <span v-if="contract.i.isStored">node is storing</span>
-                                                                                    <span v-if="!contract.i.isStored">available to store</span>
-                                                                                </div>
-                                                                                <div class="ms-auto d-flex flex-wrap align-items-center justify-content-center mb-1">
-                                                                                    <button type="button" class="flex-grow-1 btn btn-warning ms-1 mt-1"
-                                                                                        @click="">
-                                                                                        <i class="fa-solid fa-flag fa-fw me-1"></i>Flag
-                                                                                    </button>
-                                                                                    <button type="button" @click="store(contract.i, isStored, hasStorage)"
-                                                                                        class="flex-grow-1 ms-1 mt-1 btn text-nowrap"
-                                                                                        :class="{'btn-success': !contract.i.isStored, 'btn-danger': contract.i.isStored}">
-                                                                                        <span v-if="!contract.i.isStored"><i class="fa-solid fa-square-plus fa-fw me-1"></i>Add</span>
-                                                                                        <span v-if="contract.i.isStored"><i class="fa-solid fa-trash-can fa-fw me-1"></i>Remove</span>
-                                                                                    </button>
                                                                                 </div>
                                                                             </div>
                                                                         </div>

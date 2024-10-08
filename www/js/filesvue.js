@@ -662,11 +662,14 @@ export default {
                             </div>
 
                             <div class="d-flex align-items-center ms-auto ms-1">
-                            <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags)" >
-                                    <!-- title="Labels"  -->
-                                    <pop-vue :id=" bid + 'popper-' + (cc ? 'cc' : '') + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
-                                        <i :class="flag.fa"></i>
-                                    </pop-vue>
+                                <pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id=" bid + 'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
+                                    <i :class="lic.fa"></i>
+                                </pop-vue>
+                                <div v-for="flag in flagsDecode(newMeta[file.i][file.f].flags)" >
+                                        <!-- title="Labels"  -->
+                                        <pop-vue :id=" bid + 'popper-' + (cc ? 'cc' : '') + file.i + file.index + flag.l" :title="flag.l" trigger="hover">
+                                            <i :class="flag.fa"></i>
+                                        </pop-vue>
                                 </div>
                             </div>
                         </div>
@@ -674,9 +677,7 @@ export default {
                     </div>
                     
                     <div class="d-flex align-items-center justify-content-center text-break small text-muted">
-                                {{fancyBytes(file.s)}}<pop-vue v-if="licenses[file.lic]" v-for="lic in licenses[file.lic].fa" :id=" bid + 'popper-Lic' + (cc ? 'cc' : '') + file.i + file.index + file.lic" :title="lic.l" trigger="hover">    
-                            <i :class="lic.fa"></i>
-                        </pop-vue>
+                                {{fancyBytes(file.s)}}
                         </div>
                     
                 </div>
