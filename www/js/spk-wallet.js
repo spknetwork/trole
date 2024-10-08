@@ -140,9 +140,9 @@ export default {
                         </h5>
                         <div class="btn-group" role="group"
                             aria-label="Power Actions">
+                            <!-- vote btn -->
                             <button class="dropdown btn btn-primary p-2" href="#" role="button" id="settingsDropdownBtn" data-bs-toggle="collapse" data-bs-target="#collapseVote" aria-expanded="false" aria-controls="collapseVote">
                                 <i class="me-2 fa-solid fa-person-booth"></i>Vote</button>
-                            
                             <button type="button"
                                 class="btn btn-dark ms-0 me-0 ps-0 pe-0"
                                 disabled></button>
@@ -186,7 +186,7 @@ export default {
                     <div class="card card-body">
                         <div class="col col-lg-6 mx-auto">
                         <div class="fs-4 text-center">{{tokenGov.title}}</div>
-                        <div class="lead text-center text-white-50">  @{{account}}</div>
+                        <div class="lead text-center text-white-50 mb-3">  @{{account}}</div>
                         <form name="nodeSettings" class="needs-validation" novalidate>
                             <div class="row mb-3" v-for="opt in tokenGov.options">
                                 <label :for="opt.json" class="form-label d-flex">
