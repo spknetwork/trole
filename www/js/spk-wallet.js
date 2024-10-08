@@ -55,13 +55,13 @@ export default {
             </div>
             <!--spk token-->
             <div
-                class="d-flex align-items-center border-bottom border-secondary py-5">
+                class="d-flex flex-wrap align-items-center border-bottom border-secondary py-5">
                 <div>
-                    <div class="d-flex align-items-start">
-                        <h4 class="m-0">SPK Token</h4><small
-                            v-if="sapi == 'https://spktest.dlux.io'"><span
-                                class="badge ms-1 me-2 bg-warning">TEST</span></small>
-                    </div>
+                    <div class="d-flex align-items-start fs-4 fw-bold">SPK Token
+                            <div v-if="sapi == 'https://spktest.dlux.io'" class="badge rounded-pill text-bg-warning text-black ms-1"
+                                style="font-size: xx-small;">TEST
+                            </div>
+                        </div>
                     <p class="text-white-50 m-0">The governance
                         token for
                         the SPK network.
@@ -103,8 +103,8 @@ export default {
                                 </modal-vue>
                                 <div class="dropdown-divider">
                                 </div>
-                                <a class="dropdown-item" href="/dex/?api=https://spktest.dlux.io/spk#spk"
-                                    id="buylink"><i
+                                <a class="dropdown-item" href="https://www.dlux.io/dex/?api=https://spktest.dlux.io/spk#spk"
+                                    id="buylink" target="_blank"><i
                                         class="fas fa-coins fa-fw me-2"></i>Buy / Sell</a>
                             </ul>
                         </div>
@@ -113,13 +113,14 @@ export default {
             </div>
             <!-- SPK Power -->
             <div class="d-flex flex-column border-bottom border-secondary py-5">
-                <div class="d-flex align-items-center">
+                <div class="d-flex flex-wrap align-items-center">
                     <div class="text-start">
-                        <div class="d-flex align-items-start">
-                            <h4 class="m-0">SPK Power</h4><small
-                                v-if="sapi == 'https://spktest.dlux.io'"><span
-                                    class="badge ms-1 me-2 bg-warning">TEST</span></small>
+                        <div class="d-flex align-items-start fs-4 fw-bold">SPK Power
+                            <div v-if="sapi == 'https://spktest.dlux.io'" class="badge rounded-pill text-bg-warning text-black ms-1"
+                                style="font-size: xx-small;">TEST
+                            </div>
                         </div>
+                       
                         <p class="text-white-50">Powered SPK for
                             Voting.</p>
                         <p class="text-white-50">Benefits of SPK
@@ -182,7 +183,7 @@ export default {
                         </div>
                     </div>
                 </div>
-                <div class="collapse bg-dark rounded" id="collapseVote">
+                <div class="collapse mt-3 bg-dark rounded" id="collapseVote">
                     <div class="card card-body">
                         <div class="col col-lg-6 mx-auto">
                         <div class="fs-4 text-center">{{tokenGov.title}}</div>
@@ -275,13 +276,13 @@ export default {
             </div>
             <!-- Broca -->
             <div v-if="saccountapi.spk_power"
-                class="d-flex align-items-center border-bottom border-secondary py-5">
+                class="d-flex flex-wrap align-items-center border-bottom border-secondary py-5">
                 <div class="text-start">
-                    <div class="d-flex align-items-start">
-                        <h4 class="m-0">BROCA</h4><small
-                            v-if="sapi == 'https://spktest.dlux.io'"><span
-                                class="badge ms-1 me-2 bg-warning">TEST</span></small>
-                    </div>
+                    <div class="d-flex align-items-start fs-4 fw-bold">BROCA
+                            <div v-if="sapi == 'https://spktest.dlux.io'" class="badge rounded-pill text-bg-warning text-black ms-1"
+                                style="font-size: xx-small;">TEST
+                            </div>
+                        </div>
                     <p class="text-white-50">Resource Credits
                         for the SPK
                         network.</p>
@@ -347,7 +348,7 @@ export default {
                 </div>
             </div>
             <!--claim larynx rewards-->
-            <div class="d-flex align-items-center border-bottom border-secondary py-5"
+            <div class="d-flex flex-wrap align-items-center border-bottom border-secondary py-5"
                 id="larynxclaimrewards" v-if="saccountapi.claim > 0 && me">
                 <div>
                     <div class="d-flex align-items-start">
@@ -396,13 +397,13 @@ export default {
             </div>
             <!--larynx token-->
             <div
-                class="d-flex align-items-center border-bottom border-secondary py-5">
+                class="d-flex flex-wrap align-items-center border-bottom border-secondary py-5">
                 <div>
-                    <div class="d-flex align-items-start">
-                        <h4 class="m-0">LARYNX Token</h4><small
-                            v-if="sapi == 'https://spktest.dlux.io'"><span
-                                class="badge ms-1 me-2 bg-warning">TEST</span></small>
-                    </div>
+                    <div class="d-flex align-items-start fs-4 fw-bold">LARYNX Token
+                            <div v-if="sapi == 'https://spktest.dlux.io'" class="badge rounded-pill text-bg-warning text-black ms-1"
+                                style="font-size: xx-small;">TEST
+                            </div>
+                        </div>
                     <p class="text-white-50">The mining token
                         for the SPK
                         network.</p>
@@ -491,8 +492,8 @@ export default {
                                 </modal-vue>
                                 <div class="dropdown-divider">
                                 </div>
-                                <a class="dropdown-item" href="/dex/larynx"
-                                    id="buylink"><i
+                                <a class="dropdown-item" href="https://www.dlux.io/dex/#larynx"
+                                    id="buylink" target="_blank"><i
                                         class="fas fa-coins fa-fw me-2"></i>Buy / Sell</a>
                             </ul>
                         </div>
@@ -500,7 +501,7 @@ export default {
                 </div>
             </div>
             <!--locked larynx-->
-            <div class="d-flex text-start align-items-center border-bottom border-secondary py-5"
+            <div class="d-flex text-start flex-wrap align-items-center border-bottom border-secondary py-5"
                 v-if="saccountapi.gov">
                 <div>
                     <div class="d-flex align-items-start">
@@ -521,7 +522,7 @@ export default {
                     </ul>
                 </div>
                 <div id="larynxgactions" class="ms-auto text-end" v-show="me">
-                    <div class="d-flex align-items-center mb-2">
+                    <div class="d-flex flex-wrap align-items-center mb-2">
                         <small class="ms-auto"><span
                                 class="badge me-2 bg-success">{{toFixed(pFloat(spkStats.spk_rate_lgov) * 100,3)}}%</span></small>
                         <h5 id="govbalance" class="m-0">
@@ -530,7 +531,7 @@ export default {
                     </div>
                     <div class="btn-group" role="group"
                         aria-label="LARYNX Actions">
-                        <button onclick="location.href='/dex/#larynx'"
+                        <button onclick="window.open('https://www.dlux.io/dex/#larynx', '_blank')"
                             type="button" class="btn btn-primary p-0">
                             <span class="p-2"><i
                                     class="fa-solid fa-gear fa-fw me-2"></i>Options</span>
@@ -563,13 +564,12 @@ export default {
             </div>
             <!--larynx power-->
             <div class="border-bottom border-secondary py-5">
-                <div class="d-flex text-start align-items-center">
+                <div class="d-flex flex-wrap text-start align-items-center">
                     <div>
-                        <div class="d-flex align-items-start">
-                            <h4 class="m-0">LARYNX Power</h4>
-                            <small
-                                v-if="sapi == 'https://spktest.dlux.io'"><span
-                                    class="badge ms-1 me-2 bg-warning">TEST</span></small>
+                       <div class="d-flex align-items-start fs-4 fw-bold">LARYNX Power
+                            <div v-if="sapi == 'https://spktest.dlux.io'" class="badge rounded-pill text-bg-warning text-black ms-1"
+                                style="font-size: xx-small;">TEST
+                            </div>
                         </div>
                         <p class="text-white-50">Powered tokens used to mine SPK</p>
                         <p class="text-white-50">Benefits of LARYNX Power:
@@ -592,7 +592,7 @@ export default {
                         </ul>
                     </div>
                     <div id="larynxgactions" class="ms-auto text-end">
-                        <div class="d-flex align-items-center mb-2">
+                        <div class="d-flex flex-wrap align-items-center mb-2">
                             <small class="ms-auto"><span
                                     class="badge me-2 bg-success">{{toFixed(pFloat(spkStats.spk_rate_lpow) * 100,3)}}%</span></small>
                             <h5 class="m-0"> {{formatNumber((saccountapi.poweredUp)/1000, 3, '.', ',')}} LP</h5>
@@ -696,46 +696,50 @@ export default {
                     </small>
                 </div>
                 <div class="collapse" id="delegationsspk">
-                    <div class="d-flex flex-column text-start border border-secondary rounded p-4 my-4">
-                        <h4 class="border-bottom border-secondary py-2">
-                            Delegated: {{formatNumber((saccountapi.granting.t)/1000, 3, '.', ',')}} LP</h4>
-                        <div v-for="(a,b,c) in saccountapi.granting">
-                            <div class="d-flex align-items-center border-bottom border-secondary pb-2 my-1"
-                                v-if="b != 't'">
-                                <p class="my-0">@{{b}}: {{formatNumber((a)/1000, 3, '.', ',')}} LP</p>
-                                <div class="d-flex ms-auto ">
-                                    <modal-vue type="delegate" 
-                                        :smarkets="smarkets.node" token="LARYNX"
-                                        :to="b" :amount="a" :stats="spkStats"
-                                        :balance="saccountapi.poweredUp"
-                                        :account="account"
-                                        @modalsign="sendIt($event)"
-                                        :test="test" v-slot:trigger>
-                                        <button type="button"
-                                            class="ms-1 btn btn-secondary trigger"><i
-                                                class="fas fa-fw fa-user-edit"></i></button>
-                                    </modal-vue>
-                                    <modal-vue type="delegate" 
-                                        :smarkets="smarkets.node" token="LARYNX"
-                                        :to="b" amount="0" :stats="spkStats"
-                                        :balance="saccountapi.poweredUp"
-                                        :account="account"
-                                        :test="test"
-                                        @modalsign="sendIt($event)" v-slot:trigger>
-                                        <button class="ms-1 btn btn-danger ms-1 trigger"
-                                            type="button"><i
-                                                class="fas fa-fw fa-trash-alt"></i></button>
-                                    </modal-vue>
+                    <div class="d-flex flex-column text-start border border-secondary rounded px-2 py-1 p-lg-4 my-4" style="background-color: rgba(0, 0, 0, 0.5);">
+                        <div class="mb-3">    
+                            <h4 class="py-2 m-0">
+                                Delegated: {{formatNumber((saccountapi.granting.t)/1000, 3, '.', ',')}} LP</h4>
+                            <div v-for="(a,b,c) in saccountapi.granting">
+                                <div class="d-flex align-items-center border-top border-secondary py-2"
+                                    v-if="b != 't'">
+                                    <p class="my-0"><a :href="'https://www.dlux.io/@' + b " target="_blank" class="text-info no-decoration">@{{b}}</a>: {{formatNumber((a)/1000, 3, '.', ',')}} LP</p>
+                                    <div class="d-flex ms-auto ">
+                                        <modal-vue type="delegate" 
+                                            :smarkets="smarkets.node" token="LARYNX"
+                                            :to="b" :amount="a" :stats="spkStats"
+                                            :balance="saccountapi.poweredUp"
+                                            :account="account"
+                                            @modalsign="sendIt($event)"
+                                            :test="test" v-slot:trigger>
+                                            <button type="button"
+                                                class="ms-1 btn btn-sm btn-secondary trigger"><i
+                                                    class="fas fa-fw fa-user-edit"></i></button>
+                                        </modal-vue>
+                                        <modal-vue type="delegate" 
+                                            :smarkets="smarkets.node" token="LARYNX"
+                                            :to="b" amount="0" :stats="spkStats"
+                                            :balance="saccountapi.poweredUp"
+                                            :account="account"
+                                            :test="test"
+                                            @modalsign="sendIt($event)" v-slot:trigger>
+                                            <button class="ms-1 btn btn-sm btn-danger ms-1 trigger"
+                                                type="button"><i
+                                                    class="fas fa-fw fa-trash-alt"></i></button>
+                                        </modal-vue>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <h4 class="border-bottom border-secondary py-2 mt-5">
-                            Received: {{formatNumber((saccountapi.granted.t)/1000, 3,'.', ',')}} LP</h4>
-                        <div v-for="(a,b,c) in saccountapi.granted">
-                            <div class="d-flex align-items-center border-bottom border-secondary pb-2 my-1"
-                                v-if="b != 't'">
-                                <p class="my-0">@{{b}}: {{formatNumber((a)/1000, 3, '.', ',')}} LP</p>
+                        <div class="mb-1">
+                            <h4 class="py-2 m-0">
+                                Received: {{formatNumber((saccountapi.granted.t)/1000, 3,'.', ',')}} LP</h4>
+                            <div v-for="(a,b,c) in saccountapi.granted" >
+                                <div class="d-flex align-items-center border-top border-secondary py-2"
+                                    v-if="b != 't'">
+                                    <p class="my-0"><a :href="'https://www.dlux.io/@' + b " target="_blank" class="text-info no-decoration">@{{b}}</a>: {{formatNumber((a)/1000, 3, '.', ',')}} LP</p>
 
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -743,7 +747,7 @@ export default {
             </div>
             <!--account value-->
             <div
-                class="d-flex text-start align-items-center border-secondary py-5">
+                class="d-flex flex-wrap text-start align-items-center border-secondary py-5">
                 <div class="">
                     <h4>Estimated Account Value</h4>
                     <p class="text-white-50">The approximate US Dollar value for all SPK assets in your account</p>
