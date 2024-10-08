@@ -184,6 +184,7 @@ export default {
                 </div>
                 <div class="collapse bg-dark rounded" id="collapseVote">
                     <div class="card card-body">
+                        <div class="col col-lg-6 mx-auto">
                         <div class="fs-4 text-center">{{tokenGov.title}}</div>
                         <div class="lead text-center text-white-50">  @{{account}}</div>
                         <form name="nodeSettings" class="needs-validation" novalidate>
@@ -268,6 +269,7 @@ export default {
                                 </form>
                           
                         </ul>
+                    </div>
                     </div>
                 </div>
             </div>
