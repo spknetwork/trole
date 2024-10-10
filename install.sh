@@ -468,7 +468,7 @@ then
 else
     git clone https://github.com/spknetwork/proofofaccess.git ~/proofofaccess
     cd ~/proofofaccess
-    mkdir -p ~/data
+    mkdir -p ~/proofofaccess/data
     /snap/bin/go build -o ~/proofofaccess/main ~/proofofaccess/main.go
     #mv proofofaccess /home/${whoami}/proofofaccess
     #rm -rf proofofaccess
