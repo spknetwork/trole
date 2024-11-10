@@ -72,7 +72,7 @@ fi
 
 if ! command -v node > /dev/null
 then
-    curl -s https://deb.nodesource.com/setup_16.x | sudo bash
+    curl -s https://deb.nodesource.com/setup_18.x | sudo bash
     sudo apt install nodejs -y
 fi
 
