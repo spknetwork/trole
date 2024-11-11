@@ -3,6 +3,8 @@ const ENV = process.env;
 const account = ENV.ACCOUNT || '';
 const active_key = ENV.ACTIVE || ''
 const domain = ENV.DOMAIN || ''
+const ipfsSubDomain = ENV.IPFSSUBDOMAIN || 'ipfs'
+const poaSubDomain = ENV.POASUBDOMAIN || 'poa'
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
 var registered = false, vcode = ENV.VALIDATOR != "false" ? true : false, vreg = true, balance = 0, amount = 0
@@ -148,10 +150,10 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         process.exit()
     }
     if(!registered){
-        RegisterService(price, 'IPFS', domain ? `https://ipfs.${domain}` : "NA").then(r=>{
+        RegisterService(price, 'IPFS', domain ? `https://${ipfsSubDomain}.${domain}` : "NA").then(r=>{
             console.log('IPFS registered')
             if(vcode){
-                RegisterService(price, 'VAL', `https://poa.${domain}`).then(r=>{
+                RegisterService(price, 'VAL', `https://${poaSubDomain}.${domain}`).then(r=>{
                     console.log('VAL registered')
                     if(vcode)process.exit()
                     else RegisterVal(price)
@@ -173,7 +175,7 @@ Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()
         })
     } else {
         if(!vreg && domain){
-            RegisterService(price, 'VAL', `https://poa.${domain}`).then(r=>{
+            RegisterService(price, 'VAL', `https://${poaSubDomain}.${domain}`).then(r=>{
                 console.log('VAL registered')
                 if(vcode && domain)RegisterVal(price)
                 else process.exit()
