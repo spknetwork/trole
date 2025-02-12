@@ -246,6 +246,7 @@ function inventory() {
           ipfs.pin.ls(j, (err, pinset) => {
             if (err && j) {
               try {
+                if(j.length < 10)console.log('contract failure artifact, deleting', contract.i)
                 console.log('missing', j)
                 ipfs.pin.add(j, function (err, pin) {
                   if (err) {
@@ -258,6 +259,7 @@ function inventory() {
               }
             } else if (!j) {
               console.log('missing', j)
+              //
             }
             // setTimeout(() => { // slow it down, make a queue function
             //   console.log('inventory', contract.df[j])
@@ -679,9 +681,10 @@ exports.arrange = (req, res, next) => {
               for (var i = 1; i < CIDs.length; i++) {
                 checkThenBuild( getFilePath(CIDs[i], contract) );
               }
-              DB.write(j.id, JSON.stringify(j))
-              console.log(`authorized: ${CIDs}`)
-              res.status(200).json({ authorized: CIDs }); //bytes and time remaining
+              DB.write(j.id, JSON.stringify(j)).then(r => {
+                console.log(`authorized: ${CIDs}`)
+                res.status(200).json({ authorized: CIDs }); //bytes and time remaining
+              })
             } else {
               res.status(401).send("Access denied. Signature Mismatch");
             }
