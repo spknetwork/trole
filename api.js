@@ -135,7 +135,7 @@ getStats()
 var lock = {}
 
 function getStats() {
-  live_stats.i = (live_stats.i + 1 ) % 10
+  live_stats.i = (live_stats.i + 1) % 10
   console.log('Clean: ' + live_stats.i)
   inventory()
   fetch(`${config.SPK_API}/feed${live_stats.feed ? '/' + live_stats.feed : ''}`).then(rz => rz.json()).then(json => {
@@ -144,10 +144,10 @@ function getStats() {
     const stored = `@${config.account} Stored`
     const deleted = `@${config.account} Removed`
     for (var i = 0; i < keys.length; i++) {
-      if(parseInt(keys[i].split(':')[0]) > live_stats.feed) live_stats.feed = parseInt(keys[i].split(':')[0])
+      if (parseInt(keys[i].split(':')[0]) > live_stats.feed) live_stats.feed = parseInt(keys[i].split(':')[0])
       if (feed[keys[i]].search(stored) > -1) {
         storeByContract(feed[keys[i]].split('|')[1])
-      } else if (feed[keys[i]].search(deleted) > -1){
+      } else if (feed[keys[i]].search(deleted) > -1) {
         deleteByContract(feed[keys[i]].split('|')[1])
       }
     }
@@ -163,7 +163,7 @@ function getStats() {
     live_stats.repoSize = BigInt(stats.repoSize)
     live_stats.numObjects = BigInt(stats.numObjects)
   })
-  if(!live_stats.head_block) return setTimeout(getStats, 3 * 1000)
+  if (!live_stats.head_block) return setTimeout(getStats, 3 * 1000)
   fs.readdir(`./uploads/`, (err, files) => {
     files.forEach(file => {
       const keys = file.split(':')
@@ -178,20 +178,20 @@ function getStats() {
       const key = file.replace('.json', "")
       // return final char in key
       const block = parseInt(key[key.length - 1])
-      if(live_stats.i == block){
+      if (live_stats.i == block) {
         DB.read(key).then(json => {
           try {
             json = JSON.parse(json)
-          } catch(e){
+          } catch (e) {
             console.log('Parse Error')
           }
           getActiveContract(key).then(contract => {
             const behind = contract[1].behind
             contract = contract[1].result
-            if(contract == 'Contract Not Found'){
-              if (behind < 100){
+            if (contract == 'Contract Not Found') {
+              if (behind < 100) {
                 DB.delete(key)
-                for(var i = 0; i < json.df.length; i++){
+                for (var i = 0; i < json.df.length; i++) {
                   fs.remove(getFilePath(json.df[i], key))
                   ipfsUnpin(json.df[i])
                   console.log('unpinning', json.df[i])
@@ -200,19 +200,19 @@ function getStats() {
             } else {
               var isMine = 0
               const nodes = contract.n ? Object.keys(contract.n) : []
-              for(var j = 1; j <= nodes.length; i++){
-                if(contract.n[`${j}`] == config.account){
+              for (var j = 1; j <= nodes.length; i++) {
+                if (contract.n[`${j}`] == config.account) {
                   isMine = j
                   break
                 }
               }
-              if(isMine == 0){ //or j > p + threshold
-                for(var i = 0; i < json.df.length; i++){
+              if (isMine == 0) { //or j > p + threshold
+                for (var i = 0; i < json.df.length; i++) {
                   fs.remove(getFilePath(json.df[i], key))
                   ipfsUnpin(json.df[i])
                   console.log('unpinning', json.df[i])
                 }
-                DB.delete(key).then(d=>{
+                DB.delete(key).then(d => {
                   console.log('deleted', key + '.json')
                 })
               }
@@ -229,7 +229,7 @@ function getStats() {
 
 function ipfsUnpin(cid) {
   return new Promise((res, rej) => {
-    if(cid)ipfs.pin.rm(cid, (err, pinset) => {
+    if (cid) ipfs.pin.rm(cid, (err, pinset) => {
       if (err) return rej(err)
       res(pinset)
     })
@@ -246,15 +246,18 @@ function inventory() {
           ipfs.pin.ls(j, (err, pinset) => {
             if (err && j) {
               try {
-                if(j.length < 10)console.log('contract failure artifact, deleting', contract.i)
-                console.log('missing', j)
-                ipfs.pin.add(j, function (err, pin) {
-                  if (err) {
-                    console.log(err);
-                  }
-                  console.log(`pinned ${j}`)
-                })
-              } catch(e){
+                if (j.length < 10) {
+                  console.log('contract failure artifact, deleting', contract.i)
+                } else {
+                  console.log('missing', j)
+                  ipfs.pin.add(j, function (err, pin) {
+                    if (err) {
+                      console.log(err);
+                    }
+                    console.log(`pinned ${j}`)
+                  })
+                }
+              } catch (e) {
                 console.log(e)
               }
             } else if (!j) {
@@ -273,66 +276,66 @@ function inventory() {
 
 function localIpfsUpload(cid, contractID) {
   return new Promise((res, rej) => {
-  DB.read(contractID)
-    .then(str => {
-      var contract = JSON.parse(str)
-      ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
-        if (err) {
-          console.log('File add Error: ', err);
-        }
-        //check that file[0].hash == cid and pin the file if true
-        if (str.indexOf(file[0].hash) > 0) {
-          console.log('lIu', contract.t, file[0].size, contract.s)
-          if (contract.t + file[0].size <= contract.s) { //t total s storage
-            ipfs.pin.add(cid, function (err, pin) {
-              if (err) {
-                console.log(err);
-                res({status: 410, message: 'Internal Error'})
-              }
-              console.log(`pinned ${cid}`)
-              // sign and update contract
-              DB.read(contractID)
-                .then(str => {
-                  contract = JSON.parse(str)
-                  contract[cid] = file[0].size
-                  DB.write(contract.id, JSON.stringify(contract))
-                    .then(json => {
-                      console.log('signNupdate', contract)
-                      var allDone = true
-                      for (var i = 0; i < contract.df.length; i++) {
-                        console.log('DiF', contract.df[i], contract[contract.df[i]], cid, i)
-                        if (!contract[contract.df[i]]) {
-                          allDone = false
-                          break
-                        }
-                      }
-                      if (allDone) {
-                        signNupdate(contract)
-                        //delete files
-                        for (var i = 0; i < contract.files; i++) {
-                          fs.rmSync(getFilePath(contract.files[i], contract.id))
-                        }
-                        res({status: 200, message: 'Success'})
-                      }
-                    })
-                })
-            })
-          } else {
-            console.log(`Files larger than contract: ${file[0].hash}`)
-            fs.rmSync(getFilePath(cid, contract.id))
-            DB.delete(contract.id)
-            res({status: 400, message: 'File Size Exceeded'})
+    DB.read(contractID)
+      .then(str => {
+        var contract = JSON.parse(str)
+        ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
+          if (err) {
+            console.log('File add Error: ', err);
           }
-        } else {
-          console.log(`mismatch between ${cid} and ${file[0].hash}`)
-          fs.rmSync(getFilePath(cid, contract.id))
-          fs.createWriteStream(
-            getFilePath(cid, contract.id), { flags: 'w' }
-          );
-          res({status: 400, message: 'File CID Mismatch'})
-        }
+          //check that file[0].hash == cid and pin the file if true
+          if (str.indexOf(file[0].hash) > 0) {
+            console.log('lIu', contract.t, file[0].size, contract.s)
+            if (contract.t + file[0].size <= contract.s) { //t total s storage
+              ipfs.pin.add(cid, function (err, pin) {
+                if (err) {
+                  console.log(err);
+                  res({ status: 410, message: 'Internal Error' })
+                }
+                console.log(`pinned ${cid}`)
+                // sign and update contract
+                DB.read(contractID)
+                  .then(str => {
+                    contract = JSON.parse(str)
+                    contract[cid] = file[0].size
+                    DB.write(contract.id, JSON.stringify(contract))
+                      .then(json => {
+                        console.log('signNupdate', contract)
+                        var allDone = true
+                        for (var i = 0; i < contract.df.length; i++) {
+                          console.log('DiF', contract.df[i], contract[contract.df[i]], cid, i)
+                          if (!contract[contract.df[i]]) {
+                            allDone = false
+                            break
+                          }
+                        }
+                        if (allDone) {
+                          signNupdate(contract)
+                          //delete files
+                          for (var i = 0; i < contract.files; i++) {
+                            fs.rmSync(getFilePath(contract.files[i], contract.id))
+                          }
+                          res({ status: 200, message: 'Success' })
+                        }
+                      })
+                  })
+              })
+            } else {
+              console.log(`Files larger than contract: ${file[0].hash}`)
+              fs.rmSync(getFilePath(cid, contract.id))
+              DB.delete(contract.id)
+              res({ status: 400, message: 'File Size Exceeded' })
+            }
+          } else {
+            console.log(`mismatch between ${cid} and ${file[0].hash}`)
+            fs.rmSync(getFilePath(cid, contract.id))
+            fs.createWriteStream(
+              getFilePath(cid, contract.id), { flags: 'w' }
+            );
+            res({ status: 400, message: 'File CID Mismatch' })
+          }
+        })
       })
-    })
   })
 }
 
@@ -393,7 +396,7 @@ exports.contract = (req, res, next) => {
           message: 'Contract Exists or User PubKey Not Found'
         });
     }
-  }).catch(e=>{
+  }).catch(e => {
     next(e)
   })
 }
@@ -495,7 +498,7 @@ exports.upload = (req, res, next) => {
       console.log('finish')
       res.status(r.status).json(r.message)
     })
-    
+
   });
 
   req.pipe(busboy);
@@ -503,7 +506,7 @@ exports.upload = (req, res, next) => {
 
 exports.live = (req, res, next) => {
   console.log('live')
-  const StorageMax =  BigInt(live_stats.storageMax).toString()
+  const StorageMax = BigInt(live_stats.storageMax).toString()
   const RepoSize = BigInt(live_stats.repoSize).toString()
   const NumObjects = BigInt(live_stats.numObjects).toString()
   return res.status(200).json({
@@ -540,18 +543,18 @@ exports.flag = (req, res, next) => {
   const signed = verifySig(`${CID}`, sig, config.posting_pub)
   if (signed && !unflag) {
     fs.write(`./db/${CID}.flag`, 1)
-        .then(json => {
-          console.log('flagged', CID)
-        })
-        .catch(e => {
-        })
+      .then(json => {
+        console.log('flagged', CID)
+      })
+      .catch(e => {
+      })
   } else if (signed && unflag) {
     fs.remove(`./db/${CID}.flag`)
-        .then(json => {
-          console.log('unflagged', CID)
-        })
-        .catch(e => {
-        })
+      .then(json => {
+        console.log('unflagged', CID)
+      })
+      .catch(e => {
+      })
   }
   res.status(200).json({
     msg: `${CID} has been ${signed ? 'flagged' : 'unflagged'}`,
@@ -658,19 +661,20 @@ exports.arrange = (req, res, next) => {
         DB.read(contract)
           .then(j => {
             j = JSON.parse(j)
+            const found = j.n ? true : false
             j.s = r[1][1].a,
-            j.t = 0,
-            j.fo = r[1][1].t,
-            j.co = r[1][1].b,
-            j.f = r[1][1].f,
-            j.df = files,
-            j.n = cids.split(',').length - 1,
-            j.u = 0,
-            j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
-            j.sig = sig,
-            j.key = r[0][1],
-            j.b = r[1][1].r,
-            j.id = r[1][1].i
+              j.t = 0,
+              j.fo = r[1][1].t,
+              j.co = r[1][1].b,
+              j.f = r[1][1].f,
+              j.df = files,
+              j.n = cids.split(',').length - 1,
+              j.u = 0,
+              j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
+              j.sig = sig,
+              j.key = r[0][1],
+              j.b = r[1][1].r,
+              j.id = r[1][1].i
             j.m = meta
             if (
               account != j.fo //or account mismatch
@@ -679,10 +683,10 @@ exports.arrange = (req, res, next) => {
             } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
               const CIDs = cids.split(',');
               for (var i = 1; i < CIDs.length; i++) {
-                checkThenBuild( getFilePath(CIDs[i], contract) );
+                checkThenBuild(getFilePath(CIDs[i], contract));
               }
               DB.write(j.id, JSON.stringify(j)).then(r => {
-                console.log(`authorized: ${CIDs}`)
+                console.log(found, `authorized: ${CIDs}`)
                 res.status(200).json({ authorized: CIDs }); //bytes and time remaining
               })
             } else {
@@ -693,15 +697,15 @@ exports.arrange = (req, res, next) => {
   }
 }
 
-function checkThenBuild(path){
+function checkThenBuild(path) {
   fs.stat(path).then(stats => {
 
   })
-  .catch(err => {
-    fs.createWriteStream(
-      path, { flags: 'w' }
-    );
-  })
+    .catch(err => {
+      fs.createWriteStream(
+        path, { flags: 'w' }
+      );
+    })
 }
 
 function signNupdate(contract) {
@@ -867,13 +871,13 @@ function initTable(struct) {
   })
 }
 
-function storeByContract(str){
+function storeByContract(str) {
   const contracts = str.split(',')
-  for(var i = 0; i < contracts.length; i++){
+  for (var i = 0; i < contracts.length; i++) {
     getActiveContract(contracts[i]).then(contract => {
       contract = contract[1].result
       DB.write(contract.i, JSON.stringify(contract))
-      for(var cid in contract.df){
+      for (var cid in contract.df) {
         ipfs.pin.add(cid, function (err, data) {
           console.log(err, data)
           if (err) {
@@ -885,16 +889,16 @@ function storeByContract(str){
   }
 }
 
-function deleteByContract(str){
-  console.log("deleteByContract ",  str)
+function deleteByContract(str) {
+  console.log("deleteByContract ", str)
   const contracts = str.split(',')
   console.log(contracts)
-  for(var i = 0; i < contracts.length; i++){
+  for (var i = 0; i < contracts.length; i++) {
     console.log(contracts[i])
     getActiveContract(contracts[i]).then(contract => {
       contract = contract[1].result
       DB.delete(contract.i)
-      for(var cid in contract.df){
+      for (var cid in contract.df) {
         console.log(cid)
         ipfsUnpin(cid)
       }
