@@ -662,6 +662,7 @@ exports.arrange = (req, res, next) => {
           .then(j => {
             j = JSON.parse(j)
             const found = j.n ? true : false
+            console.log({n})
             j.s = r[1][1].a,
               j.t = 0,
               j.fo = r[1][1].t,
