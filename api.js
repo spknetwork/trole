@@ -280,7 +280,7 @@ function localIpfsUpload(cid, contractID) {
         }
         //check that file[0].hash == cid and pin the file if true
         if (str.indexOf(file[0].hash) > 0) {
-          console.log(contract.t, file[0].size, contract.s)
+          console.log('lIu', contract.t, file[0].size, contract.s)
           if (contract.t + file[0].size <= contract.s) { //t total s storage
             ipfs.pin.add(cid, function (err, pin) {
               if (err) {
@@ -298,7 +298,7 @@ function localIpfsUpload(cid, contractID) {
                       console.log('signNupdate', contract)
                       var allDone = true
                       for (var i = 0; i < contract.df.length; i++) {
-                        console.log(contract.df[i], contract[contract.df[i]], cid, i)
+                        console.log('DiF', contract.df[i], contract[contract.df[i]], cid, i)
                         if (!contract[contract.df[i]]) {
                           allDone = false
                           break
