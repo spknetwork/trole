@@ -321,12 +321,14 @@ function localIpfsUpload(cid, contractID) {
                         for (var i = 0; i < contract.df.length; i++) {
                           console.log('DiF', contract.df[i], contract[contract.df[i]], cid, i)
                           if (!contract[contract.df[i]]) {
+                            console.log("missing:", contract[contract.df[i]])
                             allDone = false
                             break
                           }
                         }
 
                         if (allDone) {
+                          console.log('allDone')
                           signNupdate(contract)
                           // Delete files only after all uploads complete
                           for (var i = 0; i < contract.df.length; i++) {
