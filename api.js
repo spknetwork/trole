@@ -304,7 +304,7 @@ function localIpfsUpload(cid, contractID) {
                   return res({ status: 410, message: 'Internal Error' })
                 }
                 console.log(`pinned ${cid}`)
-                
+
                 // Re-read contract to get latest state
                 DB.read(contractID)
                   .then(str => {
@@ -323,7 +323,7 @@ function localIpfsUpload(cid, contractID) {
                             break
                           }
                         }
-                        
+
                         if (allDone) {
                           signNupdate(contract)
                           // Delete files only after all uploads complete
@@ -335,7 +335,7 @@ function localIpfsUpload(cid, contractID) {
                             }
                           }
                         }
-                        
+
                         delete lock[contractID]
                         res({ status: 200, message: 'Success' })
                       })
@@ -695,42 +695,43 @@ exports.arrange = (req, res, next) => {
         }
         const CIDs = cids.split(',');
         finish(contract)
-        
+
         function finish(nonce) {
           DB.read(contract)
-          .then(j => {
-            j = JSON.parse(j)
-            const found = j.sig == sig ? true : false
-            j.s = r[1][1].a,
-              j.t = 0,
-              j.fo = r[1][1].t,
-              j.co = r[1][1].b,
-              j.f = r[1][1].f,
-              j.df = files,
-              j.n = cids.split(',').length - 1,
-              j.u = 0,
-              j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
-              j.sig = sig,
-              j.key = r[0][1],
-              j.b = r[1][1].r,
-              j.id = r[1][1].i
-            j.m = meta
-            if (
-              account != j.fo //or account mismatch
-            ) {
-              res.status(401).send("Access denied. Contract Mismatch");
-            } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
-              for (var i = 1; i < CIDs.length; i++) {
-                checkThenBuild(getFilePath(CIDs[i], contract));
+            .then(j => {
+              j = JSON.parse(j)
+              const found = j.sig == sig ? true : false
+              j.s = r[1][1].a,
+                j.t = 0,
+                j.fo = r[1][1].t,
+                j.co = r[1][1].b,
+                j.f = r[1][1].f,
+                j.df = files,
+                j.n = cids.split(',').length - 1,
+                j.u = 0,
+                j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
+                j.sig = sig,
+                j.key = r[0][1],
+                j.b = r[1][1].r,
+                j.id = r[1][1].i
+              j.m = meta
+              if (
+                account != j.fo //or account mismatch
+              ) {
+                res.status(401).send("Access denied. Contract Mismatch");
+              } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
+                if (!found) {
+                  for (var i = 1; i < CIDs.length; i++) {
+                    checkThenBuild(getFilePath(CIDs[i], contract));
+                  }
+                  DB.write(j.id, JSON.stringify(j)).then(r => {
+                    res.status(200).json({ authorized: CIDs });
+                  })
+                } else res.status(200).json({ authorized: CIDs });
+              } else {
+                res.status(401).send("Access denied. Signature Mismatch");
               }
-              if(!found)DB.write(j.id, JSON.stringify(j)).then(r => {
-                res.status(200).json({ authorized: CIDs });
-              })
-              else res.status(200).json({ authorized: CIDs });
-            } else {
-              res.status(401).send("Access denied. Signature Mismatch");
-            }
-          })
+            })
         }
       })
   }
