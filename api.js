@@ -500,7 +500,10 @@ exports.upload = (req, res, next) => {
         if (stats.size !== rangeStart) {
           return res
             .status(407)
-            .json({ message: 'Bad "chunk" provided' });
+            .json({ message: 'Bad "chunk" provided',
+              startByte: rangeStart,
+              haveByte: stats.size
+             });
         }
 
         file
