@@ -276,28 +276,42 @@ function inventory() {
 
 function localIpfsUpload(cid, contractID) {
   return new Promise((res, rej) => {
+    // Use a lock to prevent concurrent contract updates
+    if (lock[contractID]) {
+      return setTimeout(() => {
+        localIpfsUpload(cid, contractID).then(r => res(r)).catch(e => rej(e))
+      }, 100)
+    }
+    lock[contractID] = true
+
     DB.read(contractID)
       .then(str => {
         var contract = JSON.parse(str)
         ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
           if (err) {
+            delete lock[contractID]
             console.log('File add Error: ', err);
+            return res({ status: 500, message: 'IPFS Add Error' })
           }
-          //check that file[0].hash == cid and pin the file if true
+
           if (str.indexOf(file[0].hash) > 0) {
             console.log('lIu', contract.t, file[0].size, contract.s)
-            if (contract.t + file[0].size <= contract.s) { //t total s storage
+            if (contract.t + file[0].size <= contract.s) {
               ipfs.pin.add(cid, function (err, pin) {
                 if (err) {
+                  delete lock[contractID]
                   console.log(err);
-                  res({ status: 410, message: 'Internal Error' })
+                  return res({ status: 410, message: 'Internal Error' })
                 }
                 console.log(`pinned ${cid}`)
-                // sign and update contract
+                
+                // Re-read contract to get latest state
                 DB.read(contractID)
                   .then(str => {
                     contract = JSON.parse(str)
                     contract[cid] = file[0].size
+                    contract.t = (contract.t || 0) + file[0].size // Update total size
+
                     DB.write(contract.id, JSON.stringify(contract))
                       .then(json => {
                         console.log('signNupdate', contract)
@@ -309,21 +323,37 @@ function localIpfsUpload(cid, contractID) {
                             break
                           }
                         }
+                        
                         if (allDone) {
                           signNupdate(contract)
-                          //delete files
-                          for (var i = 0; i < contract.files; i++) {
-                            fs.rmSync(getFilePath(contract.files[i], contract.id))
+                          // Delete files only after all uploads complete
+                          for (var i = 0; i < contract.df.length; i++) {
+                            try {
+                              fs.rmSync(getFilePath(contract.df[i], contract.id))
+                            } catch (e) {
+                              console.log('Error removing file:', e)
+                            }
                           }
-                          res({ status: 200, message: 'Success' })
                         }
+                        
+                        delete lock[contractID]
+                        res({ status: 200, message: 'Success' })
                       })
+                      .catch(err => {
+                        delete lock[contractID]
+                        res({ status: 500, message: 'Contract Write Error' })
+                      })
+                  })
+                  .catch(err => {
+                    delete lock[contractID]
+                    res({ status: 500, message: 'Contract Read Error' })
                   })
               })
             } else {
               console.log(`Files larger than contract: ${file[0].hash}`)
               fs.rmSync(getFilePath(cid, contract.id))
               DB.delete(contract.id)
+              delete lock[contractID]
               res({ status: 400, message: 'File Size Exceeded' })
             }
           } else {
@@ -332,9 +362,14 @@ function localIpfsUpload(cid, contractID) {
             fs.createWriteStream(
               getFilePath(cid, contract.id), { flags: 'w' }
             );
+            delete lock[contractID]
             res({ status: 400, message: 'File CID Mismatch' })
           }
         })
+      })
+      .catch(err => {
+        delete lock[contractID]
+        res({ status: 500, message: 'Initial Contract Read Error' })
       })
   })
 }
