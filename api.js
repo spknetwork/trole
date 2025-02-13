@@ -32,6 +32,9 @@ ipfs.id().then(r => {
   })
 }).catch(e => console.log(e))
 
+var lock = {}
+var ipfsLock = {}
+
 const DB = {
   getKeys: function (type = 'contracts') {
     return new Promise((res, rej) => {
@@ -132,7 +135,6 @@ const DB = {
 }
 
 getStats()
-var lock = {}
 
 function getStats() {
   live_stats.i = (live_stats.i + 1) % 10
@@ -277,12 +279,12 @@ function inventory() {
 function localIpfsUpload(cid, contractID) {
   return new Promise((res, rej) => {
     // Use a lock to prevent concurrent contract updates
-    if (lock[contractID]) {
+    if (ipfsLock[contractID]) {
       return setTimeout(() => {
         localIpfsUpload(cid, contractID).then(r => res(r)).catch(e => rej(e))
       }, 100)
     }
-    lock[contractID] = true
+    ipfsLock[contractID] = true
 
     DB.read(contractID)
       .then(str => {
@@ -336,16 +338,16 @@ function localIpfsUpload(cid, contractID) {
                           }
                         }
 
-                        delete lock[contractID]
+                        delete ipfsLock[contractID]
                         res({ status: 200, message: 'Success' })
                       })
                       .catch(err => {
-                        delete lock[contractID]
+                        delete ipfsLock[contractID]
                         res({ status: 500, message: 'Contract Write Error' })
                       })
                   })
                   .catch(err => {
-                    delete lock[contractID]
+                    delete ipfsLock[contractID]
                     res({ status: 500, message: 'Contract Read Error' })
                   })
               })
@@ -353,7 +355,7 @@ function localIpfsUpload(cid, contractID) {
               console.log(`Files larger than contract: ${file[0].hash}`)
               fs.rmSync(getFilePath(cid, contract.id))
               DB.delete(contract.id)
-              delete lock[contractID]
+              delete ipfsLock[contractID]
               res({ status: 400, message: 'File Size Exceeded' })
             }
           } else {
@@ -362,13 +364,13 @@ function localIpfsUpload(cid, contractID) {
             fs.createWriteStream(
               getFilePath(cid, contract.id), { flags: 'w' }
             );
-            delete lock[contractID]
+            delete ipfsLock[contractID]
             res({ status: 400, message: 'File CID Mismatch' })
           }
         })
       })
       .catch(err => {
-        delete lock[contractID]
+        delete ipfsLock[contractID]
         res({ status: 500, message: 'Initial Contract Read Error' })
       })
   })
@@ -499,7 +501,7 @@ exports.upload = (req, res, next) => {
 
         if (stats.size !== rangeStart) {
           return res
-            .status(407)
+            .status(403)
             .json({ message: 'Bad "chunk" provided',
               startByte: rangeStart,
               haveByte: stats.size
