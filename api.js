@@ -688,8 +688,10 @@ exports.arrange = (req, res, next) => {
               for (var i = 1; i < CIDs.length; i++) {
                 checkThenBuild(getFilePath(CIDs[i], contract));
               }
-              res.status(200).json({ authorized: CIDs });
-              if(!found)DB.write(j.id, JSON.stringify(j)).then(r => {})
+              if(!found)DB.write(j.id, JSON.stringify(j)).then(r => {
+                res.status(200).json({ authorized: CIDs });
+              })
+              else res.status(200).json({ authorized: CIDs });
             } else {
               res.status(401).send("Access denied. Signature Mismatch");
             }
