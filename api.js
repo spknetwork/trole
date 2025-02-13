@@ -464,7 +464,7 @@ exports.upload = (req, res, next) => {
 
         if (stats.size !== rangeStart) {
           return res
-            .status(400)
+            .status(407)
             .json({ message: 'Bad "chunk" provided' });
         }
 
