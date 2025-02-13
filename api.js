@@ -697,18 +697,18 @@ exports.arrange = (req, res, next) => {
               }
               DB.write(j.id, JSON.stringify(j)).then(r => {
                 console.log(found, `authorized: ${CIDs}`)
-                setTimeout(() => {
+                //setTimeout(() => {
                 res.status(200).json({ authorized: CIDs }); //bytes and time remaining
-                }, 500)
+                //}, 500)
               })
             } else {
               res.status(401).send("Access denied. Signature Mismatch");
             }
           } else {
             console.log(found, `authorized: ${CIDs}`)
-            setTimeout(() => {
+            //setTimeout(() => {
               res.status(200).json({ authorized: CIDs }); //bytes and time remaining
-              }, 500)
+              //}, 500)
           }
           })
         }
