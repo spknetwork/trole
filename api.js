@@ -658,7 +658,16 @@ exports.arrange = (req, res, next) => {
         for (var i = 0; i < files.length; i++) {
           if (!files[i]) files.splice(i, 1);
         }
-        DB.read(contract)
+        finish(contract)
+        
+        function finish(nonce) {
+          if(lock[nonce]){
+            setTimeout(() => {
+              finish(nonce)
+            }, 10)
+            return
+          }
+          DB.read(contract)
           .then(j => {
             j = JSON.parse(j)
             const found = j.n ? true : false
@@ -694,6 +703,7 @@ exports.arrange = (req, res, next) => {
               res.status(401).send("Access denied. Signature Mismatch");
             }
           })
+        }
       })
   }
 }
