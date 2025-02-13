@@ -662,17 +662,10 @@ exports.arrange = (req, res, next) => {
         finish(contract)
         
         function finish(nonce) {
-          if(lock[nonce]){
-            setTimeout(() => {
-              finish(nonce)
-            }, 10)
-            return
-          }
           DB.read(contract)
           .then(j => {
             j = JSON.parse(j)
             const found = j.sig == sig ? true : false
-            if(!found){
             j.s = r[1][1].a,
               j.t = 0,
               j.fo = r[1][1].t,
@@ -695,21 +688,11 @@ exports.arrange = (req, res, next) => {
               for (var i = 1; i < CIDs.length; i++) {
                 checkThenBuild(getFilePath(CIDs[i], contract));
               }
-              DB.write(j.id, JSON.stringify(j)).then(r => {
-                console.log(found, `authorized: ${CIDs}`)
-                //setTimeout(() => {
-                res.status(200).json({ authorized: CIDs }); //bytes and time remaining
-                //}, 500)
-              })
+              res.status(200).json({ authorized: CIDs });
+              if(!found)DB.write(j.id, JSON.stringify(j)).then(r => {})
             } else {
               res.status(401).send("Access denied. Signature Mismatch");
             }
-          } else {
-            console.log(found, `authorized: ${CIDs}`)
-            //setTimeout(() => {
-              res.status(200).json({ authorized: CIDs }); //bytes and time remaining
-              //}, 500)
-          }
           })
         }
       })
