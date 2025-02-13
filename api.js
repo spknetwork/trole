@@ -658,6 +658,7 @@ exports.arrange = (req, res, next) => {
         for (var i = 0; i < files.length; i++) {
           if (!files[i]) files.splice(i, 1);
         }
+        const CIDs = cids.split(',');
         finish(contract)
         
         function finish(nonce) {
@@ -691,7 +692,6 @@ exports.arrange = (req, res, next) => {
             ) {
               res.status(401).send("Access denied. Contract Mismatch");
             } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
-              const CIDs = cids.split(',');
               for (var i = 1; i < CIDs.length; i++) {
                 checkThenBuild(getFilePath(CIDs[i], contract));
               }
