@@ -224,7 +224,7 @@ function getStats() {
       }
     });
   });
-  setTimeout(getStats, 10 * 60 * 1000) // 10 minutes
+  setTimeout(getStats, 1 * 60 * 1000) // 10 minutes
 }
 
 function ipfsUnpin(cid) {
