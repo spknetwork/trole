@@ -247,7 +247,7 @@ function inventory() {
             if (err && j) {
               try {
                 if (j.length < 10) {
-                  console.log('contract failure artifact, deleting', contract.i)
+                  //console.log('contract failure artifact, deleting', contract.i)
                 } else {
                   console.log('missing', j)
                   ipfs.pin.add(j, function (err, pin) {
