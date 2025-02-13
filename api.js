@@ -670,7 +670,7 @@ exports.arrange = (req, res, next) => {
           DB.read(contract)
           .then(j => {
             j = JSON.parse(j)
-            const found = j.n ? true : false
+            const found = j.sig == sig ? true : false
             console.log({n: j.n})
             j.s = r[1][1].a,
               j.t = 0,
