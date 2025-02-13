@@ -671,7 +671,7 @@ exports.arrange = (req, res, next) => {
           .then(j => {
             j = JSON.parse(j)
             const found = j.sig == sig ? true : false
-            console.log({n: j.n})
+            if(!found){
             j.s = r[1][1].a,
               j.t = 0,
               j.fo = r[1][1].t,
@@ -702,6 +702,10 @@ exports.arrange = (req, res, next) => {
             } else {
               res.status(401).send("Access denied. Signature Mismatch");
             }
+          } else {
+            console.log(found, `authorized: ${CIDs}`)
+                res.status(200).json({ authorized: CIDs }); //bytes and time remaining
+          }
           })
         }
       })
