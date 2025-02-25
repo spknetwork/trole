@@ -755,49 +755,183 @@ function checkThenBuild(path) {
     })
 }
 
+// function signNupdate(contract) {
+//   return new Promise((resolve, reject) => {
+//     var sizes = ''
+//     for (var i = 0; i < contract.df.length; i++) {
+//       sizes += `${contract[contract.df[i]]},`
+//     }
+//     sizes = sizes.substring(0, sizes.length - 1)
+//     const data = {
+//       fo: contract.fo, //file owner
+//       id: contract.id, //contract id
+//       sig: contract.sig, //signature of uploader
+//       co: config.account, //broker
+//       f: contract.f, //from
+//       c: contract.df.join(','), //cids uploaded
+//       s: sizes,
+//       m: contract.m
+//     }
+//     const operations = [
+//       [
+//         'custom_json',
+//         {
+//           "required_auths": [
+//             config.account
+//           ],
+//           "required_posting_auths": [],
+//           "id": "spkccT_channel_update",
+//           "json": JSON.stringify(data)
+//         }
+//       ]
+//     ]
+//     const tx = new hiveTx.Transaction()
+//     tx.create(operations).then(() => {
+//       const privateKey = hiveTx.PrivateKey.from(config.active_key)
+//       tx.sign(privateKey)
+//       tx.broadcast().then(r => {
+//       })
+//         .catch(e => {
+//           console.log({ e })
+//         })
+//     })
+//   })
+// }
+
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
-    var sizes = ''
+    // Build the sizes string
+    var sizes = '';
     for (var i = 0; i < contract.df.length; i++) {
-      sizes += `${contract[contract.df[i]]},`
+      sizes += `${contract[contract.df[i]]},`;
     }
-    sizes = sizes.substring(0, sizes.length - 1)
+    sizes = sizes.substring(0, sizes.length - 1);
+
+    // Construct the original data object
     const data = {
-      fo: contract.fo, //file owner
-      id: contract.id, //contract id
-      sig: contract.sig, //signature of uploader
-      co: config.account, //broker
-      f: contract.f, //from
-      c: contract.df.join(','), //cids uploaded
+      fo: contract.fo, // file owner
+      id: contract.id, // contract id
+      sig: contract.sig, // signature of uploader
+      co: config.account, // broker
+      f: contract.f, // from
+      c: contract.df.join(','), // cids uploaded
       s: sizes,
       m: contract.m
-    }
-    const operations = [
-      [
-        'custom_json',
-        {
-          "required_auths": [
-            config.account
-          ],
-          "required_posting_auths": [],
-          "id": "spkccT_channel_update",
-          "json": JSON.stringify(data)
-        }
-      ]
-    ]
-    const tx = new hiveTx.Transaction()
-    tx.create(operations).then(() => {
-      const privateKey = hiveTx.PrivateKey.from(config.active_key)
-      tx.sign(privateKey)
-      tx.broadcast().then(r => {
-      })
-        .catch(e => {
-          console.log({ e })
+    };
+
+    // Stringify the data and define limits
+    const jsonString = JSON.stringify(data);
+    const maxJsonLength = 2000; // Maximum characters per transaction
+    const chunkSize = 1800; // Chunk size to leave room for metadata
+
+    if (jsonString.length <= maxJsonLength) {
+      // **Single Transaction Case**
+      const operations = [
+        [
+          'custom_json',
+          {
+            "required_auths": [config.account],
+            "required_posting_auths": [],
+            "id": "spkccT_channel_update",
+            "json": jsonString
+          }
+        ]
+      ];
+      const tx = new hiveTx.Transaction();
+      tx.create(operations)
+        .then(() => {
+          const privateKey = hiveTx.PrivateKey.from(config.active_key);
+          tx.sign(privateKey);
+          tx.broadcast()
+            .then(resolve)
+            .catch(err => {
+              console.log({ err });
+              reject(err);
+            });
         })
-    })
-  })
+        .catch(err => {
+          console.log({ err });
+          reject(err);
+        });
+    } else {
+      // **Chunked Transaction Case**
+      const chunks = splitString(jsonString, chunkSize);
+      const total_chunks = chunks.length;
+      const update_id = contract.id.split(':')[2]; // Unique part of contract.id
+
+      // Helper function to send a chunk
+      const sendChunk = (chunk_id, chunk_data) => {
+        const chunk_json = {
+          fo: contract.fo,
+          id: contract.id,
+          sig: contract.sig,
+          co: config.account,
+          f: contract.f,
+          update_id: update_id,
+          chunk_id: chunk_id + 1, // Start from 1
+          total_chunks: total_chunks,
+          chunk_data: chunk_data
+        };
+        const operations = [
+          [
+            'custom_json',
+            {
+              "required_auths": [config.account],
+              "required_posting_auths": [],
+              "id": "spkccT_channel_update",
+              "json": JSON.stringify(chunk_json)
+            }
+          ]
+        ];
+        const tx = new hiveTx.Transaction();
+        return new Promise((res, rej) => {
+          tx.create(operations)
+            .then(() => {
+              const privateKey = hiveTx.PrivateKey.from(config.active_key);
+              tx.sign(privateKey);
+              tx.broadcast()
+                .then(res)
+                .catch(err => {
+                  console.log({ err });
+                  rej(err);
+                });
+            })
+            .catch(err => {
+              console.log({ err });
+              rej(err);
+            });
+        });
+      };
+
+      // Send the first chunk immediately
+      sendChunk(0, chunks[0])
+        .then(() => {
+          // Chain the remaining chunks with a 3-second delay
+          let promiseChain = Promise.resolve();
+          for (let i = 1; i < chunks.length; i++) {
+            promiseChain = promiseChain
+              .then(() => new Promise(res => setTimeout(res, 3000))) // 3-second delay
+              .then(() => sendChunk(i, chunks[i]));
+          }
+          return promiseChain;
+        })
+        .then(resolve)
+        .catch(err => {
+          console.log({ err });
+          reject(err);
+        });
+    }
+  });
 }
 
+// Helper function to split a string into chunks
+function splitString(str, chunkSize) {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += chunkSize) {
+    chunks.push(str.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
 
 function sign(msg, key) {
   const { sha256 } = require('hive-tx/helpers/crypto')
