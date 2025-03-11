@@ -12,6 +12,7 @@ api.get('/upload-contract', API.contract)
 api.get("/upload-check", API.stats)
 api.get("/upload-authorize", API.arrange)
 api.get("/upload-stats", API.live)
+api.get("/storage-stats", API.storageStats);
 api.get("/flag-qry/:cid", API.flags)
 api.get("/flag", API.flag)
 api.get("/contracts", API.contracts)

@@ -1,5 +1,6 @@
 const fetch = require("node-fetch");
 const hiveTx = require("hive-tx")
+const diskusage = require('diskusage');
 const config = require('./config')
 const { Pool } = require("pg");
 const pool = new Pool({
@@ -378,6 +379,48 @@ function localIpfsUpload(cid, contractID) {
   })
 }
 
+exports.storageStats = (req, res, next) => {
+  // Check disk usage for the current working directory
+  diskusage.check(process.cwd(), (err, info) => {
+    if (err) {
+      console.error('Error getting disk usage:', err);
+      return res.status(500).json({ message: 'Error retrieving disk usage' });
+    }
+
+    // Convert disk usage numbers to BigInt for consistency with IPFS stats
+    const total = BigInt(info.total);
+    const free = BigInt(info.free);
+    const used = total - free;
+
+    // Get the number of active contracts
+    DB.getKeys('contracts')
+      .then(keys => {
+        const activeContracts = keys.length;
+
+        // Prepare the response
+        const response = {
+          disk: {
+            total: total.toString(), // Total disk space in bytes
+            free: free.toString(),   // Free disk space in bytes
+            used: used.toString()    // Used disk space in bytes
+          },
+          ipfsRepo: {
+            size: live_stats.repoSize.toString(),       // Current IPFS repo size
+            numObjects: live_stats.numObjects.toString(), // Number of IPFS objects
+            storageMax: live_stats.storageMax.toString()  // Max IPFS repo size
+          },
+          activeContracts: activeContracts // Number of active contracts
+        };
+
+        res.status(200).json(response);
+      })
+      .catch(err => {
+        console.error('Error getting active contracts:', err);
+        res.status(500).json({ message: 'Error retrieving active contracts' });
+      });
+  });
+};
+
 exports.contract = (req, res, next) => {
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
@@ -755,49 +798,6 @@ function checkThenBuild(path) {
     })
 }
 
-// function signNupdate(contract) {
-//   return new Promise((resolve, reject) => {
-//     var sizes = ''
-//     for (var i = 0; i < contract.df.length; i++) {
-//       sizes += `${contract[contract.df[i]]},`
-//     }
-//     sizes = sizes.substring(0, sizes.length - 1)
-//     const data = {
-//       fo: contract.fo, //file owner
-//       id: contract.id, //contract id
-//       sig: contract.sig, //signature of uploader
-//       co: config.account, //broker
-//       f: contract.f, //from
-//       c: contract.df.join(','), //cids uploaded
-//       s: sizes,
-//       m: contract.m
-//     }
-//     const operations = [
-//       [
-//         'custom_json',
-//         {
-//           "required_auths": [
-//             config.account
-//           ],
-//           "required_posting_auths": [],
-//           "id": "spkccT_channel_update",
-//           "json": JSON.stringify(data)
-//         }
-//       ]
-//     ]
-//     const tx = new hiveTx.Transaction()
-//     tx.create(operations).then(() => {
-//       const privateKey = hiveTx.PrivateKey.from(config.active_key)
-//       tx.sign(privateKey)
-//       tx.broadcast().then(r => {
-//       })
-//         .catch(e => {
-//           console.log({ e })
-//         })
-//     })
-//   })
-// }
-
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
     // Build the sizes string
@@ -1086,3 +1086,47 @@ function deleteByContract(str) {
     })
   }
 }
+
+
+// function signNupdate(contract) {
+//   return new Promise((resolve, reject) => {
+//     var sizes = ''
+//     for (var i = 0; i < contract.df.length; i++) {
+//       sizes += `${contract[contract.df[i]]},`
+//     }
+//     sizes = sizes.substring(0, sizes.length - 1)
+//     const data = {
+//       fo: contract.fo, //file owner
+//       id: contract.id, //contract id
+//       sig: contract.sig, //signature of uploader
+//       co: config.account, //broker
+//       f: contract.f, //from
+//       c: contract.df.join(','), //cids uploaded
+//       s: sizes,
+//       m: contract.m
+//     }
+//     const operations = [
+//       [
+//         'custom_json',
+//         {
+//           "required_auths": [
+//             config.account
+//           ],
+//           "required_posting_auths": [],
+//           "id": "spkccT_channel_update",
+//           "json": JSON.stringify(data)
+//         }
+//       ]
+//     ]
+//     const tx = new hiveTx.Transaction()
+//     tx.create(operations).then(() => {
+//       const privateKey = hiveTx.PrivateKey.from(config.active_key)
+//       tx.sign(privateKey)
+//       tx.broadcast().then(r => {
+//       })
+//         .catch(e => {
+//           console.log({ e })
+//         })
+//     })
+//   })
+// }
