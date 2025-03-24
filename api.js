@@ -974,17 +974,20 @@ function getActiveContract(contract, chain = 'spk') {
   return new Promise((res, rej) => {
     if (chain == 'spk') {
       fetch(config.SPK_API + `/api/fileContract/${contract}`)
-        .then((r) => {
-          return r.json();
-        })
+      .then((r) => {
+        if (!r.ok) {
+          throw new Error(`HTTP error! status: ${r.status}`);
+        }
+        return r.json();
+      })
         .then((re) => {
           res([0, re]);
         })
         .catch((e) => {
-          res([1, e]);
+          rej([1, e]);
         });
     } else {
-      res([1, "Not Found"]);
+      rej([1, "Not Found"]);
     }
   });
 }
