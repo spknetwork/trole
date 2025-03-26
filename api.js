@@ -201,23 +201,25 @@ function getStats() {
                 }
               }
             } else {
-              var isMine = 0
-              const nodes = contract.n ? Object.keys(contract.n) : []
-              for (var j = 1; j <= nodes.length; i++) {
-                if (contract.n[`${j}`] == config.account) {
-                  isMine = j
-                  break
+              if (behind < 100) {
+                var isMine = 0
+                const nodes = contract.n ? Object.keys(contract.n) : []
+                for (var j = 1; j <= nodes.length; i++) {
+                  if (contract.n[`${j}`] == config.account) {
+                    isMine = j
+                    break
+                  }
                 }
-              }
-              if (isMine == 0) { //or j > p + threshold
-                for (var i = 0; i < json.df.length; i++) {
-                  fs.remove(getFilePath(json.df[i], key))
-                  ipfsUnpin(json.df[i])
-                  console.log('unpinning', json.df[i])
+                if (isMine == 0) { //or j > p + threshold
+                  for (var i = 0; i < json.df.length; i++) {
+                    fs.remove(getFilePath(json.df[i], key))
+                    ipfsUnpin(json.df[i])
+                    console.log('unpinning', json.df[i])
+                  }
+                  DB.delete(key).then(d => {
+                    console.log('deleted', key + '.json')
+                  })
                 }
-                DB.delete(key).then(d => {
-                  console.log('deleted', key + '.json')
-                })
               }
             }
           }).catch(e => {
@@ -547,10 +549,11 @@ exports.upload = (req, res, next) => {
         if (stats.size !== rangeStart) {
           return res
             .status(403)
-            .json({ message: 'Bad "chunk" provided',
+            .json({
+              message: 'Bad "chunk" provided',
               startByte: rangeStart,
               haveByte: stats.size
-             });
+            });
         }
 
         file
@@ -974,12 +977,12 @@ function getActiveContract(contract, chain = 'spk') {
   return new Promise((res, rej) => {
     if (chain == 'spk') {
       fetch(config.SPK_API + `/api/fileContract/${contract}`)
-      .then((r) => {
-        if (!r.ok) {
-          throw new Error(`HTTP error! status: ${r.status}`);
-        }
-        return r.json();
-      })
+        .then((r) => {
+          if (!r.ok) {
+            throw new Error(`HTTP error! status: ${r.status}`);
+          }
+          return r.json();
+        })
         .then((re) => {
           res([0, re]);
         })
