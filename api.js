@@ -824,8 +824,8 @@ function signNupdate(contract) {
 
     // Stringify the data and define limits
     const jsonString = JSON.stringify(data);
-    const maxJsonLength = 2000; // Maximum characters per transaction
-    const chunkSize = 1800; // Chunk size to leave room for metadata
+    const maxJsonLength = config.maxJsonLength; // Maximum characters per transaction
+    const chunkSize = config.chunkSize; // Chunk size to leave room for metadata
 
     if (jsonString.length <= maxJsonLength) {
       // **Single Transaction Case**
