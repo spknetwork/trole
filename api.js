@@ -423,6 +423,68 @@ exports.storageStats = (req, res, next) => {
   });
 };
 
+exports.promo_contract = (req, res, next) => {
+  const user = req.query.user;
+  fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
+    if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
+      var grant = parseInt(config.base_grant * 2), multiplier = 1
+      const powder = parseInt(live_stats.broca.split(',')[0])
+      const cap = live_stats.spk_power * config.base_grant
+      if (powder / cap > 0.8) {
+        multiplier = 8
+      } else if (powder / cap > 0.6) {
+        multiplier = 4
+      } else if (powder / cap > 0.4) {
+        multiplier = 2
+      }
+      if (live_stats.granted[user]) {
+        grant = parseInt((live_stats.granted[user] / live_stats.granted.t) * multiplier * (.2 * cap))
+      }
+      live_stats.broca = `${powder - grant},${live_stats.broca.split(',')[1]}`
+      const operations = [
+        [
+          'custom_json',
+          {
+            "required_auths": [
+              config.account
+            ],
+            "required_posting_auths": [],
+            "id": "spkccT_channel_open",
+            "json": `{\"broca\":${grant},\"broker\":\"${config.account}\",\"to\":\"${user}\",\"contract\":\"0\"}`
+          }
+        ]
+      ]
+      const tx = new hiveTx.Transaction()
+      tx.create(operations).then(() => {
+        const privateKey = hiveTx.PrivateKey.from(config.active_key)
+        tx.sign(privateKey)
+        tx.broadcast().then(r => {
+          console.log({ r })
+          res.status(200)
+            .json({
+              message: 'Contract Sent',
+              tx: r
+            });
+        })
+      })
+        .catch(e => {
+          console.log(e)
+          res.status(400)
+            .json({
+              message: 'File Contract Build Failed'
+            });
+        })
+    } else {
+      res.status(400)
+        .json({
+          message: 'Contract Exists or User PubKey Not Found'
+        });
+    }
+  }).catch(e => {
+    next(e)
+  })
+}
+
 exports.contract = (req, res, next) => {
   const user = req.query.user;
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
@@ -1014,50 +1076,6 @@ function getContract(contract, chain = 'spk') {
   });
 }
 
-function updatePins(data) {
-  return new Promise((r, e) => {
-    pool.query(
-      `INSERT INTO pins(hash,size,ts,account,sig,exp,contract,pinned,flag,state)VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      data,
-      (err, res) => {
-        if (err) {
-          //console.log(data)
-          console.log(`Error - Failed to insert data into pins`);
-          e(err);
-        } else {
-          r(res);
-        }
-      }
-    );
-  })
-}
-
-function initTable(struct) {
-  return new Promise((r, e) => {
-    var data = []
-    var string = '', primary = ''
-    for (var column in struct.table) {
-      string += `${column} ${struct.table[column].type}, `;
-      if (struct.table[column].key) primary += `${column} `
-    }
-    pool.query(
-      `CREATE TABLE ${struct.name}(
-          ${string}
-        PRIMARY KEY( ${primary} )
-      );`,
-      data,
-      (err, res) => {
-        if (err) {
-          console.log(`Error - Failed to insert data into pins`);
-          e(err);
-        } else {
-          r(res);
-        }
-      }
-    );
-  })
-}
-
 function storeByContract(str) {
   const contracts = str.split(',')
   for (var i = 0; i < contracts.length; i++) {
@@ -1092,47 +1110,3 @@ function deleteByContract(str) {
     })
   }
 }
-
-
-// function signNupdate(contract) {
-//   return new Promise((resolve, reject) => {
-//     var sizes = ''
-//     for (var i = 0; i < contract.df.length; i++) {
-//       sizes += `${contract[contract.df[i]]},`
-//     }
-//     sizes = sizes.substring(0, sizes.length - 1)
-//     const data = {
-//       fo: contract.fo, //file owner
-//       id: contract.id, //contract id
-//       sig: contract.sig, //signature of uploader
-//       co: config.account, //broker
-//       f: contract.f, //from
-//       c: contract.df.join(','), //cids uploaded
-//       s: sizes,
-//       m: contract.m
-//     }
-//     const operations = [
-//       [
-//         'custom_json',
-//         {
-//           "required_auths": [
-//             config.account
-//           ],
-//           "required_posting_auths": [],
-//           "id": "spkccT_channel_update",
-//           "json": JSON.stringify(data)
-//         }
-//       ]
-//     ]
-//     const tx = new hiveTx.Transaction()
-//     tx.create(operations).then(() => {
-//       const privateKey = hiveTx.PrivateKey.from(config.active_key)
-//       tx.sign(privateKey)
-//       tx.broadcast().then(r => {
-//       })
-//         .catch(e => {
-//           console.log({ e })
-//         })
-//     })
-//   })
-// }

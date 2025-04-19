@@ -17,6 +17,7 @@ const flex = ENV.FLEX || 10000000 //upload temp space limit
 const docker = ENV.DOCKER || false
 const maxJsonLength = ENV.MAX_JSON_LENGTH || 8000
 const chunkSize = ENV.CHUNK_SIZE || 7800
+const promo_contract = ENV.PROMO_CONTRACT || false
 
 const tables = {
   db:{
@@ -85,7 +86,8 @@ const config = {
   base_grant,
   docker,
   maxJsonLength,
-  chunkSize
+  chunkSize,
+  promo_contract
 };
 
 module.exports = config
