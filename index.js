@@ -16,7 +16,7 @@ api.get("/storage-stats", API.storageStats);
 api.get("/flag-qry/:cid", API.flags)
 api.get("/flag", API.flag)
 api.get("/contracts", API.contracts)
-if (config.promo_contract) api.get("/promo-contract", API.promo_contract)
+if (config.promo_contract) api.get("/upload-promo-contract", API.promo_contract)
 api.use(express.static("www"));
 
 http.listen(config.port, '::', function () {
