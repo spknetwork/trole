@@ -21,5 +21,6 @@ api.use(express.static("www"));
 
 http.listen(config.port, '::', function () {
   console.log(`API listening on port ${config.port}`);
+  console.log('promo:', config.promo_contract)
 });
 
