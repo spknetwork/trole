@@ -803,6 +803,11 @@ exports.arrange = (req, res, next) => {
       res.status(401).send("Access denied. No Valid Signature");
       return
     }
+    
+    console.log(`Verifying signature for account: ${account}, contract: ${contract}`);
+    // Log signature info without revealing full details
+    console.log(`Signature length: ${sig ? sig.length : 0}`);
+    
     var getPubKeys = getAccountPubKeys(account)
     Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
       .then((r) => {
@@ -816,41 +821,60 @@ exports.arrange = (req, res, next) => {
         function finish(nonce) {
           DB.read(contract)
             .then(j => {
-              j = JSON.parse(j)
-              const found = j.sig == sig ? true : false
-              j.s = r[1][1].a,
-                j.t = 0,
-                j.fo = r[1][1].t,
-                j.co = r[1][1].b,
-                j.f = r[1][1].f,
-                j.df = files,
-                j.n = cids.split(',').length - 1,
-                j.u = 0,
-                j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
-                j.sig = sig,
-                j.key = r[0][1],
-                j.b = r[1][1].r,
-                j.id = r[1][1].i
-              j.m = meta
-              if (
-                account != j.fo //or account mismatch
-              ) {
-                res.status(401).send("Access denied. Contract Mismatch");
-              } else if (verifySig(`${account}:${contract}${cids}`, sig, r[0][1])) {
-                if (!found) {
-                  for (var i = 1; i < CIDs.length; i++) {
-                    checkThenBuild(getFilePath(CIDs[i], contract));
+              try {
+                j = JSON.parse(j)
+                const found = j.sig == sig ? true : false
+                j.s = r[1][1].a,
+                  j.t = 0,
+                  j.fo = r[1][1].t,
+                  j.co = r[1][1].b,
+                  j.f = r[1][1].f,
+                  j.df = files,
+                  j.n = cids.split(',').length - 1,
+                  j.u = 0,
+                  j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
+                  j.sig = sig,
+                  j.key = r[0][1],
+                  j.b = r[1][1].r,
+                  j.id = r[1][1].i
+                j.m = meta
+                
+                if (account != j.fo) { //or account mismatch
+                  res.status(401).send("Access denied. Contract Mismatch");
+                } else {
+                  const sigMsg = `${account}:${contract}${cids}`;
+                  console.log(`Verifying signature for message: ${sigMsg.substring(0, 30)}...`);
+                  
+                  const isValid = verifySig(sigMsg, sig, r[0][1]);
+                  
+                  if (isValid) {
+                    if (!found) {
+                      for (var i = 1; i < CIDs.length; i++) {
+                        checkThenBuild(getFilePath(CIDs[i], contract));
+                      }
+                      DB.write(j.id, JSON.stringify(j)).then(r => {
+                        res.status(200).json({ authorized: CIDs });
+                      })
+                    } else res.status(200).json({ authorized: CIDs });
+                  } else {
+                    res.status(401).send("Access denied. Signature Mismatch");
                   }
-                  DB.write(j.id, JSON.stringify(j)).then(r => {
-                    res.status(200).json({ authorized: CIDs });
-                  })
-                } else res.status(200).json({ authorized: CIDs });
-              } else {
-                res.status(401).send("Access denied. Signature Mismatch");
+                }
+              } catch (error) {
+                console.log('Error processing request:', error);
+                res.status(500).send("Server error processing request");
               }
             })
+            .catch(err => {
+              console.log('Error reading contract:', err);
+              res.status(500).send("Error reading contract data");
+            });
         }
       })
+      .catch(err => {
+        console.log('Error fetching account or contract data:', err);
+        res.status(500).send("Error processing contract verification");
+      });
   }
 }
 
@@ -1008,13 +1032,23 @@ function sign(msg, key) {
 }
 
 function verifySig(msg, sig, key) {
-  const { sha256 } = require("hive-tx/helpers/crypto");
-  const signature = hiveTx.Signature.from(sig)
-  const message = sha256(msg);
-  const publicKey = hiveTx.PublicKey.from(key);
-  const verify = publicKey.verify(message, signature);
-  if (verify) return true
-  return false
+  try {
+    const { sha256 } = require("hive-tx/helpers/crypto");
+    // Ensure signature is in the correct format before processing
+    if (!sig || typeof sig !== 'string') {
+      console.log('Invalid signature format:', sig);
+      return false;
+    }
+    
+    const message = sha256(msg);
+    const publicKey = hiveTx.PublicKey.from(key);
+    const signature = hiveTx.Signature.from(sig);
+    const verify = publicKey.verify(message, signature);
+    return verify;
+  } catch (error) {
+    console.log('Signature verification error:', error.message);
+    return false;
+  }
 }
 
 function getAccountPubKeys(acc, chain = 'HIVE') {
