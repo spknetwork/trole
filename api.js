@@ -487,6 +487,7 @@ exports.promo_contract = (req, res, next) => {
 
 exports.contract = (req, res, next) => {
   const user = req.query.user;
+  console.log('promo',{ user })
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
     if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
       var grant = config.base_grant, multiplier = 1
