@@ -789,93 +789,103 @@ exports.stats = (req, res, next) => {
 }
 
 exports.arrange = (req, res, next) => {
-  if (!req.headers || !req.headers['x-cid'] || !req.headers['x-files']
-    || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
-    res.status(400).json({ message: 'Missing data' });
-  } else {
-    let chain = req.headers['x-chain'] || 'HIVE';
-    let account = req.headers['x-account'];
-    let sig = req.headers['x-sig'];
-    let cids = req.headers['x-files'];
-    let meta = decodeURI(req.headers['x-meta']);
-    let contract = req.headers['x-contract'];
-    if (!account || !sig) {
-      res.status(401).send("Access denied. No Valid Signature");
-      return
-    }
-    
-    console.log(`Verifying signature for account: ${account}, contract: ${contract}`);
-    // Log signature info without revealing full details
-    console.log(`Signature length: ${sig ? sig.length : 0}`);
-    
-    var getPubKeys = getAccountPubKeys(account)
-    Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
-      .then((r) => {
-        var files = cids.split(',');
-        for (var i = 0; i < files.length; i++) {
-          if (!files[i]) files.splice(i, 1);
-        }
-        const CIDs = cids.split(',');
-        finish(contract)
-
-        function finish(nonce) {
-          DB.read(contract)
-            .then(j => {
-              try {
-                j = JSON.parse(j)
-                const found = j.sig == sig ? true : false
-                j.s = r[1][1].a,
-                  j.t = 0,
-                  j.fo = r[1][1].t,
-                  j.co = r[1][1].b,
-                  j.f = r[1][1].f,
-                  j.df = files,
-                  j.n = cids.split(',').length - 1,
-                  j.u = 0,
-                  j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
-                  j.sig = sig,
-                  j.key = r[0][1],
-                  j.b = r[1][1].r,
-                  j.id = r[1][1].i
-                j.m = meta
-                
-                if (account != j.fo) { //or account mismatch
-                  res.status(401).send("Access denied. Contract Mismatch");
-                } else {
-                  const sigMsg = `${account}:${contract}${cids}`;
-                  console.log(`Verifying signature for message: ${sigMsg.substring(0, 30)}...`);
-                  
-                  const isValid = verifySig(sigMsg, sig, r[0][1]);
-                  
-                  if (isValid) {
-                    if (!found) {
-                      for (var i = 1; i < CIDs.length; i++) {
-                        checkThenBuild(getFilePath(CIDs[i], contract));
-                      }
-                      DB.write(j.id, JSON.stringify(j)).then(r => {
-                        res.status(200).json({ authorized: CIDs });
-                      })
-                    } else res.status(200).json({ authorized: CIDs });
-                  } else {
-                    res.status(401).send("Access denied. Signature Mismatch");
-                  }
-                }
-              } catch (error) {
-                console.log('Error processing request:', error);
-                res.status(500).send("Server error processing request");
-              }
-            })
-            .catch(err => {
-              console.log('Error reading contract:', err);
-              res.status(500).send("Error reading contract data");
-            });
-        }
-      })
-      .catch(err => {
-        console.log('Error fetching account or contract data:', err);
-        res.status(500).send("Error processing contract verification");
-      });
+  // Check for required headers (x-files and x-meta are no longer expected in headers)
+  if (!req.headers || !req.headers['x-cid'] || !req.headers['x-account'] || !req.headers['x-sig'] || !req.headers['x-contract']) {
+    return res.status(400).json({ message: 'Missing required header data' });
   }
+
+  // Check for required body parameters (cids and meta)
+  if (!req.body || typeof req.body.cids === 'undefined' || typeof req.body.meta === 'undefined') {
+    return res.status(400).json({ message: 'Missing cids or meta in request body' });
+  }
+
+  // Define variables from headers
+  let chain = req.headers['x-chain'] || 'HIVE';
+  let account = req.headers['x-account'];
+  let sig = req.headers['x-sig'];
+  let contract = req.headers['x-contract'];
+  
+  // Define cids and meta from body
+  let cids = req.body.cids;
+  let meta = decodeURI(req.body.meta);
+
+  // Check if account or sig (from headers) are empty/invalid
+  // This check was part of the original logic and should be maintained.
+  if (!account || !sig) {
+    return res.status(401).send("Access denied. No Valid Signature");
+  }
+  
+  console.log(`Verifying signature for account: ${account}, contract: ${contract}`);
+  // Log signature info without revealing full details
+  console.log(`Signature length: ${sig ? sig.length : 0}`);
+  
+  var getPubKeys = getAccountPubKeys(account)
+  Promise.all([getPubKeys, getContract({ to: account, from: contract.split(':')[0], id: contract.split(':')[1] })])
+    .then((r) => {
+      var files = cids.split(',');
+      for (var i = 0; i < files.length; i++) {
+        if (!files[i]) files.splice(i, 1);
+      }
+      const CIDs = cids.split(',');
+      finish(contract)
+
+      function finish(nonce) {
+        DB.read(contract)
+          .then(j => {
+            try {
+              j = JSON.parse(j)
+              const found = j.sig == sig ? true : false
+              j.s = r[1][1].a,
+                j.t = 0,
+                j.fo = r[1][1].t,
+                j.co = r[1][1].b,
+                j.f = r[1][1].f,
+                j.df = files,
+                j.n = cids.split(',').length - 1,
+                j.u = 0,
+                j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',
+                j.sig = sig,
+                j.key = r[0][1],
+                j.b = r[1][1].r,
+                j.id = r[1][1].i
+              j.m = meta
+              
+              if (account != j.fo) { //or account mismatch
+                res.status(401).send("Access denied. Contract Mismatch");
+              } else {
+                const sigMsg = `${account}:${contract}${cids}`;
+                console.log(`Verifying signature for message: ${sigMsg.substring(0, 30)}...`);
+                
+                const isValid = verifySig(sigMsg, sig, r[0][1]);
+                
+                if (isValid) {
+                  if (!found) {
+                    for (var i = 1; i < CIDs.length; i++) {
+                      checkThenBuild(getFilePath(CIDs[i], contract));
+                    }
+                    DB.write(j.id, JSON.stringify(j)).then(r => {
+                      res.status(200).json({ authorized: CIDs });
+                    })
+                  } else res.status(200).json({ authorized: CIDs });
+                } else {
+                  res.status(401).send("Access denied. Signature Mismatch");
+                }
+              }
+            } catch (error) {
+              console.log('Error processing request:', error);
+              res.status(500).send("Server error processing request");
+            }
+          })
+          .catch(err => {
+            console.log('Error reading contract:', err);
+            res.status(500).send("Error reading contract data");
+          });
+      }
+    })
+    .catch(err => {
+      console.log('Error fetching account or contract data:', err);
+      res.status(500).send("Error processing contract verification");
+    });
 }
 
 function checkThenBuild(path) {
