@@ -796,6 +796,7 @@ exports.arrange = (req, res, next) => {
 
   // Check for required body parameters (cids and meta)
   if (!req.body || typeof req.body.files === 'undefined' || typeof req.body.meta === 'undefined') {
+    console.log('Missing cids or meta in request body')
     return res.status(400).json({ message: 'Missing cids or meta in request body' });
   }
 
@@ -808,6 +809,7 @@ exports.arrange = (req, res, next) => {
   // Define cids and meta from body
   let cids = req.body.files;
   let meta = decodeURI(req.body.meta);
+  console.log({ cids, meta })
 
   // Check if account or sig (from headers) are empty/invalid
   // This check was part of the original logic and should be maintained.
