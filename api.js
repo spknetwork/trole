@@ -35,6 +35,7 @@ ipfs.id().then(r => {
 
 var lock = {}
 var ipfsLock = {}
+var promoDebouncer = {}
 
 const DB = {
   getKeys: function (type = 'contracts') {
@@ -425,6 +426,10 @@ exports.storageStats = (req, res, next) => {
 
 exports.promo_contract = (req, res, next) => {
   const user = req.query.user;
+  if (promoDebouncer[user] && promoDebouncer[user] > new Date().getTime() - 1000 * 60 * 10) {
+    return res.status(429).json({ message: 'Too many requests' });
+  }
+  promoDebouncer[user] = new Date(new Date().getTime() + 1000 * 60 * 10);
   console.log('promo',{ user })
   fetch(`${config.SPK_API}/@${user}`).then(rz => rz.json()).then(json => {
     if (!json.channels[config.account] && json.pubKey != 'NA') { //no contract
