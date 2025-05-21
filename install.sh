@@ -134,11 +134,11 @@ then
     then
         echo What is your domain name? -dlux.io
         read DOMAIN
-        echo "DOMAIN=spk.${DOMAIN}" | tee -a .env
-        echo "domain=spk.${DOMAIN}" | tee -a .env
+        echo "DOMAIN=${DOMAIN}" | tee -a .env
+        echo "domain=${DOMAIN}" | tee -a .env
     else
-        echo "DOMAIN=spk.${DOMAIN}"
-        echo "domain=spk.${DOMAIN}" | tee -a .env
+        echo "DOMAIN=${DOMAIN}"
+        echo "domain=${DOMAIN}" | tee -a .env
     fi
     if [ -z "$ACCOUNT" ];
     then
@@ -178,15 +178,19 @@ then
         KEY_PROMPT=false
         echo "SPKPUB=${SPKPUB}"
         echo "SPKPRIV=${SPKPRIV}" | cut -b 1-11
+        echo "mspublic=${SPKPUB}" | tee -a .env
+        echo "msowner=${SPKPRIV}" | tee -a .env
     fi
     if [ -z "$KEY_PROMPT" ];
         then
             echo "What is the Private SPK key for $ACCOUNT"
             read SPKPRIV
             echo "SPKPRIV=${SPKPRIV}" | tee -a .env 
+            echo "msowner=${SPKPRIV}" | tee -a .env
             echo "What is the Public SPK key for $ACCOUNT"
             read SPKPUB
             echo "SPKPUB=${SPKPUB}" | tee -a .env
+            echo "mspublic=${SPKPUB}" | tee -a .env
         elif [ $KEY_PROMPT = true ]
             then
                 KEY_PAIR=$(node generate_key_pair.js)
@@ -195,6 +199,8 @@ then
                 SPKPUB=$(echo $KEY_PAIR | cut -d " " -f2)
                 echo "SPKPRIV=${SPKPRIV}" | tee -a .env 
                 echo "SPKPUB=${SPKPUB}" | tee -a .env
+                echo "msowner=${SPKPRIV}" | tee -a .env
+                echo "mspublic=${SPKPUB}" | tee -a .env
     fi
     if [ -z "$API_PORT" ];
     then
@@ -217,9 +223,11 @@ else
     echo What is your domain name? -dlux.io
     read DOMAIN
     echo "DOMAIN=${DOMAIN}" | tee -a .env 
+    echo "domain=${DOMAIN}" | tee -a .env
     echo What is your HIVE account name? dlux-io
     read ACCOUNT
     echo "ACCOUNT=${ACCOUNT}" | tee -a .env
+    echo "account=${ACCOUNT}" | tee -a .env
     echo "API_PORT=5050" | tee -a .env 
     echo "ENDPOINT=127.0.0.1" | tee -a .env 
     echo "ENDPORT=5001" | tee -a .env
