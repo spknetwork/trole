@@ -135,24 +135,30 @@ then
         echo What is your domain name? -dlux.io
         read DOMAIN
         echo "DOMAIN=spk.${DOMAIN}" | tee -a .env
+        echo "domain=spk.${DOMAIN}" | tee -a .env
     else
         echo "DOMAIN=spk.${DOMAIN}"
+        echo "domain=spk.${DOMAIN}" | tee -a .env
     fi
     if [ -z "$ACCOUNT" ];
     then
         echo What is your HIVE account name? dlux-io
         read ACCOUNT
         echo "ACCOUNT=${ACCOUNT}" | tee -a .env
+        echo "account=${ACCOUNT}" | tee -a .env
     else
         echo "ACCOUNT=${ACCOUNT}"
+        echo "account=${ACCOUNT}"
     fi
     if [ -z "$ACTIVE" ];
     then
         echo "What is the ACTIVE key for $ACCOUNT"
         read ACTIVE
         echo "ACTIVE=${ACTIVE}" | tee -a .env
+        echo "active=${ACTIVE}" | tee -a .env
     else
         echo "ACTIVE=${ACTIVE}" | cut -b 1-10
+        echo "active=${ACTIVE}" | cut -b 1-10
     fi
     # For SPK Network Testnet
     echo "mirrorNet=true" | tee -a .env
