@@ -1,575 +1,910 @@
 #!/bin/bash
+set -euo pipefail  # Exit on error, undefined variables, pipe failures
 
-# Formatting STDOUT
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-RED='\033[0;31m'
-NC='\033[0m'
+# =============================================================================
+# TROLE INSTALLATION SCRIPT - IMPROVED VERSION
+# =============================================================================
+# This script installs and configures the Trole ecosystem including:
+# - IPFS (InterPlanetary File System)
+# - SPK Network Node (HoneyComb)
+# - Caddy web server with reverse proxy
+# - Proof of Access (PoA) services
+# - Go development environment
+# =============================================================================
 
-whoami=$(whoami)
-if [ $whoami = root ];
-then
-    echo -e "${RED}Can not install as root${NC}"
-    exit
-fi
+# Configuration
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly LOG_FILE="${SCRIPT_DIR}/install.log"
+readonly ENV_FILE="${SCRIPT_DIR}/.env"
+readonly BACKUP_DIR="${HOME}/.trole_backups"
 
-group=$(groups | grep $whoami)
-if [ -z "$group" ];
-then
-    echo -e "${RED}User $whoami is not a part of the group $whoami. Add user to group and run this script again.${NC}"
-    exit
-fi
+# Color codes for output formatting
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m' # No Color
 
-# version check
-source /etc/os-release
-if [ $ID_LIKE != 'debian' ];
-then
-    echo -e "${RED}${PRETTY_NAME}${NC} Installed"
-    echo -e "${RED}Ubuntu/Debian Required for Install Script${NC}"
-    exit
-fi
-echo -e "${YELLOW}This script may ask some questions after it installs it's first set of dependencies. Stay tuned.${NC}"
+# Version constraints
+readonly MIN_NODE_VERSION=14
+readonly REQUIRED_IPFS_VERSION="v0.26.0"
+readonly REQUIRED_GO_VERSION="1.19"
 
-source .env
-if [ -z "$DOMAIN" ];
-then
-    echo What is your domain name? -dlux.io
-    read DOMAIN
-    echo "DOMAIN=${DOMAIN}" | tee -a .env
-else
-    echo "DOMAIN=${DOMAIN}"
-fi
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
 
-sudo apt update &> /dev/null
-echo -e "${YELLOW}Ensure ipfs.${DOMAIN} DNS records point to this server.${NC}"
-echo "Install options:"
-while true; do
-    read -p "File Storage only?(No SPK Node and No Validator) " yn
-    case $yn in
-        [Yy]* ) BUILDSPK=false ; break;;
-        [Nn]* ) BUILDSPK=true ; break;;
-        * ) echo "Please answer yes or no.";;
+log() {
+    local level="$1"
+    shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    case "$level" in
+        INFO)  echo -e "${GREEN}[INFO]${NC} $message" | tee -a "$LOG_FILE" ;;
+        WARN)  echo -e "${YELLOW}[WARN]${NC} $message" | tee -a "$LOG_FILE" ;;
+        ERROR) echo -e "${RED}[ERROR]${NC} $message" | tee -a "$LOG_FILE" ;;
+        DEBUG) echo -e "${BLUE}[DEBUG]${NC} $message" | tee -a "$LOG_FILE" ;;
     esac
-done
-if [ $BUILDSPK = "true" ];
-then
-    echo -e "${YELLOW}Ensure spk.${DOMAIN} DNS records point to this server.${NC}"
-fi
+    echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+}
 
-while true; do
-    read -p "Register a Validator? " yn
-    case $yn in
-        [Yy]* ) BUILDVAL=true ; break;;
-        [Nn]* ) BUILDVAL=false ; break;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-if [ $BUILDVAL = "true" ];
-then
-    echo -e "${YELLOW}Ensure poa.${DOMAIN} DNS records point to this server.${NC}"
-fi
-# install node
+error_exit() {
+    log ERROR "$1"
+    exit "${2:-1}"
+}
 
-if ! command -v node > /dev/null
-then
-    curl -s https://deb.nodesource.com/setup_18.x | sudo bash
-    sudo apt install nodejs -y
-fi
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-if ! command -v npm > /dev/null
-then
-    sudo apt install npm -y
-fi
-
-# Install node for Trole
-
-NODE_VERSION=$(node -v | cut -f1 -d.)
-if [ ${NODE_VERSION/v} -lt 14 ];
-then
-    echo -e "${RED}NodeJS version 14 or higher is Required${NC}"
-    echo -e "Ensure node -v is version 14 or higher and run this script again."
-    exit
-fi
-
-# Install Trole
-
-NODE_PACKAGES=node_modules
-if test -d "$NODE_PACKAGES";
-then
-    echo -e "${GREEN}Trole is installed${NC}"
-else
-    echo -e "Installing Trole"
-    npm i
-fi
-
-# if ! command -v docker > /dev/null
-# then
-#     echo Installing Docker
-#     sudo apt install apt-transport-https ca-certificates curl software-properties-common -y
-#     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-#     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable" -y
-#     apt-cache policy docker-ce
-#     sudo apt install docker-ce -y
-# else
-#     echo -e "${GREEN}Docker installed${NC}"
-# fi
-
-# if ! command -v docker-compose > /dev/null
-# then
-#     echo Installing Docker Compose
-#     sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-#     sudo chmod +x /usr/local/bin/docker-compose
-# else
-#     echo -e "${GREEN}Docker-Compose installed${NC}"
-# fi
-
-# hive account active key will be required as well
-
-# Get configs
-if test -f .env;
-then
-    echo -e "${GREEN}Reading .env Variables${NC}"
-    source .env
-    if [ -z "$DOMAIN" ];
-    then
-        echo What is your domain name? -dlux.io
-        read DOMAIN
-        echo "DOMAIN=${DOMAIN}" | tee -a .env
-        echo "domain=${DOMAIN}" | tee -a .env
-    else
-        echo "DOMAIN=${DOMAIN}"
-        echo "domain=${DOMAIN}" | tee -a .env
-    fi
-    if [ -z "$ACCOUNT" ];
-    then
-        echo What is your HIVE account name? dlux-io
-        read ACCOUNT
-        echo "ACCOUNT=${ACCOUNT}" | tee -a .env
-        echo "account=${ACCOUNT}" | tee -a .env
-    else
-        echo "ACCOUNT=${ACCOUNT}"
-        echo "account=${ACCOUNT}"
-    fi
-    if [ -z "$ACTIVE" ];
-    then
-        echo "What is the ACTIVE key for $ACCOUNT"
-        read ACTIVE
-        echo "ACTIVE=${ACTIVE}" | tee -a .env
-        echo "active=${ACTIVE}" | tee -a .env
-    else
-        echo "ACTIVE=${ACTIVE}" | cut -b 1-10
-        echo "active=${ACTIVE}" | cut -b 1-10
-    fi
-    # For SPK Network Testnet
-    echo "mirrorNet=true" | tee -a .env
-
-    if [ -z "$SPKPRIV" ];
-    then
-        echo "Please input any existing SPK Keys, or generate a new keypair..."
-        while true; do
-            read -p "Do you have an existing SPK keypair? " yn
-            case $yn in
-                [Yy]* ) KEY_GEN=true ; break;;
-                [Nn]* ) KEY_PROMPT=true ; break;;
-                * ) echo "Please answer yes or no.";;
-            esac
-        done
-    else
-        KEY_PROMPT=false
-        echo "SPKPUB=${SPKPUB}"
-        echo "SPKPRIV=${SPKPRIV}" | cut -b 1-11
-        echo "mspublic=${SPKPUB}" | tee -a .env
-        echo "msowner=${SPKPRIV}" | tee -a .env
-    fi
-    if [ -z "$KEY_PROMPT" ];
-        then
-            echo "What is the Private SPK key for $ACCOUNT"
-            read SPKPRIV
-            echo "SPKPRIV=${SPKPRIV}" | tee -a .env 
-            echo "msowner=${SPKPRIV}" | tee -a .env
-            echo "What is the Public SPK key for $ACCOUNT"
-            read SPKPUB
-            echo "SPKPUB=${SPKPUB}" | tee -a .env
-            echo "mspublic=${SPKPUB}" | tee -a .env
-        elif [ $KEY_PROMPT = true ]
-            then
-                KEY_PAIR=$(node generate_key_pair.js)
-                echo $KEY_PAIR
-                SPKPRIV=$(echo $KEY_PAIR | cut -d " " -f1)
-                SPKPUB=$(echo $KEY_PAIR | cut -d " " -f2)
-                echo "SPKPRIV=${SPKPRIV}" | tee -a .env 
-                echo "SPKPUB=${SPKPUB}" | tee -a .env
-                echo "msowner=${SPKPRIV}" | tee -a .env
-                echo "mspublic=${SPKPUB}" | tee -a .env
-    fi
-    if [ -z "$API_PORT" ];
-    then
-        echo "API_PORT=5050" | tee -a .env 
-    fi
-    if [ -z "$ENDPORT" ];
-    then
-        echo "ENDPORT=5001" | tee -a .env 
-    fi
-    if [ -z "$ENDPOINT" ];
-    then
-        echo "ENDPOINT=127.0.0.1" | tee -a .env 
-    fi
-    if [ -z "$POA_URL" ];
-    then
-        echo "POA_URL=ws://localhost:8001" | tee -a .env 
-    fi
-else
-    echo -e "${YELLOW}No .env found${NC}"
-    echo What is your domain name? -dlux.io
-    read DOMAIN
-    echo "DOMAIN=${DOMAIN}" | tee -a .env 
-    echo "domain=${DOMAIN}" | tee -a .env
-    echo What is your HIVE account name? dlux-io
-    read ACCOUNT
-    echo "ACCOUNT=${ACCOUNT}" | tee -a .env
-    echo "account=${ACCOUNT}" | tee -a .env
-    echo "API_PORT=5050" | tee -a .env 
-    echo "ENDPOINT=127.0.0.1" | tee -a .env 
-    echo "ENDPORT=5001" | tee -a .env
-    echo "VALIDATOR=${BUILDVAL}" | tee -a .env
-    echo "ipfshost=127.0.0.1" | tee -a .env
-    echo "ipfsprotocol=http" | tee -a .env
-    echo "ipfsport=5001" | tee -a .env
-    echo "STARTURL=https://rpc.ecency.com/" | tee -a .env
-    echo "APIURL=https://rpc.ecency.com/" | tee -a .env
-fi
-source .env
-echo -e "${YELLOW}Ensure ipfs.${DOMAIN} is pointed to this server${NC}"
-
-# install ipfs
-if ! command -v ipfs > /dev/null
-then
-    echo -e "${YELLOW}Installing IPFS(KUBO)${NC}"
-    wget https://github.com/ipfs/kubo/releases/download/v0.26.0/kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
-    tar -xvzf kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
-    mv kubo ../kubo
-    sudo bash ../kubo/install.sh > /dev/null
-    rm kubo_v0.26.0_linux-amd64.tar.gz > /dev/null
-    # if ! command -v ipfs > /dev/null
-    # then
-    #     echo -e "${GREEN} IPFS installed succesfully${NC}"
-    # else
-    #     echo -e "${RED} IPFS install failed${NC}"
-    #     echo -e "${YELLOW}Try Installing IPFS manually and run this script again${NC}"
-    #     exit
-    # fi
-else
-    echo -e "${GREEN}IPFS is installed${NC}"
-fi
-IPFS_CONFIG_FILE=~/.ipfs/config
-if test -f "$IPFS_CONFIG_FILE";
-then
-    echo -e "${GREEN}IPFS config exists${NC}"
-else
-    echo -e "${GREEN}Initializing IPFS${NC}"
-    ipfs init --profile server > /dev/null
-fi
-
-echo 'Configuring IPFS cors'
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["GET", "POST"]'
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '["Authorization"]'
-ipfs config --json API.HTTPHeaders.Access-Control-Expose-Headers '["Location"]'
-ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
-
-IPFS_ID=$(ipfs id | grep ID | cut -d"\"" -f4 )
-if [ -z "$IPFSID" ];
-then
-    echo "IPFSID=${IPFS_ID}" | tee -a .env 
-elif [ $IPFS_ID != $IPFSID ];
-then
-    while true; do
-        read -p "Your IPFS ID seems to have changed. Replace IPFSID in .env(Yes / No)?" yn
-        case $yn in
-            [Yy]* ) REPLACE=true ; break;;
-            [Nn]* ) REPLACE=false ; break;;
-            * ) echo "Please answer yes or no.";;
-        esac
-    done
-    if [ $REPLACE = "true" ];
-        then
-        echo "IPFSID=${IPFS_ID}" | tee -a .env 
-    fi
-fi
-
-IPFS_SERVICE_FILE=/lib/systemd/system/ipfs.service
-if test -f "$IPFS_SERVICE_FILE";
-then
-    echo -e "${GREEN}IPFS service exists${NC}"
-else
-    echo -e "Building IPFS Service${NC}"
-    echo -e IPFSSERVICE="[Unit]\nDescription=ipfs daemon\n[Service]\nExecStart=/usr/local/bin/ipfs daemon --enable-pubsub-experiment --enable-gc\nRestart=always\nUser=${whoami}\nGroup=${whoami}\nEnvironment=”IPFS_PATH=/home/${whoami}/data/ipfs”\n[Install]\nWantedBy=multi-user.target" | sudo tee $IPFS_SERVICE_FILE    
-    sudo systemctl daemon-reload 
-fi
-
-ipfs_is_active=$(sudo systemctl is-active ipfs)
-if [ $ipfs_is_active = 'active' ];
-then
-    echo -e "${GREEN}IPFS daemon is active${NC}"
-else
-    echo 'Starting IPFS daemon'
-    sudo systemctl start ipfs
-fi
-
-ipfs_is_enabled=$(sudo systemctl is-enabled ipfs)
-if [ $ipfs_is_enabled = 'enabled' ];
-then
-    echo -e "${GREEN}IPFS service is set to auto-start${NC}"
-else
-    echo 'Enabling IPFS daemon auto-start'
-    sudo systemctl enable ipfs
-fi
-
-ipfs_is_active=$(sudo systemctl is-active ipfs)
-if [ $ipfs_is_active != 'active' ];
-then
-    echo -e "${RED}IPFS failed to start${NC}"
-    exit
-fi
-
-if [ $BUILDSPK = "true" ];
-then
-    SPK_SERVICE_FILE=/lib/systemd/system/spk.service
-    if test -f "$SPK_SERVICE_FILE";
-    then
-        echo -e "${GREEN}SPK service exists${NC}"
-    else
-        git clone https://github.com/spknetwork/honeycomb-spkcc.git ~/honeycomb
-        #install npm packages
-        cd ~/honeycomb
-        git checkout 1.2-poa
-        npm i
-        cp ~/trole/.env ~/honeycomb/.env
-        # append spk to DOMAIN
-        echo "DOMAIN=spk.${DOMAIN}" | tee -a .env
-        echo -e "Installing HoneyComb"
-        echo -e "[Unit]\nDescription=Spk Network Node\n[Service]\nWorkingDirectory=/home/${whoami}/honeycomb/\nExecStart=/usr/bin/node /home/${whoami}/honeycomb/index.mjs\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $SPK_SERVICE_FILE
-        sudo systemctl daemon-reload 
-    fi
-
-    spk_is_active=$(sudo systemctl is-active spk)
-    if [ $spk_is_active = 'active' ];
-    then
-        echo -e "${GREEN}SPK is running${NC}"
-    else
-        echo 'Starting SPK'
-        sudo systemctl start spk
-    fi
-
-    spk_is_enabled=$(sudo systemctl is-enabled spk)
-    if [ $spk_is_enabled = 'enabled' ];
-    then
-        echo -e "${GREEN}SPK is set to auto-start${NC}"
-    else
-        echo 'Enabling SPK auto-start'
-        sudo systemctl enable spk
-    fi
-
-    spk_is_active=$(sudo systemctl is-active spk)
-    if [ $spk_is_active != 'active' ];
-    then
-        echo -e "${RED}SPK failed to start${NC}"
-        exit
-    else
-        echo SPK is running
-    fi
-fi
-
-# install caddy
-
-CADDY_FILE=/etc/caddy/Caddyfile
-if ! command -v caddy > /dev/null
-then
-    echo -e "${YELLOW}Installing Caddy${NC}"
-    sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
-    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-    sudo apt update > /dev/null
-    sudo apt install caddy > /dev/null
-else
-    echo -e "${GREEN}Caddy is installed${NC}"
-fi
-
-CADDY_PATTERN="ipfs.${DOMAIN}"
-CADDY_CONFIG_EXISTS=$(grep $CADDY_PATTERN $CADDY_FILE 2> /dev/null)
-if [ -z "$CADDY_CONFIG_EXISTS" ];
-then
-    echo Building Caddyfile
-    echo -e "spk.${DOMAIN} {\n\treverse_proxy localhost:3001\n}\n\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}" | sudo tee -a $CADDY_FILE
-    sudo systemctl restart caddy
-else
-    echo Caddy config exists: Ensure
-    echo -e "spk.${DOMAIN} {\n\treverse_proxy localhost:3001\n}\n\npoa.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy localhost:8001 \n\treverse_proxy @ws localhost:8001\n}\nipfs.${DOMAIN} {\n\t@ws {\n\t\theader Connection *Upgrade*\n\t\theader Upgrade websocket\n\t}\n\treverse_proxy /upload* localhost:${API_PORT} \n\t\treverse_proxy /ipfs/* localhost:8080\n\treverse_proxy @ws localhost:8001\n\t\tlog {\n\t\toutput file /var/log/caddy/ipfs.${DOMAIN}-access.log {\n\t\t\troll_size 10mb\n\t\t\troll_keep 20\n\t\t\troll_keep_for 720h\n\t\t}\n\t}\n}"
-    echo -e "${YELLOW}Ensure Caddyfile contains the above configuration${NC}"
-fi
-
-caddy_is_active=$(sudo systemctl is-active caddy)
-if [ $caddy_is_active != 'active' ];
-then
-    echo -e "${RED}Caddy failed to start${NC}"
-    exit
-else
-    echo -e "${GREEN}Caddy is running${NC}"
-fi
-
-TROLE_SERVICE_FILE=/lib/systemd/system/trole.service
-if test -f "$TROLE_SERVICE_FILE";
-then
-    echo -e "${GREEN}Trole service exists${NC}"
-else
-    echo -e "Installing Trole"
-    mkdir /home/${whoami}/trole/db
-    echo -e TROLE_SERVICE="[Unit]\nDescription=trole\n[Service]\nWorkingDirectory=/home/${whoami}/trole\nExecStart=/usr/bin/node /home/${whoami}/trole/index.js\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $TROLE_SERVICE_FILE
-    sudo systemctl daemon-reload 
-fi
-
-trole_is_active=$(sudo systemctl is-active trole)
-if [ $trole_is_active = 'active' ];
-then
-    echo -e "${GREEN}Trole is running${NC}"
-else
-    echo 'Starting Trole'
-    sudo systemctl start trole
-fi
-
-trole_is_enabled=$(sudo systemctl is-enabled trole)
-if [ $trole_is_enabled = 'enabled' ];
-then
-    echo -e "${GREEN}Trole is set to auto-start${NC}"
-else
-    echo 'Enabling Trole auto-start'
-    sudo systemctl enable trole
-fi
-
-trole_is_active=$(sudo systemctl is-active trole)
-if [ $trole_is_active != 'active' ];
-then
-    echo -e "${RED}Trole failed to start${NC}"
-    exit
-else
-    echo Trole is running
-fi
-
-
-# PoA
-which_go=$(which go)
-if test -f "$which_go";
-then
-    echo -e "${GREEN}Go Installed${NC}"
-else
-    echo -e "Installing Go"
-    which_snap=$(which snap)
-    if test -f "$which_snap";
-    then
-        echo -e "${GREEN}Snap Installed${NC}"
-    else
-        echo -e "Installing Snap"
-        
-        sudo apt install snapd 
-    fi
-    sudo snap install go --classic 
-fi
-
-POA_SERVICE_FILE=/lib/systemd/system/poa.service
-if test -f "$POA_SERVICE_FILE";
-then
-    echo -e "${GREEN}PoA service exists${NC}"
-else
-    git clone https://github.com/spknetwork/proofofaccess.git ~/proofofaccess
-    cd ~/proofofaccess
-    mkdir -p ~/proofofaccess/data
-    /snap/bin/go build -o ~/proofofaccess/main ~/proofofaccess/main.go
-    #mv proofofaccess /home/${whoami}/proofofaccess
-    #rm -rf proofofaccess
-    echo -e "Installing Proof of Access"
-    echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 2 -username ${ACCOUNT} -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POA_SERVICE_FILE
-    sudo systemctl daemon-reload 
-fi
-
-poa_is_active=$(sudo systemctl is-active poa)
-if [ $poa_is_active = 'active' ];
-then
-    echo -e "${GREEN}PoA is running${NC}"
-else
-    echo 'Starting PoA'
-    sudo systemctl start poa
-fi
-
-poa_is_enabled=$(sudo systemctl is-enabled poa)
-if [ $poa_is_enabled = 'enabled' ];
-then
-    echo -e "${GREEN}PoA is set to auto-start${NC}"
-else
-    echo 'Enabling PoA auto-start'
-    sudo systemctl enable poa
-fi
-
-poa_is_active=$(sudo systemctl is-active poa)
-if [ $poa_is_active != 'active' ];
-then
-    echo -e "${RED}PoA failed to start${NC}"
-    exit
-else
-    echo PoA is running
-fi
-
-if [ $BUILDSPK = "true" ];
-then
-
-    POAV_SERVICE_FILE=/lib/systemd/system/poav.service
-    if test -f "$POAV_SERVICE_FILE";
-    then
-        echo -e "${GREEN}PoA Validator service exists${NC}"
-    else
-        #git clone https://github.com/pknetwork/proofofaccess.git ~/proofofaccess
-        #mv proofofaccess /home/${whoami}/proofofaccess
-        #rm -rf proofofaccess
-        #echo -e "Installing Proof of Access"
-        echo -e "[Unit]\nDescription=PoA\n[Service]\nWorkingDirectory=/home/${whoami}/\nExecStart=/home/${whoami}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001\nRestart=always\nUser=${whoami}\nGroup=${whoami}\n[Install]\nWantedBy=multi-user.target" | sudo tee $POAV_SERVICE_FILE
-        sudo systemctl daemon-reload 
+validate_environment() {
+    local whoami_user
+    whoami_user=$(whoami)
+    
+    if [[ "$whoami_user" == "root" ]]; then
+        error_exit "Cannot install as root user. Please run as a regular user with sudo privileges."
     fi
     
-    poav_is_active=$(sudo systemctl is-active poav)
-    if [ $poav_is_active = 'active' ];
-    then
-        echo -e "${GREEN}PoAV is running${NC}"
+    if ! groups | grep -q "$whoami_user"; then
+        error_exit "User $whoami_user is not part of group $whoami_user. Please add user to group and retry."
+    fi
+    
+    # Check OS compatibility
+    if [[ ! -f /etc/os-release ]]; then
+        error_exit "Cannot determine OS version. /etc/os-release not found."
+    fi
+    
+    source /etc/os-release
+    if [[ "${ID_LIKE:-}" != "debian" ]]; then
+        error_exit "This script requires Ubuntu/Debian. Detected: ${PRETTY_NAME:-Unknown}"
+    fi
+    
+    log INFO "Environment validation passed for user: $whoami_user on ${PRETTY_NAME:-Unknown OS}"
+}
+
+backup_existing_config() {
+    if [[ -f "$ENV_FILE" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        local backup_file="${BACKUP_DIR}/.env.backup.$(date +%Y%m%d_%H%M%S)"
+        cp "$ENV_FILE" "$backup_file"
+        log INFO "Backed up existing .env to $backup_file"
+    fi
+}
+
+create_directories() {
+    local dirs=("${HOME}/trole/db" "$BACKUP_DIR")
+    for dir in "${dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir"
+            log INFO "Created directory: $dir"
+        fi
+    done
+}
+
+# =============================================================================
+# INPUT VALIDATION AND COLLECTION
+# =============================================================================
+
+validate_domain() {
+    local domain="$1"
+    if [[ ! "$domain" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$ ]]; then
+        return 1
+    fi
+    return 0
+}
+
+validate_hive_account() {
+    local account="$1"
+    if [[ ! "$account" =~ ^[a-z][a-z0-9.-]{2,15}$ ]]; then
+        return 1
+    fi
+    return 0
+}
+
+validate_hive_key() {
+    local key="$1"
+    # Basic validation - Hive keys start with 5 and are 51-52 characters
+    if [[ ! "$key" =~ ^5[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{50,51}$ ]]; then
+        return 1
+    fi
+    return 0
+}
+
+prompt_user_input() {
+    local var_name="$1"
+    local prompt_text="$2"
+    local validator_func="${3:-}"
+    local hide_input="${4:-false}"
+    local input=""
+    
+    while true; do
+        if [[ "$hide_input" == "true" ]]; then
+            read -s -p "$prompt_text: " input
+            echo
+        else
+            read -p "$prompt_text: " input
+        fi
+        
+        if [[ -n "$input" ]]; then
+            if [[ -n "$validator_func" ]] && ! "$validator_func" "$input"; then
+                log WARN "Invalid input format. Please try again."
+                continue
+            fi
+            eval "$var_name='$input'"
+            break
+        else
+            log WARN "Input cannot be empty. Please try again."
+        fi
+    done
+}
+
+collect_configuration() {
+    log INFO "Collecting configuration parameters..."
+    
+    # Load existing environment if available
+    if [[ -f "$ENV_FILE" ]]; then
+        source "$ENV_FILE"
+        log INFO "Loaded existing configuration from .env"
+    fi
+    
+    # Domain configuration
+    if [[ -z "${DOMAIN:-}" ]]; then
+        prompt_user_input DOMAIN "Enter your domain name (e.g., example.com)" validate_domain
+        echo "DOMAIN=${DOMAIN}" >> "$ENV_FILE"
+    fi
+    log INFO "Domain: $DOMAIN"
+    
+    # Hive account configuration
+    if [[ -z "${ACCOUNT:-}" ]]; then
+        prompt_user_input ACCOUNT "Enter your HIVE account name" validate_hive_account
+        echo "ACCOUNT=${ACCOUNT}" >> "$ENV_FILE"
+    fi
+    log INFO "Account: $ACCOUNT"
+    
+    # Hive active key
+    if [[ -z "${ACTIVE:-}" ]]; then
+        prompt_user_input ACTIVE "Enter the ACTIVE key for $ACCOUNT" validate_hive_key true
+        echo "ACTIVE=${ACTIVE}" >> "$ENV_FILE"
+    fi
+    log INFO "Active key configured (hidden)"
+    
+    # Service configuration prompts
+    if [[ -z "${BUILDSPK:-}" ]]; then
+        while true; do
+            read -p "Install SPK Node and Validator? (y/n): " -n 1 -r
+            echo
+            case $REPLY in
+                [Yy]*) BUILDSPK=true; break;;
+                [Nn]*) BUILDSPK=false; break;;
+                *) log WARN "Please answer y or n.";;
+            esac
+        done
+        echo "BUILDSPK=${BUILDSPK}" >> "$ENV_FILE"
+    fi
+    
+    if [[ -z "${BUILDVAL:-}" ]]; then
+        while true; do
+            read -p "Register as Validator? (y/n): " -n 1 -r
+            echo
+            case $REPLY in
+                [Yy]*) BUILDVAL=true; break;;
+                [Nn]*) BUILDVAL=false; break;;
+                *) log WARN "Please answer y or n.";;
+            esac
+        done
+        echo "BUILDVAL=${BUILDVAL}" >> "$ENV_FILE"
+    fi
+    
+    # Set default values for other configuration
+    {
+        echo "domain=${DOMAIN}"
+        echo "account=${ACCOUNT}"
+        echo "active=${ACTIVE}"
+        echo "mirrorNet=true"
+        echo "API_PORT=${API_PORT:-5050}"
+        echo "ENDPOINT=${ENDPOINT:-127.0.0.1}"
+        echo "ENDPORT=${ENDPORT:-5001}"
+        echo "POA_URL=${POA_URL:-ws://localhost:8001}"
+        echo "VALIDATOR=${BUILDVAL}"
+        echo "ipfshost=127.0.0.1"
+        echo "ipfsprotocol=http"
+        echo "ipfsport=5001"
+        echo "STARTURL=https://rpc.ecency.com/"
+        echo "APIURL=https://rpc.ecency.com/"
+    } >> "$ENV_FILE"
+    
+    # Handle SPK keys
+    handle_spk_keys
+    
+    log INFO "Configuration collection completed"
+}
+
+handle_spk_keys() {
+    if [[ -z "${SPKPRIV:-}" ]]; then
+        while true; do
+            read -p "Do you have existing SPK keypair? (y/n): " -n 1 -r
+            echo
+            case $REPLY in
+                [Yy]*)
+                    prompt_user_input SPKPRIV "Enter your SPK private key" "" true
+                    prompt_user_input SPKPUB "Enter your SPK public key"
+                    break;;
+                [Nn]*)
+                    log INFO "Generating new SPK keypair..."
+                    if [[ -f "generate_key_pair.js" ]]; then
+                        local key_pair
+                        key_pair=$(node generate_key_pair.js)
+                        SPKPRIV=$(echo "$key_pair" | cut -d " " -f1)
+                        SPKPUB=$(echo "$key_pair" | cut -d " " -f2)
+                        log INFO "Generated new SPK keypair"
+                    else
+                        error_exit "generate_key_pair.js not found. Cannot generate SPK keys."
+                    fi
+                    break;;
+                *) log WARN "Please answer y or n.";;
+            esac
+        done
+        
+        {
+            echo "SPKPRIV=${SPKPRIV}"
+            echo "SPKPUB=${SPKPUB}"
+            echo "msowner=${SPKPRIV}"
+            echo "mspublic=${SPKPUB}"
+        } >> "$ENV_FILE"
+    fi
+}
+
+# =============================================================================
+# SYSTEM DEPENDENCIES INSTALLATION
+# =============================================================================
+
+update_system() {
+    log INFO "Updating system packages..."
+    if ! sudo apt update >/dev/null; then
+        error_exit "Failed to update package lists"
+    fi
+    log INFO "System packages updated successfully"
+}
+
+install_nodejs() {
+    if command_exists node; then
+        local node_version
+        node_version=$(node -v | cut -f1 -d. | sed 's/v//')
+        if [[ "$node_version" -ge "$MIN_NODE_VERSION" ]]; then
+            log INFO "Node.js $(node -v) is already installed and meets requirements"
+            return 0
+        else
+            log WARN "Node.js version $node_version is below minimum required version $MIN_NODE_VERSION"
+        fi
+    fi
+    
+    log INFO "Installing Node.js..."
+    if ! curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -; then
+        error_exit "Failed to add Node.js repository"
+    fi
+    
+    if ! sudo apt install -y nodejs; then
+        error_exit "Failed to install Node.js"
+    fi
+    
+    # Verify installation
+    if ! command_exists node || ! command_exists npm; then
+        error_exit "Node.js installation verification failed"
+    fi
+    
+    log INFO "Node.js $(node -v) and npm $(npm -v) installed successfully"
+}
+
+install_trole_dependencies() {
+    log INFO "Installing Trole Node.js dependencies..."
+    
+    if [[ ! -f "package.json" ]]; then
+        error_exit "package.json not found. Please run this script from the Trole directory."
+    fi
+    
+    if [[ -d "node_modules" ]]; then
+        log INFO "Node modules already exist, updating..."
+        if ! npm update; then
+            log WARN "npm update failed, trying fresh install..."
+            rm -rf node_modules package-lock.json
+        fi
+    fi
+    
+    if [[ ! -d "node_modules" ]]; then
+        if ! npm install; then
+            error_exit "Failed to install Node.js dependencies"
+        fi
+    fi
+    
+    log INFO "Trole dependencies installed successfully"
+}
+
+install_ipfs() {
+    if command_exists ipfs; then
+        local ipfs_version
+        ipfs_version=$(ipfs version --number)
+        log INFO "IPFS $ipfs_version is already installed"
+        return 0
+    fi
+    
+    log INFO "Installing IPFS (Kubo)..."
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    
+    pushd "$temp_dir" >/dev/null || error_exit "Failed to change to temporary directory"
+    
+    if ! wget -q "https://github.com/ipfs/kubo/releases/download/${REQUIRED_IPFS_VERSION}/kubo_${REQUIRED_IPFS_VERSION}_linux-amd64.tar.gz"; then
+        error_exit "Failed to download IPFS"
+    fi
+    
+    if ! tar -xzf "kubo_${REQUIRED_IPFS_VERSION}_linux-amd64.tar.gz"; then
+        error_exit "Failed to extract IPFS archive"
+    fi
+    
+    if ! sudo bash kubo/install.sh >/dev/null; then
+        error_exit "Failed to install IPFS"
+    fi
+    
+    popd >/dev/null
+    rm -rf "$temp_dir"
+    
+    if ! command_exists ipfs; then
+        error_exit "IPFS installation verification failed"
+    fi
+    
+    log INFO "IPFS $(ipfs version --number) installed successfully"
+}
+
+configure_ipfs() {
+    local ipfs_config_file="${HOME}/.ipfs/config"
+    
+    if [[ ! -f "$ipfs_config_file" ]]; then
+        log INFO "Initializing IPFS..."
+        if ! ipfs init --profile server >/dev/null; then
+            error_exit "Failed to initialize IPFS"
+        fi
     else
-        echo 'Starting PoAV'
-        sudo systemctl start poav
+        log INFO "IPFS configuration already exists"
     fi
+    
+    log INFO "Configuring IPFS CORS settings..."
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '["*"]'
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '["GET", "POST"]'
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '["Authorization"]'
+    ipfs config --json API.HTTPHeaders.Access-Control-Expose-Headers '["Location"]'
+    ipfs config --json API.HTTPHeaders.Access-Control-Allow-Credentials '["true"]'
+    
+    # Get and store IPFS ID
+    local ipfs_id
+    ipfs_id=$(ipfs id --format="<id>")
+    
+    if [[ -z "${IPFSID:-}" ]]; then
+        echo "IPFSID=${ipfs_id}" >> "$ENV_FILE"
+        log INFO "IPFS ID stored: $ipfs_id"
+    elif [[ "$ipfs_id" != "$IPFSID" ]]; then
+        log WARN "IPFS ID has changed from $IPFSID to $ipfs_id"
+        while true; do
+            read -p "Update IPFSID in .env? (y/n): " -n 1 -r
+            echo
+            case $REPLY in
+                [Yy]*) 
+                    sed -i "s/IPFSID=.*/IPFSID=${ipfs_id}/" "$ENV_FILE"
+                    log INFO "IPFS ID updated in .env"
+                    break;;
+                [Nn]*) 
+                    log INFO "IPFS ID not updated"
+                    break;;
+                *) log WARN "Please answer y or n.";;
+            esac
+        done
+    fi
+}
 
-    if [ $BUILDVAL = "true" ];
-    then
-        poav_is_enabled=$(sudo systemctl is-enabled poav)
-        if [ $poav_is_enabled = 'enabled' ];
-        then
-            echo -e "${GREEN}PoAV is set to auto-start${NC}"
-        else
-            echo 'Enabling PoAV auto-start'
-            sudo systemctl enable poav
-        fi
-
-        poav_is_active=$(sudo systemctl is-active poav)
-        if [ $poav_is_active != 'active' ];
-        then
-            echo -e "${RED}PoAV failed to start${NC}"
-            exit
-        else
-            echo PoAV is running
+install_go() {
+    if command_exists go; then
+        log INFO "Go $(go version | awk '{print $3}') is already installed"
+        return 0
+    fi
+    
+    log INFO "Installing Go via Snap..."
+    
+    if ! command_exists snap; then
+        log INFO "Installing Snap package manager..."
+        if ! sudo apt install -y snapd; then
+            error_exit "Failed to install Snap"
         fi
     fi
+    
+    if ! sudo snap install go --classic; then
+        error_exit "Failed to install Go"
+    fi
+    
+    # Add snap bin to PATH if not already there
+    if [[ ":$PATH:" != *":/snap/bin:"* ]]; then
+        echo 'export PATH="/snap/bin:$PATH"' >> "${HOME}/.bashrc"
+        export PATH="/snap/bin:$PATH"
+    fi
+    
+    if ! command_exists go; then
+        error_exit "Go installation verification failed"
+    fi
+    
+    log INFO "Go $(go version | awk '{print $3}') installed successfully"
+}
+
+install_caddy() {
+    if command_exists caddy; then
+        log INFO "Caddy is already installed"
+        return 0
+    fi
+    
+    log INFO "Installing Caddy web server..."
+    
+    if ! sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https; then
+        error_exit "Failed to install Caddy prerequisites"
+    fi
+    
+    if ! curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg; then
+        error_exit "Failed to add Caddy GPG key"
+    fi
+    
+    if ! curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null; then
+        error_exit "Failed to add Caddy repository"
+    fi
+    
+    if ! sudo apt update >/dev/null; then
+        error_exit "Failed to update package lists after adding Caddy repository"
+    fi
+    
+    if ! sudo apt install -y caddy; then
+        error_exit "Failed to install Caddy"
+    fi
+    
+    log INFO "Caddy installed successfully"
+}
+
+# =============================================================================
+# SERVICE MANAGEMENT
+# =============================================================================
+
+create_systemd_service() {
+    local service_name="$1"
+    local service_file="/lib/systemd/system/${service_name}.service"
+    local service_content="$2"
+    
+    if [[ -f "$service_file" ]]; then
+        log INFO "$service_name service already exists"
+        return 0
+    fi
+    
+    log INFO "Creating $service_name systemd service..."
+    echo -e "$service_content" | sudo tee "$service_file" >/dev/null
+    sudo systemctl daemon-reload
+    log INFO "$service_name service created successfully"
+}
+
+manage_service() {
+    local service_name="$1"
+    local enable_service="${2:-true}"
+    
+    # Start service if not active
+    if ! sudo systemctl is-active --quiet "$service_name"; then
+        log INFO "Starting $service_name service..."
+        if ! sudo systemctl start "$service_name"; then
+            error_exit "$service_name service failed to start"
+        fi
+    else
+        log INFO "$service_name service is already running"
+    fi
+    
+    # Enable service for auto-start if requested
+    if [[ "$enable_service" == "true" ]]; then
+        if ! sudo systemctl is-enabled --quiet "$service_name"; then
+            log INFO "Enabling $service_name for auto-start..."
+            sudo systemctl enable "$service_name"
+        else
+            log INFO "$service_name is already enabled for auto-start"
+        fi
+    fi
+    
+    # Verify service is running
+    if ! sudo systemctl is-active --quiet "$service_name"; then
+        error_exit "$service_name service is not running after start attempt"
+    fi
+    
+    log INFO "$service_name service is running successfully"
+}
+
+setup_ipfs_service() {
+    local whoami_user
+    whoami_user=$(whoami)
+    
+    local service_content="[Unit]
+Description=IPFS daemon
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/ipfs daemon --enable-pubsub-experiment --enable-gc
+Restart=on-failure
+RestartSec=5
+User=${whoami_user}
+Group=${whoami_user}
+Environment=\"IPFS_PATH=/home/${whoami_user}/.ipfs\"
+
+[Install]
+WantedBy=multi-user.target"
+    
+    create_systemd_service "ipfs" "$service_content"
+    manage_service "ipfs"
+}
+
+setup_trole_service() {
+    local whoami_user
+    whoami_user=$(whoami)
+    
+    local service_content="[Unit]
+Description=Trole Node
+After=network.target ipfs.service
+Requires=ipfs.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/${whoami_user}/trole
+ExecStart=/usr/bin/node /home/${whoami_user}/trole/index.js
+Restart=on-failure
+RestartSec=5
+User=${whoami_user}
+Group=${whoami_user}
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target"
+    
+    create_systemd_service "trole" "$service_content"
+    manage_service "trole"
+}
+
+setup_spk_service() {
+    if [[ "${BUILDSPK:-false}" != "true" ]]; then
+        log INFO "Skipping SPK service setup (not requested)"
+        return 0
+    fi
+    
+    local whoami_user
+    whoami_user=$(whoami)
+    local honeycomb_dir="${HOME}/honeycomb"
+    
+    # Clone and setup honeycomb if not exists
+    if [[ ! -d "$honeycomb_dir" ]]; then
+        log INFO "Cloning HoneyComb SPK node..."
+        if ! git clone https://github.com/spknetwork/honeycomb-spkcc.git "$honeycomb_dir"; then
+            error_exit "Failed to clone HoneyComb repository"
+        fi
+        
+        pushd "$honeycomb_dir" >/dev/null
+        if ! git checkout 1.2-poa; then
+            log WARN "Failed to checkout 1.2-poa branch, using default"
+        fi
+        
+        if ! npm install; then
+            error_exit "Failed to install HoneyComb dependencies"
+        fi
+        
+        # Copy environment file
+        cp "$ENV_FILE" "${honeycomb_dir}/.env"
+        echo "DOMAIN=spk.${DOMAIN}" >> "${honeycomb_dir}/.env"
+        
+        popd >/dev/null
+    fi
+    
+    local service_content="[Unit]
+Description=SPK Network Node (HoneyComb)
+After=network.target ipfs.service
+Requires=ipfs.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/${whoami_user}/honeycomb
+ExecStart=/usr/bin/node /home/${whoami_user}/honeycomb/index.mjs
+Restart=on-failure
+RestartSec=5
+User=${whoami_user}
+Group=${whoami_user}
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target"
+    
+    create_systemd_service "spk" "$service_content"
+    manage_service "spk"
+}
+
+setup_poa_service() {
+    local whoami_user
+    whoami_user=$(whoami)
+    local poa_dir="${HOME}/proofofaccess"
+    
+    # Clone and build PoA if not exists
+    if [[ ! -d "$poa_dir" ]]; then
+        log INFO "Cloning and building Proof of Access..."
+        if ! git clone https://github.com/spknetwork/proofofaccess.git "$poa_dir"; then
+            error_exit "Failed to clone Proof of Access repository"
+        fi
+        
+        pushd "$poa_dir" >/dev/null
+        mkdir -p data
+        
+        # Build the Go application
+        if ! /snap/bin/go build -o main main.go; then
+            error_exit "Failed to build Proof of Access"
+        fi
+        
+        popd >/dev/null
+    fi
+    
+    local service_content="[Unit]
+Description=Proof of Access Node
+After=network.target ipfs.service
+Requires=ipfs.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/${whoami_user}
+ExecStart=/home/${whoami_user}/proofofaccess/main -node 2 -username ${ACCOUNT} -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001
+Restart=on-failure
+RestartSec=5
+User=${whoami_user}
+Group=${whoami_user}
+
+[Install]
+WantedBy=multi-user.target"
+    
+    create_systemd_service "poa" "$service_content"
+    manage_service "poa"
+    
+    # Setup validator service if requested
+    if [[ "${BUILDSPK:-false}" == "true" ]]; then
+        setup_poav_service
+    fi
+}
+
+setup_poav_service() {
+    local whoami_user
+    whoami_user=$(whoami)
+    
+    local service_content="[Unit]
+Description=Proof of Access Validator
+After=network.target ipfs.service poa.service
+Requires=ipfs.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/${whoami_user}
+ExecStart=/home/${whoami_user}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001
+Restart=on-failure
+RestartSec=5
+User=${whoami_user}
+Group=${whoami_user}
+
+[Install]
+WantedBy=multi-user.target"
+    
+    create_systemd_service "poav" "$service_content"
+    
+    # Only enable if validator mode is requested
+    local enable_validator="${BUILDVAL:-false}"
+    manage_service "poav" "$enable_validator"
+}
+
+# =============================================================================
+# CADDY CONFIGURATION
+# =============================================================================
+
+configure_caddy() {
+    local caddy_file="/etc/caddy/Caddyfile"
+    local caddy_pattern="ipfs.${DOMAIN}"
+    
+    if grep -q "$caddy_pattern" "$caddy_file" 2>/dev/null; then
+        log INFO "Caddy configuration already exists for $DOMAIN"
+        log WARN "To update Caddy config, remove existing config from $caddy_file and run script again"
+        return 0
+    fi
+    
+    if [[ ! -f "Caddyfile.template" ]]; then
+        error_exit "Caddyfile.template not found. Cannot configure Caddy."
+    fi
+    
+    log INFO "Configuring Caddy with domain $DOMAIN..."
+    
+    # Generate Caddyfile from template
+    if ! sed -e "s/{{DOMAIN}}/${DOMAIN}/g" -e "s/{{API_PORT}}/${API_PORT:-5050}/g" Caddyfile.template | sudo tee -a "$caddy_file" >/dev/null; then
+        error_exit "Failed to update Caddy configuration"
+    fi
+    
+    # Test Caddy configuration
+    if ! sudo caddy validate --config "$caddy_file"; then
+        error_exit "Caddy configuration validation failed"
+    fi
+    
+    # Restart Caddy to apply new configuration
+    if ! sudo systemctl restart caddy; then
+        error_exit "Failed to restart Caddy"
+    fi
+    
+    log INFO "Caddy configured successfully"
+}
+
+# =============================================================================
+# NODE REGISTRATION
+# =============================================================================
+
+register_node() {
+    if [[ ! -f "register_node.js" ]]; then
+        log WARN "register_node.js not found. Skipping node registration."
+        return 0
+    fi
+    
+    log INFO "Registering node services..."
+    
+    # Ensure all required services are running before registration
+    local required_services=("ipfs" "trole")
+    for service in "${required_services[@]}"; do
+        if ! sudo systemctl is-active --quiet "$service"; then
+            log WARN "$service is not running. Registration may fail."
+        fi
+    done
+    
+    # Run registration with timeout
+    if timeout 60 node register_node.js; then
+        log INFO "Node registration completed successfully"
+    else
+        log WARN "Node registration failed or timed out"
+    fi
+}
+
+# =============================================================================
+# CLEANUP AND FINALIZATION
+# =============================================================================
+
+cleanup_temp_files() {
+    log INFO "Cleaning up temporary files..."
+    
+    # Remove any temporary archives
+    find "$SCRIPT_DIR" -name "*.tar.gz" -mtime +1 -delete 2>/dev/null || true
+    
+    # Remove old log files (keep last 10)
+    find "$SCRIPT_DIR" -name "install.log.*" -type f | sort -r | tail -n +11 | xargs rm -f 2>/dev/null || true
+    
+    log INFO "Cleanup completed"
+}
+
+display_final_status() {
+    log INFO "Installation completed successfully!"
+    echo
+    echo -e "${GREEN}=== TROLE INSTALLATION SUMMARY ===${NC}"
+    echo -e "${BLUE}Domain:${NC} $DOMAIN"
+    echo -e "${BLUE}Account:${NC} $ACCOUNT"
+    echo -e "${BLUE}Services installed:${NC}"
+    
+    local services=("ipfs" "trole")
+    if [[ "${BUILDSPK:-false}" == "true" ]]; then
+        services+=("spk")
+    fi
+    services+=("poa")
+    if [[ "${BUILDSPK:-false}" == "true" ]]; then
+        services+=("poav")
+    fi
+    services+=("caddy")
+    
+    for service in "${services[@]}"; do
+        if sudo systemctl is-active --quiet "$service"; then
+            echo -e "${GREEN}  ✓ $service${NC}"
+        else
+            echo -e "${RED}  ✗ $service${NC}"
+        fi
+    done
+    
+    echo
+    echo -e "${YELLOW}DNS Requirements:${NC}"
+    echo -e "  - ipfs.$DOMAIN should point to this server"
+    if [[ "${BUILDSPK:-false}" == "true" ]]; then
+        echo -e "  - spk.$DOMAIN should point to this server"
+    fi
+    if [[ "${BUILDVAL:-false}" == "true" ]]; then
+        echo -e "  - poa.$DOMAIN should point to this server"
+    fi
+    
+    echo
+    echo -e "${YELLOW}Important:${NC}"
+    echo -e "  - Your .env file contains sensitive keys"
+    echo -e "  - A backup has been created in: $BACKUP_DIR"
+    echo -e "  - Keep your .env file secure and backed up"
+    echo -e "  - Installation log saved to: $LOG_FILE"
+    echo
+}
+
+# =============================================================================
+# MAIN INSTALLATION FLOW
+# =============================================================================
+
+main() {
+    log INFO "Starting Trole installation script..."
+    log INFO "Log file: $LOG_FILE"
+    
+    # Pre-installation checks
+    validate_environment
+    backup_existing_config
+    create_directories
+    
+    # Collect configuration
+    collect_configuration
+    source "$ENV_FILE"  # Reload updated environment
+    
+    # System updates and dependencies
+    update_system
+    install_nodejs
+    install_trole_dependencies
+    install_ipfs
+    configure_ipfs
+    install_go
+    install_caddy
+    
+    # Service setup
+    setup_ipfs_service
+    setup_trole_service
+    setup_spk_service
+    setup_poa_service
+    
+    # Configuration
+    configure_caddy
+    
+    # Registration and finalization
+    register_node
+    cleanup_temp_files
+    display_final_status
+    
+    log INFO "Trole installation completed successfully!"
+}
+
+# =============================================================================
+# SCRIPT EXECUTION
+# =============================================================================
+
+# Create log file and redirect stderr
+exec 2> >(tee -a "$LOG_FILE")
+
+# Check if running as root (should exit early)
+if [[ $EUID -eq 0 ]]; then
+    error_exit "This script should not be run as root. Please run as a regular user with sudo privileges."
 fi
 
-echo -e "${GREEN}Registering Services${NC}"
+# Handle script interruption
+trap 'log ERROR "Installation interrupted by user"; exit 130' INT
+trap 'log ERROR "Installation failed unexpectedly on line $LINENO"; exit 1' ERR
 
-cd ~/trole
-node register_node.js
+# Run main installation
+main "$@"
 
-echo -e "${YELLOW}Ensure you have made a backup of your .env file. It contains your keys and can't be recovered if lost.${NC}"
-
-exit
+exit 0

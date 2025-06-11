@@ -1,8 +1,8 @@
-version: '2.1'
+version: '3.8'
 services:
   ipfs:
-    image: ipfs/kubo:latest
-    restart: always
+    image: ipfs/kubo:v0.26.0  # Pin to specific version
+    restart: unless-stopped
     environment:
       - IPFS_PATH=/data/ipfs
     ports:
@@ -13,20 +13,43 @@ services:
     volumes:
       - ipfs:/data/ipfs
     networks:
-      - default
+      - trole_network
     container_name: ipfs
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/ipfs/QmUNLLsPACCz1vLxQVkXqqLX5R1X345qqfHbsf67hvA3Nn"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
   poa:
     image: disregardfiat/poa:0.0.2
-    restart: always
+    restart: unless-stopped
     command: ["./main", "-node", "2", "-username", "${ACCOUNT}", "-WS_PORT=8002", "-useWS=true", "-honeycomb=true", "-IPFS_PORT=5001", "-validators", "https://spktest.dlux.io/services/VAL"]
     ports:
       - "8002-8003:8000-8001"
     networks:
-      - default
+      - trole_network
     container_name: poa
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
   api:
-    build: .
-    restart: always
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       - PORT=5050
       - ENDPOINT=ipfs
@@ -35,20 +58,38 @@ services:
     ports: 
       - "5050:5050"
     volumes:
-      - ./.env:/.env
-      - db:/db/
+      - ./.env:/.env:ro  # Read-only mount
+      - db:/app/db/
     networks:
-      - default
+      - trole_network
+    depends_on:
+      ipfs:
+        condition: service_healthy
     logging:
+      driver: "json-file"
       options:
-        max-size: "2m"
+        max-size: "10m"
         max-file: "3"
-    stdin_open: true
-    tty: true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 volumes:
   ipfs:
     driver: local
   db:
     driver: local
 networks:
-  default:
+  trole_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

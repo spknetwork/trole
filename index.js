@@ -4,6 +4,7 @@ const cors = require("cors");
 const api = express();
 var http = require("http").Server(api);
 const API = require("./api");
+const { ipfsProxyRoute, ipfsHealthRoute, ipfsStatsRoute, ipfsHealthPinRoute } = require("./cdn");
 
 api.use(express.json())
 api.use(cors())
@@ -16,6 +17,10 @@ api.get("/storage-stats", API.storageStats);
 api.get("/flag-qry/:cid", API.flags)
 api.get("/flag", API.flag)
 api.get("/contracts", API.contracts)
+api.get("/ipfs/:cid", ipfsProxyRoute)
+api.get("/ipfs-health", ipfsHealthRoute)
+api.get("/ipfs-stats", ipfsStatsRoute)
+api.post("/ipfs-health-pin", ipfsHealthPinRoute)
 if (config.promo_contract) api.get("/upload-promo-contract", API.promo_contract)
 api.use(express.static("www"));
 

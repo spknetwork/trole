@@ -10,12 +10,14 @@ const active_key = ENV.ACTIVE || ''
 const posting_pub = ENV.POSTING_PUB || ''
 const ENDPOINT = ENV.ENDPOINT || "127.0.0.1";
 const ENDPORT = ENV.ENDPORT || 5001
+const IPFS_GATEWAY_PORT = ENV.IPFS_GATEWAY_PORT || 8080
 const ENDPROTOCOL = ENV.ENDPROTOCOL || "http"
+const IPFS_PROXY_API = ENV.IPFS_PROXY_API || `${ENDPROTOCOL}://${ENDPOINT}:${IPFS_GATEWAY_PORT}`;
 const HIVE_API = ENV.HIVE_API || "https://api.hive.blog";
 const SPK_API = ENV.SPK_API || "https://spktest.dlux.io";
 const flex = ENV.FLEX || 10000000 //upload temp space limit
 const docker = ENV.DOCKER || false
-const maxJsonLength = ENV.MAX_JSON_LENGTH || 8000
+const maxJsonLength = ENV.MAX_JSON_LENGTH || 7800
 const chunkSize = ENV.CHUNK_SIZE || 7800
 const promo_contract = ENV.PROMO_CONTRACT || false
 
@@ -87,7 +89,8 @@ const config = {
   docker,
   maxJsonLength,
   chunkSize,
-  promo_contract
+  promo_contract,
+  IPFS_PROXY_API
 };
 
 module.exports = config
