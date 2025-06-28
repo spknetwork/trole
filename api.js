@@ -968,15 +968,54 @@ exports.arrange = (req, res, next) => {
               j = JSON.parse(j)
               const found = j.sig == sig ? true : false  // Check if signature already exists
               
+              // Check if the CID list has changed (different files being uploaded)
+              const existingFiles = j.df ? j.df.join(',') : ''
+              const newFiles = files.join(',')
+              const filesChanged = existingFiles !== newFiles
+              
+              // If files have changed, clean up old uploads and reset contract state
+              if (filesChanged && j.df) {
+                console.log('File list changed, cleaning up old uploads...')
+                console.log('Old files:', existingFiles)
+                console.log('New files:', newFiles)
+                
+                // Remove old placeholder files
+                for (var i = 0; i < j.df.length; i++) {
+                  if (j.df[i]) {
+                    const oldFilePath = getFilePath(j.df[i], contract)
+                    try {
+                      fs.rmSync(oldFilePath)
+                      console.log('Removed old file:', oldFilePath)
+                    } catch (e) {
+                      // File might not exist, which is fine
+                      console.log('Could not remove old file (may not exist):', oldFilePath)
+                    }
+                  }
+                }
+                
+                // Reset contract upload state
+                j.t = 0  // Reset total uploaded size
+                j.u = 0  // Reset upload progress
+                
+                // Remove old file size tracking
+                if (j.df) {
+                  for (var i = 0; i < j.df.length; i++) {
+                    if (j.df[i] && j[j.df[i]]) {
+                      delete j[j.df[i]]
+                    }
+                  }
+                }
+              }
+              
               // Update contract with file and user information
               j.s = r[1][1].a,                          // Storage amount
-                j.t = 0,                                // Total uploaded size
+                j.t = filesChanged ? 0 : (j.t || 0),   // Reset total if files changed
                 j.fo = r[1][1].t,                       // File owner
                 j.co = r[1][1].b,                       // Contract owner
                 j.f = r[1][1].f,                        // From field
                 j.df = files,                           // Data files array
                 j.n = cids.split(',').length - 1,       // Number of files
-                j.u = 0,                                // Upload progress
+                j.u = filesChanged ? 0 : (j.u || 0),   // Reset progress if files changed
                 j.e = r[1][1].e ? r[1][1].e.split(':')[0] : '',  // Expiration
                 j.sig = sig,                            // User signature
                 j.key = r[0][1],                        // Public key
@@ -996,8 +1035,8 @@ exports.arrange = (req, res, next) => {
                 const isValid = verifySig(sigMsg, sig, r[0][1]);
                 
                 if (isValid) {
-                  // Create placeholder files for upload if not already found
-                  if (!found) {
+                  // Create placeholder files for upload if files have changed or it's a new contract
+                  if (!found || filesChanged) {
                     for (var i = 1; i < CIDs.length; i++) {
                       checkThenBuild(getFilePath(CIDs[i], contract));
                     }
