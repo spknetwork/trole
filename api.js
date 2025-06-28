@@ -740,12 +740,35 @@ exports.upload = (req, res, next) => {
           })
       })
       .catch(err => {
-        console.log('No File Match', err);
-        res
-          .status(401)
-          .json({
-            message: 'No file with such credentials'
-          });
+        console.log('File not found, checking if this is a valid first chunk...', err);
+        
+        // If file doesn't exist and this is the first chunk (starts at 0), create it
+        if (rangeStart === 0) {
+          console.log('Creating new file for first chunk:', filePath);
+          try {
+            // Create the file and write the first chunk
+            file
+              .pipe(fs.createWriteStream(filePath, { flags: 'w' }))
+              .on('error', (e) => {
+                console.error('failed upload', e);
+                res.sendStatus(500);
+              })
+              .on('close', () => {
+                console.log('First chunk written successfully')
+              })
+          } catch (createErr) {
+            console.error('Failed to create file for upload:', createErr);
+            res.status(500).json({ message: 'Failed to create upload file' });
+          }
+        } else {
+          // File doesn't exist and this isn't the first chunk - error
+          console.log('No File Match for non-first chunk', err);
+          res
+            .status(401)
+            .json({
+              message: 'No file with such credentials'
+            });
+        }
       })
   });
 
@@ -1033,15 +1056,30 @@ exports.arrange = (req, res, next) => {
                 
                 // Verify digital signature
                 const isValid = verifySig(sigMsg, sig, r[0][1]);
+                console.log(`Signature verification result: ${isValid}`);
                 
                 if (isValid) {
                   // Create placeholder files for upload if files have changed or it's a new contract
                   if (!found || filesChanged) {
+                    // Ensure uploads directory exists
+                    try {
+                      fs.ensureDirSync('./uploads/');
+                    } catch (e) {
+                      console.log('Uploads directory already exists or created');
+                    }
+                    
+                    // Create placeholder files for all CIDs (starting from index 1, skipping empty first element)
+                    console.log(`Creating placeholder files for ${CIDs.length - 1} files...`);
                     for (var i = 1; i < CIDs.length; i++) {
-                      checkThenBuild(getFilePath(CIDs[i], contract));
+                      if (CIDs[i]) { // Only process non-empty CIDs
+                        console.log(`Creating placeholder for CID: ${CIDs[i]}`);
+                        checkThenBuild(getFilePath(CIDs[i], contract));
+                      }
                     }
                     // Save contract configuration
+                    console.log(`Saving contract configuration for: ${j.id}`);
                     DB.write(j.id, JSON.stringify(j)).then(r => {
+                      console.log(`Contract saved successfully, authorizing upload for ${CIDs.length} files`);
                       res.status(200).json({ authorized: CIDs });
                     })
                   } else res.status(200).json({ authorized: CIDs });
@@ -1068,15 +1106,19 @@ exports.arrange = (req, res, next) => {
 
 // Helper function: Create empty file if it doesn't exist
 function checkThenBuild(path) {
-  fs.stat(path).then(stats => {
+  try {
+    // Check if file exists
+    fs.statSync(path);
     // File exists, do nothing
-  })
-    .catch(err => {
-      // Create empty file for chunked upload
-      fs.createWriteStream(
-        path, { flags: 'w' }
-      );
-    })
+  } catch (err) {
+    // Create empty file for chunked upload
+    try {
+      fs.writeFileSync(path, '');
+      console.log('Created placeholder file:', path);
+    } catch (writeErr) {
+      console.error('Failed to create placeholder file:', path, writeErr);
+    }
+  }
 }
 
 // Sign and broadcast contract completion to the blockchain
