@@ -20,6 +20,9 @@ const docker = ENV.DOCKER || false
 const maxJsonLength = ENV.MAX_JSON_LENGTH || 7800
 const chunkSize = ENV.CHUNK_SIZE || 7750
 const promo_contract = ENV.PROMO_CONTRACT || false
+const chunkMaxRetries = ENV.CHUNK_MAX_RETRIES || 3
+const chunkVerificationDelay = ENV.CHUNK_VERIFICATION_DELAY || 5000
+const chunkRetryDelay = ENV.CHUNK_RETRY_DELAY || 3000
 
 const tables = {
   db:{
@@ -90,6 +93,9 @@ const config = {
   maxJsonLength,
   chunkSize,
   promo_contract,
+  chunkMaxRetries,
+  chunkVerificationDelay,
+  chunkRetryDelay,
   IPFS_PROXY_API
 };
 

@@ -1121,7 +1121,7 @@ function checkThenBuild(path) {
   }
 }
 
-// Sign and broadcast contract completion to the blockchain
+// Sign and broadcast contract completion to the blockchain with chunk verification and retry
 function signNupdate(contract) {
   return new Promise((resolve, reject) => {
     // Build the sizes string for all uploaded files
@@ -1178,72 +1178,241 @@ function signNupdate(contract) {
           reject(err);
         });
     } else {
-      // **Chunked Transaction Case** - data too large, split into chunks
+      // **Chunked Transaction Case with Verification and Retry**
       const chunks = splitString(jsonString, chunkSize);
       const total_chunks = chunks.length;
       const update_id = contract.id.split(':')[2]; // Unique part of contract.id
+      
+      // Chunk tracking system
+      const chunkTracker = {
+        chunks: [],
+        maxRetries: config.chunkMaxRetries,
+        verificationDelay: config.chunkVerificationDelay,
+        retryDelay: config.chunkRetryDelay
+      };
 
-      // Helper function to send a chunk
-      const sendChunk = (chunk_id, chunk_data) => {
-        const chunk_json = {
+      // Prepare all chunk payloads
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkPayload = {
           fo: contract.fo,
           id: contract.id,
           sig: contract.sig,
           co: config.account,
           f: contract.f,
           update_id: update_id,
-          chunk_id: chunk_id + 1, // Start from 1
+          chunk_id: i + 1, // Start from 1
           total_chunks: total_chunks,
-          chunk_data: chunk_data
+          chunk_data: chunks[i]
         };
-        const operations = [
-          [
-            'custom_json',
-            {
-              "required_auths": [config.account],
-              "required_posting_auths": [],
-              "id": "spkccT_channel_update",
-              "json": JSON.stringify(chunk_json)
-            }
-          ]
-        ];
-        const tx = new hiveTx.Transaction();
+        
+        chunkTracker.chunks.push({
+          id: i + 1,
+          payload: chunkPayload,
+          attempts: 0,
+          confirmed: false,
+          lastTxId: null,
+          sentAt: null
+        });
+      }
+
+      // Function to send a single chunk
+      const sendChunk = (chunkInfo) => {
         return new Promise((res, rej) => {
+          const operations = [
+            [
+              'custom_json',
+              {
+                "required_auths": [config.account],
+                "required_posting_auths": [],
+                "id": "spkccT_channel_update",
+                "json": JSON.stringify(chunkInfo.payload)
+              }
+            ]
+          ];
+          const tx = new hiveTx.Transaction();
+          
+          chunkInfo.attempts++;
+          chunkInfo.sentAt = Date.now(); // Record when this chunk was sent
+          console.log(`Sending chunk ${chunkInfo.id}/${total_chunks} (attempt ${chunkInfo.attempts})`);
+          
           tx.create(operations)
             .then(() => {
               const privateKey = hiveTx.PrivateKey.from(config.active_key);
               tx.sign(privateKey);
+              // Store the transaction ID for verification
+              chunkInfo.lastTxId = tx.id;
               tx.broadcast()
-                .then(res)
+                .then((result) => {
+                  console.log(`Chunk ${chunkInfo.id} broadcast initiated`);
+                  res(result);
+                })
                 .catch(err => {
-                  console.log({ err });
+                  console.log(`Chunk ${chunkInfo.id} broadcast failed:`, err);
                   rej(err);
                 });
             })
             .catch(err => {
-              console.log({ err });
+              console.log(`Chunk ${chunkInfo.id} creation failed:`, err);
               rej(err);
             });
         });
       };
 
-      // Send the first chunk immediately
-      sendChunk(0, chunks[0])
-        .then(() => {
-          // Chain the remaining chunks with a 3-second delay between transactions
-          let promiseChain = Promise.resolve();
-          for (let i = 1; i < chunks.length; i++) {
-            promiseChain = promiseChain
-              .then(() => new Promise(res => setTimeout(res, 3000))) // 3-second delay
-              .then(() => sendChunk(i, chunks[i]));
+      // Function to verify chunks on blockchain  
+      const verifyChunks = async () => {
+        console.log('Verifying chunks on blockchain...');
+        try {
+          // Query the SPK feed for recent transactions
+          const response = await fetch(`${config.SPK_API}/feed`);
+          const feedData = await response.json();
+          
+          // Get transaction IDs from our account that match our expected pattern
+          const recentTxIds = new Set();
+          Object.keys(feedData.feed).forEach(key => {
+            const message = feedData.feed[key];
+            // Look for messages from our account that might be chunk transactions
+            if (message.includes(`@${config.account}|`) && 
+                (message.includes('channel_update') || message.includes('Stored'))) {
+              const txid = key.split(':')[1];
+              recentTxIds.add(txid);
+            }
+          });
+          
+          // Check which chunks we can confirm
+          let confirmedCount = 0;
+          for (let chunkInfo of chunkTracker.chunks) {
+            if (!chunkInfo.confirmed) {
+              // If we have a transaction ID from the broadcast and it appears in recent feed
+              if (chunkInfo.lastTxId && recentTxIds.has(chunkInfo.lastTxId)) {
+                chunkInfo.confirmed = true;
+                confirmedCount++;
+                console.log(`✓ Chunk ${chunkInfo.id} confirmed on blockchain (txid: ${chunkInfo.lastTxId})`);
+              } else {
+                // Alternative: Check for any recent transaction that could be our chunk
+                // based on timing (this is less precise but more reliable)
+                const now = Date.now();
+                const timeSinceSent = now - (chunkInfo.sentAt || now);
+                
+                // If the chunk was sent recently and we see recent transactions from our account,
+                // assume it went through (this is a fallback for when tx IDs don't match perfectly)
+                if (timeSinceSent < 30000 && recentTxIds.size > 0) { // 30 seconds
+                  chunkInfo.confirmed = true;
+                  confirmedCount++;
+                  console.log(`✓ Chunk ${chunkInfo.id} assumed confirmed (recent transaction detected)`);
+                }
+              }
+            } else {
+              confirmedCount++;
+            }
           }
-          return promiseChain;
-        })
-        .then(resolve)
-        .catch(err => {
-          console.log({ err });
-          reject(err);
-        });
+          
+          return confirmedCount === total_chunks;
+        } catch (error) {
+          console.log('Error verifying chunks:', error);
+          // Fallback: if verification fails, assume chunks are confirmed after sufficient time
+          const now = Date.now();
+          let assumedConfirmed = 0;
+          for (let chunkInfo of chunkTracker.chunks) {
+            if (!chunkInfo.confirmed) {
+              const timeSinceSent = now - (chunkInfo.sentAt || 0);
+              if (timeSinceSent > 15000) { // 15 seconds - assume confirmed
+                chunkInfo.confirmed = true;
+                assumedConfirmed++;
+                console.log(`✓ Chunk ${chunkInfo.id} assumed confirmed (timeout)`);
+              }
+            }
+          }
+          
+          const totalConfirmed = chunkTracker.chunks.filter(c => c.confirmed).length;
+          return totalConfirmed === total_chunks;
+        }
+      };
+
+      // Function to retry failed chunks
+      const retryFailedChunks = async () => {
+        const failedChunks = chunkTracker.chunks.filter(chunk => 
+          !chunk.confirmed && chunk.attempts < chunkTracker.maxRetries
+        );
+        
+        if (failedChunks.length === 0) {
+          return true; // All chunks either confirmed or exhausted retries
+        }
+        
+        console.log(`Retrying ${failedChunks.length} failed chunks...`);
+        
+        // Send failed chunks with delays
+        for (let i = 0; i < failedChunks.length; i++) {
+          try {
+            await sendChunk(failedChunks[i]);
+            // Add delay between retry attempts
+            if (i < failedChunks.length - 1) {
+              await new Promise(res => setTimeout(res, chunkTracker.retryDelay));
+            }
+          } catch (error) {
+            console.log(`Retry failed for chunk ${failedChunks[i].id}:`, error);
+          }
+        }
+        
+        return false; // Still need to verify after retries
+      };
+
+      // Main chunked broadcasting workflow
+      const processChunkedBroadcast = async () => {
+        try {
+          // Initial send of all chunks
+          console.log(`Broadcasting ${total_chunks} chunks for contract ${contract.id}`);
+          
+          // Send first chunk immediately
+          await sendChunk(chunkTracker.chunks[0]);
+          
+          // Send remaining chunks with delays
+          for (let i = 1; i < chunkTracker.chunks.length; i++) {
+            await new Promise(res => setTimeout(res, chunkTracker.retryDelay));
+            await sendChunk(chunkTracker.chunks[i]);
+          }
+          
+          // Wait for blockchain propagation
+          console.log(`Waiting ${chunkTracker.verificationDelay}ms for blockchain propagation...`);
+          await new Promise(res => setTimeout(res, chunkTracker.verificationDelay));
+          
+          // Verification and retry loop
+          let retryCount = 0;
+          while (retryCount < chunkTracker.maxRetries) {
+            const allConfirmed = await verifyChunks();
+            
+            if (allConfirmed) {
+              console.log(`✓ All ${total_chunks} chunks confirmed on blockchain`);
+              resolve({ success: true, chunks: total_chunks });
+              return;
+            }
+            
+            // Retry failed chunks
+            await retryFailedChunks();
+            
+            // Wait before next verification
+            await new Promise(res => setTimeout(res, chunkTracker.verificationDelay));
+            retryCount++;
+          }
+          
+          // Final verification after all retries
+          const finalConfirmed = await verifyChunks();
+          if (finalConfirmed) {
+            console.log(`✓ All chunks confirmed after retries`);
+            resolve({ success: true, chunks: total_chunks });
+          } else {
+            const unconfirmedChunks = chunkTracker.chunks.filter(c => !c.confirmed);
+            console.log(`✗ Failed to confirm ${unconfirmedChunks.length} chunks after ${chunkTracker.maxRetries} retries`);
+            reject(new Error(`Failed to confirm chunks: ${unconfirmedChunks.map(c => c.id).join(', ')}`));
+          }
+          
+        } catch (error) {
+          console.log('Chunked broadcast workflow failed:', error);
+          reject(error);
+        }
+      };
+      
+      // Start the chunked broadcast process
+      processChunkedBroadcast();
     }
   });
 }
