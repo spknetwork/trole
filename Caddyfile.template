@@ -12,18 +12,41 @@ poa.{{DOMAIN}} {
 }
 
 ipfs.{{DOMAIN}} {
+	@localIpfs {
+		path /ipfs/*
+		path_regexp cid /ipfs/([a-zA-Z0-9]+)
+		file {{UPLOAD_DIR}}/{http.regexp.cid.1}-*
+	}
+
+	@ipfs path /ipfs/*
+
 	@ws {
-		header Connection *Upgrade*
+		header Connection Upgrade
 		header Upgrade websocket
 	}
-	reverse_proxy /ipfs* localhost:{{API_PORT}} 
-	reverse_proxy @ws localhost:8001
-	reverse_proxy localhost:5050
+
+	handle @ws {
+		reverse_proxy localhost:8001
+	}
+
+	handle @localIpfs {
+		root * {{UPLOAD_DIR}}
+		file_server {http.matchers.file.relative}
+	}
+
+	handle @ipfs {
+		reverse_proxy localhost:{{API_PORT}}
+	}
+
+	handle {
+		reverse_proxy localhost:5050
+	}
+
 	log {
 		output file /var/log/caddy/ipfs.{{DOMAIN}}-access.log {
-			roll_size 10mb
-			roll_keep 20
-			roll_keep_for 720h
+		roll_size 10mb
+		roll_keep 20
+		roll_keep_for 720h
 		}
 	}
-} 
+}

@@ -93,7 +93,7 @@ backup_existing_config() {
 }
 
 create_directories() {
-    local dirs=("${HOME}/trole/db" "$BACKUP_DIR")
+    local dirs=("${HOME}/trole/db" "${HOME}/trole/uploads" "$BACKUP_DIR")
     for dir in "${dirs[@]}"; do
         if [[ ! -d "$dir" ]]; then
             mkdir -p "$dir"
@@ -217,6 +217,8 @@ collect_configuration() {
     fi
     
     # Set default values for other configuration
+    local whoami_user
+    whoami_user=$(whoami)
     {
         echo "domain=${DOMAIN}"
         echo "account=${ACCOUNT}"
@@ -232,6 +234,7 @@ collect_configuration() {
         echo "ipfsport=5001"
         echo "STARTURL=https://rpc.ecency.com/"
         echo "APIURL=https://rpc.ecency.com/"
+        echo "UPLOAD_DIR=/home/${whoami_user}/trole/uploads"
     } >> "$ENV_FILE"
     
     # Handle SPK keys
@@ -564,6 +567,14 @@ setup_trole_service() {
     local whoami_user
     whoami_user=$(whoami)
     
+    # Ensure uploads directory has proper permissions
+    local uploads_dir="/home/${whoami_user}/trole/uploads"
+    if [[ -d "$uploads_dir" ]]; then
+        chmod 755 "$uploads_dir"
+        chown "${whoami_user}:${whoami_user}" "$uploads_dir"
+        log INFO "Set permissions for uploads directory: $uploads_dir"
+    fi
+    
     local service_content="[Unit]
 Description=Trole Node
 After=network.target ipfs.service
@@ -578,6 +589,7 @@ RestartSec=5
 User=${whoami_user}
 Group=${whoami_user}
 Environment=NODE_ENV=production
+Environment=UPLOAD_DIR=/home/${whoami_user}/trole/uploads
 
 [Install]
 WantedBy=multi-user.target"
@@ -739,7 +751,14 @@ configure_caddy() {
     log INFO "Configuring Caddy with domain $DOMAIN..."
     
     # Generate Caddyfile from template
-    if ! sed -e "s/{{DOMAIN}}/${DOMAIN}/g" -e "s/{{API_PORT}}/${API_PORT:-5050}/g" Caddyfile.template | sudo tee -a "$caddy_file" >/dev/null; then
+    local whoami_user
+    whoami_user=$(whoami)
+    local upload_dir="/home/${whoami_user}/trole/uploads"
+    
+    if ! sed -e "s/{{DOMAIN}}/${DOMAIN}/g" \
+             -e "s/{{API_PORT}}/${API_PORT:-5050}/g" \
+             -e "s|{{UPLOAD_DIR}}|${upload_dir}|g" \
+             Caddyfile.template | sudo tee -a "$caddy_file" >/dev/null; then
         error_exit "Failed to update Caddy configuration"
     fi
     
@@ -806,6 +825,7 @@ display_final_status() {
     echo -e "${GREEN}=== TROLE INSTALLATION SUMMARY ===${NC}"
     echo -e "${BLUE}Domain:${NC} $DOMAIN"
     echo -e "${BLUE}Account:${NC} $ACCOUNT"
+    echo -e "${BLUE}Upload Directory:${NC} ${UPLOAD_DIR:-/home/$(whoami)/trole/uploads}"
     echo -e "${BLUE}Services installed:${NC}"
     
     local services=("ipfs" "trole")

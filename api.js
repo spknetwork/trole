@@ -19,6 +19,7 @@ const Ipfs = require('ipfs-api')            // IPFS (InterPlanetary File System)
 // Initialize IPFS connection using endpoint from config
 var ipfs = new Ipfs(`/ip4/${config.ENDPOINT}/tcp/${config.ENDPORT}`)
 const Busboy = require('busboy');           // Multipart form data parser for file uploads
+const ipfsQueue = require('./ipfsQueue');   // IPFS upload queue system
 
 // Global statistics object to track live system metrics
 var live_stats = {
@@ -37,6 +38,24 @@ ipfs.id().then(r => {
     }
   })
 }).catch(e => console.log(e))
+
+// Setup IPFS queue event listeners
+ipfsQueue.queueEvents.on('uploadCompleted', (item) => {
+  console.log(`[IPFS Queue] Upload completed: ${item.cid} for contract ${item.contractId}`);
+  // Clean up the local file after successful IPFS upload
+  fs.remove(item.filePath).catch(err => 
+    console.error(`[IPFS Queue] Failed to remove uploaded file ${item.filePath}:`, err)
+  );
+});
+
+ipfsQueue.queueEvents.on('uploadFailed', (item) => {
+  console.error(`[IPFS Queue] Upload failed after ${item.attempts} attempts: ${item.cid} - ${item.error}`);
+  // Keep the file for manual intervention or cleanup later
+});
+
+ipfsQueue.queueEvents.on('itemAdded', (item) => {
+  console.log(`[IPFS Queue] New item added: ${item.cid} for contract ${item.contractId}`);
+});
 
 // Lock objects to prevent concurrent operations
 var lock = {}                               // General purpose locks
@@ -338,7 +357,7 @@ function inventory() {
 
 // Upload a file to IPFS and update the contract with file information
 function localIpfsUpload(cid, contractID) {
-  return new Promise((res, rej) => {
+  return new Promise(async (res, rej) => {
     // Use a lock to prevent concurrent contract updates
     if (ipfsLock[contractID]) {
       return setTimeout(() => {
@@ -347,104 +366,66 @@ function localIpfsUpload(cid, contractID) {
     }
     ipfsLock[contractID] = true
 
-    DB.read(contractID)
-      .then(str => {
-        var contract = JSON.parse(str)
-        // Add file to IPFS
-        ipfs.files.add(fs.readFileSync(getFilePath(cid, contract.id)), function (err, file) {
-          if (err) {
-            delete lock[contractID]
-            console.log('File add Error: ', err);
-            return res({ status: 500, message: 'IPFS Add Error' })
-          }
-
-          // Verify the uploaded file hash matches expected CID
-          if (str.indexOf(file[0].hash) > 0) {
-            console.log('lIu', contract.t, file[0].size, contract.s)
-            // Check if adding this file would exceed contract storage limit
-            if (contract.t + file[0].size <= contract.s) {
-              // Pin the file in IPFS to prevent garbage collection
-              ipfs.pin.add(cid, function (err, pin) {
-                if (err) {
-                  delete lock[contractID]
-                  console.log(err);
-                  return res({ status: 410, message: 'Internal Error' })
-                }
-                console.log(`pinned ${cid}`)
-
-                // Re-read contract to get latest state
-                DB.read(contractID)
-                  .then(str => {
-                    contract = JSON.parse(str)
-                    contract[cid] = file[0].size                    // Record file size
-                    contract.t = (contract.t || 0) + file[0].size   // Update total size
-
-                    DB.write(contract.id, JSON.stringify(contract))
-                      .then(json => {
-                        console.log('signNupdate', contract)
-                        var allDone = true
-                        // Check if all files in the contract have been uploaded
-                        for (var i = 0; i < contract.df.length; i++) {
-                          console.log('DiF', contract.df[i], contract[contract.df[i]], cid, i)
-                          if (!contract[contract.df[i]]) {
-                            console.log("missing:", contract[contract.df[i]])
-                            allDone = false
-                            break
-                          }
-                        }
-
-                        // If all files uploaded, sign and broadcast to blockchain
-                        if (allDone) {
-                          console.log('allDone')
-                          signNupdate(contract)
-                          // Delete local files after successful upload
-                          for (var i = 0; i < contract.df.length; i++) {
-                            try {
-                              fs.rmSync(getFilePath(contract.df[i], contract.id))
-                            } catch (e) {
-                              console.log('Error removing file:', e)
-                            }
-                          }
-                        }
-
-                        delete ipfsLock[contractID]
-                        res({ status: 200, message: 'Success' })
-                      })
-                      .catch(err => {
-                        delete ipfsLock[contractID]
-                        res({ status: 500, message: 'Contract Write Error' })
-                      })
-                  })
-                  .catch(err => {
-                    delete ipfsLock[contractID]
-                    res({ status: 500, message: 'Contract Read Error' })
-                  })
-              })
-            } else {
-              // File too large for contract
-              console.log(`Files larger than contract: ${file[0].hash}`)
-              fs.rmSync(getFilePath(cid, contract.id))
-              DB.delete(contract.id)
-              delete ipfsLock[contractID]
-              res({ status: 400, message: 'File Size Exceeded' })
-            }
-          } else {
-            // CID mismatch - file corruption or tampering
-            console.log(`mismatch between ${cid} and ${file[0].hash}`)
-            fs.rmSync(getFilePath(cid, contract.id))
-            fs.createWriteStream(
-              getFilePath(cid, contract.id), { flags: 'w' }
-            );
-            delete ipfsLock[contractID]
-            res({ status: 400, message: 'File CID Mismatch' })
-          }
-        })
-      })
-      .catch(err => {
-        delete ipfsLock[contractID]
-        res({ status: 500, message: 'Initial Contract Read Error' })
-      })
-  })
+    try {
+      const str = await DB.read(contractID);
+      const contract = JSON.parse(str);
+      const filePath = getFilePath(cid, contract.id);
+      
+      // First verify the CID matches what was signed
+      const isValid = await ipfsQueue.verifyCID(filePath, cid);
+      if (!isValid) {
+        delete ipfsLock[contractID];
+        console.log(`CID verification failed for ${cid}`);
+        fs.rmSync(filePath);
+        return res({ status: 412, message: 'CID Verification Failed' });
+      }
+      
+      // Get file size for contract validation
+      const fileStats = await fs.stat(filePath);
+      const fileSize = fileStats.size;
+      
+      // Check if adding this file would exceed contract storage limit
+      if ((contract.t || 0) + fileSize > contract.s) {
+        console.log(`Files larger than contract: ${cid}`);
+        fs.rmSync(filePath);
+        await DB.delete(contract.id);
+        delete ipfsLock[contractID];
+        return res({ status: 400, message: 'File Size Exceeded' });
+      }
+      
+      // Add to upload queue
+      const queueItem = ipfsQueue.addToQueue(contractID, cid, filePath, cid);
+      
+      // Update contract immediately with file info (before IPFS upload)
+      contract[cid] = fileSize;
+      contract.t = (contract.t || 0) + fileSize;
+      
+      await DB.write(contract.id, JSON.stringify(contract));
+      
+      // Check if all files in contract are verified
+      let allVerified = true;
+      for (let i = 0; i < contract.df.length; i++) {
+        if (!contract[contract.df[i]]) {
+          allVerified = false;
+          break;
+        }
+      }
+      
+      if (allVerified) {
+        console.log('All files verified, ready for signing');
+        // Sign and broadcast immediately - IPFS upload happens in background
+        signNupdate(contract);
+      }
+      
+      delete ipfsLock[contractID];
+      res({ status: 200, message: 'File verified and queued for IPFS upload', queueStatus: queueItem.state });
+      
+    } catch (err) {
+      delete ipfsLock[contractID];
+      console.error('Error in localIpfsUpload:', err);
+      res({ status: err.message.includes('Not Found') ? 404 : 500, message: err.message });
+    }
+  });
 }
 
 // API endpoint: Get storage statistics including disk usage and IPFS metrics
@@ -809,6 +790,25 @@ exports.live = (req, res, next) => {
     RepoSize,                           // Current repository size
     NumObjects,                         // Number of stored objects
   })
+}
+
+// API endpoint: Get IPFS upload queue status
+exports.queueStatus = (req, res, next) => {
+  const contractId = req.query.contract;
+  
+  if (contractId) {
+    // Get status for specific contract
+    const items = ipfsQueue.getContractItems(contractId);
+    return res.status(200).json({
+      contractId,
+      items,
+      total: items.length
+    });
+  } else {
+    // Get overall queue status
+    const status = ipfsQueue.getQueueStatus();
+    return res.status(200).json(status);
+  }
 }
 
 // API endpoint: Check if a specific CID is flagged
@@ -1557,3 +1557,6 @@ function deleteByContract(str) {
     })
   }
 }
+
+// Export ipfs instance for use in other modules
+exports.ipfs = ipfs;
