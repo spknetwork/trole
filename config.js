@@ -23,6 +23,11 @@ const promo_contract = ENV.PROMO_CONTRACT || false
 const chunkMaxRetries = ENV.CHUNK_MAX_RETRIES || 3
 const chunkVerificationDelay = ENV.CHUNK_VERIFICATION_DELAY || 5000
 const chunkRetryDelay = ENV.CHUNK_RETRY_DELAY || 3000
+const HEALTH_ENDPOINT_IP = ENV.HEALTH_ENDPOINT_IP || '0.0.0.0'
+const PEER_TEST_INTERVAL = ENV.PEER_TEST_INTERVAL || 300000
+const HEALTH_WINDOW_SIZE = ENV.HEALTH_WINDOW_SIZE || 100
+const MIN_TESTS_FOR_SCORE = ENV.MIN_TESTS_FOR_SCORE || 10
+const NODE_REGION = ENV.NODE_REGION || 'unknown'
 
 const tables = {
   db:{
@@ -96,7 +101,12 @@ const config = {
   chunkMaxRetries,
   chunkVerificationDelay,
   chunkRetryDelay,
-  IPFS_PROXY_API
+  IPFS_PROXY_API,
+  HEALTH_ENDPOINT_IP,
+  PEER_TEST_INTERVAL,
+  HEALTH_WINDOW_SIZE,
+  MIN_TESTS_FOR_SCORE,
+  NODE_REGION
 };
 
 module.exports = config

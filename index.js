@@ -4,7 +4,7 @@ const cors = require("cors");
 const api = express();
 var http = require("http").Server(api);
 const API = require("./api");
-const { ipfsProxyRoute, ipfsHealthRoute, ipfsStatsRoute, ipfsHealthPinRoute } = require("./cdn");
+const { ipfsProxyRoute, ipfsHealthRoute, ipfsStatsRoute, ipfsHealthPinRoute, nodeHealthRoute, peerHealthStatsRoute, nodeRegionRoute } = require("./cdn");
 
 api.use(express.json())
 api.use(cors())
@@ -22,11 +22,31 @@ api.get("/ipfs/:cid", ipfsProxyRoute)
 api.get("/ipfs-health", ipfsHealthRoute)
 api.get("/ipfs-stats", ipfsStatsRoute)
 api.post("/ipfs-health-pin", ipfsHealthPinRoute)
+api.get("/node-health/:targetNode", nodeHealthRoute)
+api.get("/peer-health-stats", peerHealthStatsRoute)
+api.get("/node-region", nodeRegionRoute)
 if (config.promo_contract) api.get("/upload-promo-contract", API.promo_contract)
 api.use(express.static("www"));
 
+// Create separate server for health endpoint if different IP specified
+if (config.HEALTH_ENDPOINT_IP && config.HEALTH_ENDPOINT_IP !== '0.0.0.0' && config.HEALTH_ENDPOINT_IP !== '::') {
+  const healthApp = express();
+  const healthHttp = require("http").Server(healthApp);
+  
+  healthApp.use(express.json());
+  healthApp.use(cors());
+  healthApp.get("/node-health/:targetNode", nodeHealthRoute);
+  healthApp.get("/peer-health-stats", peerHealthStatsRoute);
+  healthApp.get("/node-region", nodeRegionRoute);
+  
+  healthHttp.listen(config.port + 1, config.HEALTH_ENDPOINT_IP, function () {
+    console.log(`Health API listening on ${config.HEALTH_ENDPOINT_IP}:${config.port + 1}`);
+  });
+}
+
 http.listen(config.port, '::', function () {
   console.log(`API listening on port ${config.port}`);
-  console.log('promo:', config.promo_contract)
+  console.log('promo:', config.promo_contract);
+  console.log('node region:', config.NODE_REGION);
 });
 

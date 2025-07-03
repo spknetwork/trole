@@ -3,6 +3,9 @@ const axios = require('axios');
 const cron = require('node-cron');
 const config = require('./config');
 const { Hash } = require('ipfs-only-hash');
+const { HealthScoreEncoder, LatencyStatistics } = require('./healthScore');
+const GeoCorrection = require('./geoCorrection');
+const RegionDetector = require('./regionDetector');
 
 class IPFSProxyManager {
     constructor() {
@@ -18,9 +21,23 @@ class IPFSProxyManager {
         // Health check CID - empty file for consistent health monitoring
         this.healthCheckCid = 'QmNoshFoVKgH7BrJ3r1hN6G7qWFKWhz5Ap62q7DnYGs4ya';
         
+        // Peer health monitoring
+        this.peerHealthMap = new Map(); // peerNode -> { lastCheck, latencies, healthScore }
+        this.healthEncoder = new HealthScoreEncoder();
+        this.latencyStats = new LatencyStatistics(config.HEALTH_WINDOW_SIZE || 100);
+        this.geoLatencyStats = new LatencyStatistics(config.HEALTH_WINDOW_SIZE || 100);
+        this.geoCorrection = new GeoCorrection();
+        this.peerTestInterval = config.PEER_TEST_INTERVAL || 300000; // 5 minutes
+        this.minTestsForScore = config.MIN_TESTS_FOR_SCORE || 10;
+        this.lastPeerFetch = 0;
+        this.peerList = [];
+        this.myRegion = config.NODE_REGION || 'unknown';
+        
         // Initialize and start monitoring
         this.initializeHealthCheck();
+        this.initializeRegionDetection();
         this.startHealthMonitoring();
+        this.startPeerHealthMonitoring();
     }
 
     async initializeHealthCheck() {
@@ -32,6 +49,34 @@ class IPFSProxyManager {
             } catch (error) {
                 console.error(`Failed to ensure health check file is pinned:`, error.message);
             }
+        }
+    }
+
+    async initializeRegionDetection() {
+        // Auto-detect region if not manually configured
+        if (this.myRegion === 'unknown' || !this.myRegion) {
+            try {
+                const detector = new RegionDetector();
+                const detectedRegion = await detector.detectRegion();
+                
+                if (detectedRegion && detectedRegion !== 'unknown') {
+                    this.myRegion = detectedRegion;
+                    console.log(`Auto-detected node region: ${this.myRegion}`);
+                    
+                    // Store geo data if available
+                    const geoData = detector.getGeoData();
+                    if (geoData) {
+                        this.geoData = geoData;
+                        console.log(`Node location: ${geoData.city || 'Unknown city'}, ${geoData.country || 'Unknown country'}`);
+                    }
+                } else {
+                    console.log('Could not auto-detect region, using default: unknown');
+                }
+            } catch (error) {
+                console.error('Error during region detection:', error.message);
+            }
+        } else {
+            console.log(`Using configured node region: ${this.myRegion}`);
         }
     }
 
@@ -231,6 +276,172 @@ class IPFSProxyManager {
             const healthChecks = gateways.map(gateway => this.checkGatewayHealth(gateway));
             await Promise.allSettled(healthChecks);
         });
+    }
+
+    async fetchPeerNodes() {
+        try {
+            // Only fetch peer list if it's been more than 10 minutes
+            if (Date.now() - this.lastPeerFetch < 600000) {
+                return this.peerList;
+            }
+
+            const response = await axios.get(`${config.SPK_API}/api/nodes`, {
+                timeout: 10000
+            });
+            
+            const nodes = response.data?.nodes || [];
+            this.peerList = nodes.filter(node => {
+                // Filter out self and ensure node has valid gateway URL
+                return node.account !== config.account && node.gateway;
+            }).map(node => ({
+                account: node.account,
+                gateway: node.gateway,
+                region: node.region || 'unknown'
+            }));
+            
+            this.lastPeerFetch = Date.now();
+            console.log(`Fetched ${this.peerList.length} peer nodes for health monitoring`);
+            
+            return this.peerList;
+        } catch (error) {
+            console.error('Error fetching peer nodes:', error.message);
+            return this.peerList; // Return cached list on error
+        }
+    }
+
+    async testPeerHealth(peer) {
+        const startTime = Date.now();
+        
+        try {
+            // Make request with special headers to prevent redirection
+            const response = await axios.get(`${peer.gateway}/ipfs/${this.healthCheckCid}`, {
+                timeout: this.healthCheckTimeout,
+                headers: {
+                    'X-Health-Check': 'true',
+                    'X-No-Redirect': 'true',
+                    'X-From-Node': config.account || 'unknown'
+                },
+                validateStatus: (status) => status < 500
+            });
+            
+            const latency = Date.now() - startTime;
+            
+            // Add measurement to statistics
+            this.latencyStats.addMeasurement(peer.account, latency);
+            
+            // Calculate geo-corrected latency (placeholder for now)
+            const geoLatency = this.calculateGeoCorrectedLatency(latency, peer.region);
+            this.geoLatencyStats.addMeasurement(peer.account, geoLatency);
+            
+            // Update peer health data
+            if (!this.peerHealthMap.has(peer.account)) {
+                this.peerHealthMap.set(peer.account, {
+                    lastCheck: Date.now(),
+                    healthScore: null,
+                    failures: 0
+                });
+            }
+            
+            const peerHealth = this.peerHealthMap.get(peer.account);
+            peerHealth.lastCheck = Date.now();
+            peerHealth.failures = 0;
+            
+            // Calculate health score if we have enough data
+            const stats = this.latencyStats.getStatistics(peer.account);
+            if (stats && stats.count >= this.minTestsForScore) {
+                const rawZScore = this.latencyStats.calculateZScore(peer.account, latency);
+                const geoZScore = this.geoLatencyStats.calculateZScore(peer.account, geoLatency);
+                
+                peerHealth.healthScore = this.healthEncoder.encodeHealthScore(rawZScore, geoZScore);
+            }
+            
+            return { success: true, latency, peer: peer.account };
+            
+        } catch (error) {
+            // Track failures
+            if (!this.peerHealthMap.has(peer.account)) {
+                this.peerHealthMap.set(peer.account, {
+                    lastCheck: Date.now(),
+                    healthScore: null,
+                    failures: 1
+                });
+            } else {
+                const peerHealth = this.peerHealthMap.get(peer.account);
+                peerHealth.failures = (peerHealth.failures || 0) + 1;
+                peerHealth.lastCheck = Date.now();
+            }
+            
+            return { success: false, error: error.message, peer: peer.account };
+        }
+    }
+
+    calculateGeoCorrectedLatency(latency, peerRegion) {
+        // Use the geo-correction module to adjust latency based on distance
+        return this.geoCorrection.calculateGeoCorrectedLatency(
+            latency,
+            this.myRegion,
+            peerRegion
+        );
+    }
+
+    startPeerHealthMonitoring() {
+        // Run peer health checks periodically
+        const intervalMinutes = Math.floor(this.peerTestInterval / 60000);
+        const cronSchedule = `*/${intervalMinutes} * * * *`;
+        
+        cron.schedule(cronSchedule, async () => {
+            const peers = await this.fetchPeerNodes();
+            
+            if (peers.length === 0) {
+                console.log('No peer nodes available for health monitoring');
+                return;
+            }
+            
+            console.log(`Running peer health checks for ${peers.length} nodes`);
+            
+            // Test peers in batches to avoid overwhelming the network
+            const batchSize = 5;
+            for (let i = 0; i < peers.length; i += batchSize) {
+                const batch = peers.slice(i, i + batchSize);
+                const tests = batch.map(peer => this.testPeerHealth(peer));
+                
+                const results = await Promise.allSettled(tests);
+                
+                // Log results
+                results.forEach((result, index) => {
+                    if (result.status === 'fulfilled' && result.value.success) {
+                        console.log(`Peer health check ${result.value.peer}: ${result.value.latency}ms`);
+                    } else if (result.status === 'fulfilled' && !result.value.success) {
+                        console.log(`Peer health check ${result.value.peer} failed: ${result.value.error}`);
+                    }
+                });
+                
+                // Small delay between batches
+                if (i + batchSize < peers.length) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+        });
+        
+        // Also run an initial check after 30 seconds
+        setTimeout(() => {
+            this.fetchPeerNodes().then(peers => {
+                if (peers.length > 0) {
+                    const randomPeers = peers.slice(0, Math.min(3, peers.length));
+                    randomPeers.forEach(peer => this.testPeerHealth(peer));
+                }
+            });
+        }, 30000);
+    }
+
+    getPeerHealthScore(peerAccount) {
+        const peerHealth = this.peerHealthMap.get(peerAccount);
+        
+        if (!peerHealth || !peerHealth.healthScore) {
+            return null;
+        }
+        
+        return peerHealth.healthScore;
     }
 
     getHealthyGateways() {
@@ -543,9 +754,111 @@ const ipfsHealthPinRoute = async (req, res) => {
     }
 };
 
+// Node health endpoint
+// '/node-health/:targetNode'
+const nodeHealthRoute = async (req, res) => {
+    const { targetNode } = req.params;
+    
+    // Only respond to health check requests
+    if (!req.headers['x-health-check'] || req.headers['x-health-check'] !== 'true') {
+        return res.status(403).json({
+            error: 'This endpoint only responds to health check requests'
+        });
+    }
+    
+    // Get health score for the target node
+    const healthScore = ipfsProxy.getPeerHealthScore(targetNode);
+    
+    if (!healthScore) {
+        // Return empty response if no data available
+        return res.send('');
+    }
+    
+    // Return the 2-character health score
+    res.send(healthScore);
+};
+
+// Peer health statistics endpoint
+// '/peer-health-stats'
+const peerHealthStatsRoute = async (req, res) => {
+    const stats = {
+        timestamp: new Date().toISOString(),
+        encoder: {
+            normalChar: ipfsProxy.healthEncoder.getCharAtPosition(32),
+            normalPosition: 32,
+            zScoreStep: 0.1,
+            description: 'Each character represents 0.1 standard deviations'
+        },
+        peers: []
+    };
+    
+    // Compile statistics for each peer
+    for (const [peerAccount, peerHealth] of ipfsProxy.peerHealthMap.entries()) {
+        const rawStats = ipfsProxy.latencyStats.getStatistics(peerAccount);
+        const geoStats = ipfsProxy.geoLatencyStats.getStatistics(peerAccount);
+        
+        const peerInfo = {
+            account: peerAccount,
+            healthScore: peerHealth.healthScore,
+            lastCheck: new Date(peerHealth.lastCheck).toISOString(),
+            failures: peerHealth.failures || 0,
+            measurements: rawStats ? rawStats.count : 0
+        };
+        
+        // Decode health score if available
+        if (peerHealth.healthScore) {
+            try {
+                const decoded = ipfsProxy.healthEncoder.decodeHealthScore(peerHealth.healthScore);
+                peerInfo.decodedScore = {
+                    raw: {
+                        zScore: decoded.raw.toFixed(2),
+                        description: ipfsProxy.healthEncoder.describeZScore(decoded.raw)
+                    },
+                    geoCorrected: {
+                        zScore: decoded.geoCorrected.toFixed(2),
+                        description: ipfsProxy.healthEncoder.describeZScore(decoded.geoCorrected)
+                    }
+                };
+            } catch (error) {
+                peerInfo.decodedScore = { error: error.message };
+            }
+        }
+        
+        // Add statistics if available
+        if (rawStats) {
+            peerInfo.latencyStats = {
+                mean: rawStats.mean.toFixed(2),
+                stdDev: rawStats.stdDev.toFixed(2),
+                measurements: rawStats.count
+            };
+        }
+        
+        stats.peers.push(peerInfo);
+    }
+    
+    res.json(stats);
+};
+
+// Node region info endpoint
+// '/node-region'
+const nodeRegionRoute = async (req, res) => {
+    const regionInfo = {
+        region: ipfsProxy.myRegion,
+        configured: config.NODE_REGION || null,
+        autoDetected: ipfsProxy.myRegion !== config.NODE_REGION,
+        geoData: ipfsProxy.geoData || null,
+        timestamp: new Date().toISOString()
+    };
+    
+    res.json(regionInfo);
+};
+
 module.exports = {
     ipfsProxyRoute,
     ipfsHealthRoute,
     ipfsStatsRoute,
-    ipfsHealthPinRoute
+    ipfsHealthPinRoute,
+    nodeHealthRoute,
+    peerHealthStatsRoute,
+    nodeRegionRoute
 }
