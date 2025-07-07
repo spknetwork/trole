@@ -369,7 +369,7 @@ function localIpfsUpload(cid, contractID) {
     try {
       const str = await DB.read(contractID);
       const contract = JSON.parse(str);
-      const filePath = getFilePath(cid, contract.id);
+      const filePath = getFilePath(cid, contractID);
       
       // First verify the CID matches what was signed
       const isValid = await ipfsQueue.verifyCID(filePath, cid);
