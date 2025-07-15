@@ -203,6 +203,20 @@ collect_configuration() {
         echo "BUILDSPK=${BUILDSPK}" >> "$ENV_FILE"
     fi
     
+    # Ask for Honeygraph URL if installing SPK node
+    if [[ "${BUILDSPK}" == "true" ]] && [[ -z "${HONEYGRAPH_URL:-}" ]]; then
+        log INFO "Honeygraph provides read replication for SPK Network nodes"
+        read -p "Enter Honeygraph URL (optional, e.g., https://graph.spk.network): " honeygraph_input
+        if [[ -n "$honeygraph_input" ]]; then
+            HONEYGRAPH_URL="$honeygraph_input"
+            echo "HONEYGRAPH_URL=${HONEYGRAPH_URL}" >> "$ENV_FILE"
+            log INFO "Honeygraph URL configured: ${HONEYGRAPH_URL}"
+            log INFO "Your SPK node will authenticate to Honeygraph using account: ${ACCOUNT}"
+        else
+            log INFO "No Honeygraph URL provided, continuing without read replication"
+        fi
+    fi
+    
     if [[ -z "${BUILDVAL:-}" ]]; then
         while true; do
             read -p "Register as Validator? (y/n): " -n 1 -r
@@ -628,6 +642,17 @@ setup_spk_service() {
         cp "$ENV_FILE" "${honeycomb_dir}/.env"
         echo "DOMAIN=spk.${DOMAIN}" >> "${honeycomb_dir}/.env"
         
+        # Configure Honeygraph authentication if endpoint is provided
+        if [[ -n "${HONEYGRAPH_URL:-}" ]]; then
+            log INFO "Configuring Honeygraph authentication..."
+            echo "" >> "${honeycomb_dir}/.env"
+            echo "# Honeygraph Configuration" >> "${honeycomb_dir}/.env"
+            echo "HONEYGRAPH_URL=${HONEYGRAPH_URL}" >> "${honeycomb_dir}/.env"
+            echo "HONEYGRAPH_AUTH_ENABLED=true" >> "${honeycomb_dir}/.env"
+            echo "# Honeygraph will authenticate using this node's Hive account: ${ACCOUNT}" >> "${honeycomb_dir}/.env"
+            log INFO "Honeygraph authentication configured for account: ${ACCOUNT}"
+        fi
+        
         popd >/dev/null
     fi
     
@@ -857,6 +882,15 @@ display_final_status() {
     fi
     
     echo
+    
+    if [[ -n "${HONEYGRAPH_URL:-}" ]]; then
+        echo -e "${YELLOW}Honeygraph Configuration:${NC}"
+        echo -e "  - URL: ${HONEYGRAPH_URL}"
+        echo -e "  - Authentication: Using Hive account ${ACCOUNT}"
+        echo -e "  - The SPK node will authenticate automatically"
+        echo
+    fi
+    
     echo -e "${YELLOW}Important:${NC}"
     echo -e "  - Your .env file contains sensitive keys"
     echo -e "  - A backup has been created in: $BACKUP_DIR"

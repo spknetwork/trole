@@ -8,7 +8,7 @@ const poaSubDomain = ENV.POASUBDOMAIN || 'poa'
 const fetch = require('node-fetch');
 const dhive = require('@hiveio/dhive');
 var registered = false, vcode = ENV.VALIDATOR != "false" ? true : false, vreg = true, balance = 0, amount = 0
-var client = new dhive.Client(["https://hive-api.dlux.io", "https://api.hive.blog", "https://anyx.io"]);
+var client = new dhive.Client(["https://api.hive.blog", "https://anyx.io"]);
 var key = dhive.PrivateKey.fromString(active_key);
 var price = 2000
 const Ipfs = require('ipfs-api')
