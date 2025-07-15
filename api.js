@@ -24,7 +24,9 @@ const ipfsQueue = require('./ipfsQueue');   // IPFS upload queue system
 // Global statistics object to track live system metrics
 var live_stats = {
   i: parseInt(Math.random() * 10),          // Random cleanup index
-  feed: 0                                   // Last processed feed item
+  feed: 0,                                  // Last processed feed item
+  lastRun: null,                            // Last successful run timestamp
+  failureCount: 0                           // Consecutive failure count
 }
 // Initialize IPFS and register this node
 ipfs.id().then(r => {
@@ -176,51 +178,76 @@ getStats()
 
 // Main system monitoring and cleanup function - runs every minute
 function getStats() {
-  live_stats.i = (live_stats.i + 1) % 10    // Increment cleanup index (0-9 cycle)
-  console.log('Clean: ' + live_stats.i)
+  try {
+    const now = Date.now()
+    
+    // Check if function has been stuck (hasn't run in 5 minutes)
+    if (live_stats.lastRun && (now - live_stats.lastRun) > 5 * 60 * 1000) {
+      console.error(`WARNING: getStats hasn't run successfully in ${Math.floor((now - live_stats.lastRun) / 1000)} seconds`)
+    }
+    
+    live_stats.i = (live_stats.i + 1) % 10    // Increment cleanup index (0-9 cycle)
+    console.log(`Clean: ${live_stats.i} | Last run: ${live_stats.lastRun ? new Date(live_stats.lastRun).toISOString() : 'Never'}`)
   inventory()                               // Check IPFS inventory
   
   // Fetch and process the latest feed from SPK API
-  fetch(`${config.SPK_API}/feed${live_stats.feed ? '/' + live_stats.feed : ''}`).then(rz => rz.json()).then(json => {
-    const feed = json.feed
-    const keys = Object.keys(json.feed)
-    const stored = `@${config.account} Stored`     // Storage confirmation message
-    const deleted = `@${config.account} Removed`   // Deletion confirmation message
-    
-    // Process each feed item
-    for (var i = 0; i < keys.length; i++) {
-      // Update feed position to latest
-      if (parseInt(keys[i].split(':')[0]) > live_stats.feed) live_stats.feed = parseInt(keys[i].split(':')[0])
+  fetch(`${config.SPK_API}/feed${live_stats.feed ? '/' + live_stats.feed : ''}`)
+    .then(rz => rz.json())
+    .then(json => {
+      const feed = json.feed
+      const keys = Object.keys(json.feed)
+      const stored = `@${config.account} Stored`     // Storage confirmation message
+      const deleted = `@${config.account} Removed`   // Deletion confirmation message
       
-      // Handle storage requests
-      if (feed[keys[i]].search(stored) > -1) {
-        storeByContract(feed[keys[i]].split('|')[1])
-      } 
-      // Handle deletion requests
-      else if (feed[keys[i]].search(deleted) > -1) {
-        deleteByContract(feed[keys[i]].split('|')[1])
+      // Process each feed item
+      for (var i = 0; i < keys.length; i++) {
+        // Update feed position to latest
+        if (parseInt(keys[i].split(':')[0]) > live_stats.feed) live_stats.feed = parseInt(keys[i].split(':')[0])
+        
+        // Handle storage requests
+        if (feed[keys[i]].search(stored) > -1) {
+          storeByContract(feed[keys[i]].split('|')[1])
+        } 
+        // Handle deletion requests
+        else if (feed[keys[i]].search(deleted) > -1) {
+          deleteByContract(feed[keys[i]].split('|')[1])
+        }
       }
-    }
-  })
+    })
+    .catch(err => {
+      console.error('Error fetching feed:', err)
+    })
   
   // Fetch account statistics from SPK API
-  fetch(`${config.SPK_API}/@${config.account}`).then(rz => rz.json()).then(json => {
-    const keys = Object.keys(json)
-    // Update live stats with account data
-    for (var i = 0; i < keys.length; i++) {
-      live_stats[keys[i]] = json[keys[i]]
-    }
-  })
+  fetch(`${config.SPK_API}/@${config.account}`)
+    .then(rz => rz.json())
+    .then(json => {
+      const keys = Object.keys(json)
+      // Update live stats with account data
+      for (var i = 0; i < keys.length; i++) {
+        live_stats[keys[i]] = json[keys[i]]
+      }
+    })
+    .catch(err => {
+      console.error('Error fetching account stats:', err)
+    })
   
   // Get IPFS repository statistics
   ipfs.repo.stat((err, stats) => {
-    live_stats.storageMax = BigInt(stats.storageMax)    // Maximum storage capacity
-    live_stats.repoSize = BigInt(stats.repoSize)        // Current repository size
-    live_stats.numObjects = BigInt(stats.numObjects)    // Number of stored objects
+    if (err) {
+      console.error('Error getting IPFS repo stats:', err)
+    } else {
+      live_stats.storageMax = BigInt(stats.storageMax)    // Maximum storage capacity
+      live_stats.repoSize = BigInt(stats.repoSize)        // Current repository size
+      live_stats.numObjects = BigInt(stats.numObjects)    // Number of stored objects
+    }
   })
   
   // Exit early if blockchain head block is not yet available
-  if (!live_stats.head_block) return setTimeout(getStats, 3 * 1000)
+  if (!live_stats.head_block) {
+    console.log('No head_block yet, retrying in 3 seconds...')
+    return setTimeout(getStats, 3 * 1000)
+  }
   
   // Clean up old uploaded files (older than ~24 hours based on blocks)
   fs.readdir(`./uploads/`, (err, files) => {
@@ -299,7 +326,24 @@ function getStats() {
     });
   });
   
-  setTimeout(getStats, 1 * 60 * 1000) // Schedule next run in 1 minute
+  // Mark successful run
+  live_stats.lastRun = Date.now()
+  live_stats.failureCount = 0
+  
+  } catch (err) {
+    console.error('Critical error in getStats:', err)
+    live_stats.failureCount++
+    
+    // If too many failures, try a shorter retry interval
+    if (live_stats.failureCount > 5) {
+      console.error(`Too many failures (${live_stats.failureCount}), retrying in 10 seconds`)
+      setTimeout(getStats, 10 * 1000)
+      return
+    }
+  } finally {
+    // Always reschedule to prevent the function from stopping
+    setTimeout(getStats, 1 * 60 * 1000) // Schedule next run in 1 minute
+  }
 }
 
 // Remove a file from IPFS pinning (allows garbage collection)
@@ -777,9 +821,15 @@ exports.upload = (req, res, next) => {
 exports.live = (req, res, next) => {
   console.log('live')
   // Convert BigInt values to strings for JSON serialization
-  const StorageMax = BigInt(live_stats.storageMax).toString()
-  const RepoSize = BigInt(live_stats.repoSize).toString()
-  const NumObjects = BigInt(live_stats.numObjects).toString()
+  const StorageMax = BigInt(live_stats.storageMax || 0).toString()
+  const RepoSize = BigInt(live_stats.repoSize || 0).toString()
+  const NumObjects = BigInt(live_stats.numObjects || 0).toString()
+  
+  // Calculate health status
+  const now = Date.now()
+  const timeSinceLastRun = live_stats.lastRun ? (now - live_stats.lastRun) / 1000 : null
+  const isHealthy = timeSinceLastRun ? timeSinceLastRun < 120 : false // Healthy if ran within 2 minutes
+  
   return res.status(200).json({
     ipfsid: live_stats.ipfsid,          // IPFS node identifier
     pubKey: live_stats.pubKey,          // Node's public key
@@ -789,6 +839,13 @@ exports.live = (req, res, next) => {
     StorageMax,                         // Maximum storage capacity
     RepoSize,                           // Current repository size
     NumObjects,                         // Number of stored objects
+    health: {
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      lastRun: live_stats.lastRun ? new Date(live_stats.lastRun).toISOString() : null,
+      timeSinceLastRun: timeSinceLastRun,
+      failureCount: live_stats.failureCount,
+      cleanupIndex: live_stats.i
+    }
   })
 }
 
