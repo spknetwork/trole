@@ -44,7 +44,7 @@ if (config.HEALTH_ENDPOINT_IP && config.HEALTH_ENDPOINT_IP !== '0.0.0.0' && conf
   });
 }
 
-http.listen(config.port, '::', function () {
+http.listen(config.port, function () {
   console.log(`API listening on port ${config.port}`);
   console.log('promo:', config.promo_contract);
   console.log('node region:', config.NODE_REGION);
