@@ -293,6 +293,12 @@ function getStats() {
   });
   
   // Process contract cleanup based on current cleanup index
+  // SAFETY: Skip cleanup if IPFS is not connected to prevent accidental deletions
+  if (!ipfs) {
+    console.log('WARNING: Skipping contract cleanup - IPFS not connected')
+    return
+  }
+  
   fs.readdir(`./db/`, (err, files) => {
     files.forEach(file => {
       const key = file.replace('.json', "")
@@ -320,8 +326,12 @@ function getStats() {
                 // Clean up associated files
                 for (var i = 0; i < json.df.length; i++) {
                   fs.remove(getFilePath(json.df[i], key))
-                  ipfsUnpin(json.df[i])                // Unpin from IPFS
-                  console.log('unpinning', json.df[i])
+                  if (ipfs) {
+                    console.log('unpinning', json.df[i])
+                    ipfsUnpin(json.df[i])                // Unpin from IPFS
+                  } else {
+                    console.log('IPFS not connected, skipping unpin for', json.df[i])
+                  }
                 }
               }
             } else {
@@ -340,8 +350,12 @@ function getStats() {
                 if (isMine == 0) { //or j > p + threshold
                   for (var i = 0; i < json.df.length; i++) {
                     fs.remove(getFilePath(json.df[i], key))
-                    ipfsUnpin(json.df[i])              // Unpin from IPFS
-                    console.log('unpinning', json.df[i])
+                    if (ipfs) {
+                      console.log('unpinning', json.df[i])
+                      ipfsUnpin(json.df[i])              // Unpin from IPFS
+                    } else {
+                      console.log('IPFS not connected, skipping unpin for', json.df[i])
+                    }
                   }
                   DB.delete(key).then(d => {
                     console.log('deleted', key + '.json')
