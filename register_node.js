@@ -11,8 +11,12 @@ var registered = false, vcode = ENV.VALIDATOR != "false" ? true : false, vreg = 
 var client = new dhive.Client(["https://api.hive.blog", "https://anyx.io"]);
 var key = dhive.PrivateKey.fromString(active_key);
 var price = 2000
-const Ipfs = require('ipfs-api')
-var ipfs = new Ipfs(`127.0.0.1`, { protocol: 'http' })
+const { create } = require('ipfs-http-client')
+var ipfs = create({
+    host: '127.0.0.1',
+    port: 5001,
+    protocol: 'http'
+})
 if(!active_key || !account){
     console.log("no key/account, Can't auto register")
     process.exit()

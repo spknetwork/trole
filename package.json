@@ -22,7 +22,7 @@
     "express-form-data": "^2.0.14",
     "fs-extra": "^11.1.0",
     "hive-tx": "^4.1.1",
-    "ipfs-api": "^26.1.2",
+    "ipfs-http-client": "^56.0.3",
     "ipfs-only-hash": "^4.0.0",
     "node-cron": "^4.1.0",
     "node-fetch": "^2.6.7",

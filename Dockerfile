@@ -1,5 +1,6 @@
 # Multi-stage build for optimization
-FROM node:18-alpine AS builder
+# Use non-alpine image to avoid OpenSSL issues with old packages
+FROM node:18 AS builder
 
 # Set working directory
 WORKDIR /app
@@ -8,19 +9,20 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --only=production && \
+    npm cache clean --force
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:18-slim AS production
 
 # Add metadata
 LABEL maintainer="SPK Network"
 LABEL description="Trole - Role-based IPFS bridge controller"
 LABEL version="1.0.0"
 
-# Create non-root user
-RUN addgroup -g 1001 -S trole && \
-    adduser -S trole -u 1001 -G trole
+# Create non-root user (using Debian commands for slim image)
+RUN groupadd -g 1001 trole && \
+    useradd -m -u 1001 -g trole trole
 
 # Set working directory
 WORKDIR /app

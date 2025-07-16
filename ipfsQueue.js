@@ -99,33 +99,41 @@ async function processQueue() {
 
 // Upload file to IPFS with retry logic
 async function uploadToIPFS(queueItem, fileBuffer) {
-  // Import ipfs from the main module to avoid circular dependency
-  const mainModule = require.main.require('./api');
-  const ipfs = mainModule.ipfs;
+  // Get ipfs instance from centralized module
+  const { getIPFSInstance } = require('./ipfsClient');
+  const ipfs = getIPFSInstance();
   
-  return new Promise((resolve, reject) => {
-    ipfs.files.add(fileBuffer, (err, result) => {
-      if (err) {
-        return reject(err);
-      }
-      
-      // Verify the uploaded CID matches
-      if (result[0].hash !== queueItem.expectedCid) {
-        return reject(new Error(`IPFS returned different CID: ${result[0].hash}`));
-      }
-      
-      // Pin the file
-      ipfs.pin.add(queueItem.expectedCid, (pinErr) => {
-        if (pinErr) {
-          console.error(`Failed to pin ${queueItem.expectedCid}:`, pinErr);
-          // Don't fail the upload if pinning fails
-        }
-        
-        queueItem.ipfsResult = result[0];
-        resolve(result[0]);
-      });
-    });
-  });
+  if (!ipfs) {
+    throw new Error('IPFS client not initialized');
+  }
+  
+  try {
+    // Upload file using new API
+    const result = await ipfs.add(fileBuffer);
+    
+    // Verify the uploaded CID matches
+    if (result.cid.toString() !== queueItem.expectedCid) {
+      throw new Error(`IPFS returned different CID: ${result.cid.toString()}`);
+    }
+    
+    // Pin the file
+    try {
+      await ipfs.pin.add(queueItem.expectedCid);
+    } catch (pinErr) {
+      console.error(`Failed to pin ${queueItem.expectedCid}:`, pinErr);
+      // Don't fail the upload if pinning fails
+    }
+    
+    queueItem.ipfsResult = {
+      hash: result.cid.toString(),
+      path: result.path,
+      size: result.size
+    };
+    
+    return queueItem.ipfsResult;
+  } catch (err) {
+    throw err;
+  }
 }
 
 // Get queue status

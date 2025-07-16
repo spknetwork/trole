@@ -15,9 +15,43 @@ var { exec } = require('child_process');    // Execute shell commands
 const { Blob } = require("buffer");         // Binary large object handling
 // Helper function to generate file paths for uploaded files
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
-const Ipfs = require('ipfs-api')            // IPFS (InterPlanetary File System) client
-// Initialize IPFS connection using endpoint from config
-var ipfs = new Ipfs(`/ip4/${config.ENDPOINT}/tcp/${config.ENDPORT}`)
+// Use centralized IPFS client to avoid circular dependencies
+const { initializeIPFS: initIPFS, getIPFSInstance } = require('./ipfsClient');
+var ipfs = null;
+
+// Function to initialize IPFS connection and register node
+function initializeIPFS() {
+  if (ipfs) return; // Already initialized
+  
+  ipfs = initIPFS();
+  if (!ipfs) return;
+  
+  // Try to get ID to verify connection
+  ipfs.id().then(r => {
+    live_stats.ipfsid = r.id;
+    console.log('IPFS connected, ID:', r.id);
+    
+    // Register node after successful IPFS connection
+    exec(`node register_node.js`, (error, stdout, stderr) => {
+      console.log(stdout);
+      if (error) {
+        console.log(`error: ${error.message}`);
+      }
+    });
+  }).catch(e => {
+    if (e.message && e.message.includes('no protocol with name: tls')) {
+      console.error('IPFS connection failed: TLS protocol not supported in this client version');
+      console.error('This usually means the IPFS daemon is using a newer API format');
+    } else {
+      console.error('IPFS connection test failed:', e.message || e);
+    }
+    ipfs = null; // Reset on failure
+  });
+}
+
+// Delay IPFS initialization by 5 seconds to avoid startup segfault
+// Commented out - will be initialized from index.js
+// setTimeout(initializeIPFS, 5000)
 const Busboy = require('busboy');           // Multipart form data parser for file uploads
 const ipfsQueue = require('./ipfsQueue');   // IPFS upload queue system
 
@@ -28,18 +62,7 @@ var live_stats = {
   lastRun: null,                            // Last successful run timestamp
   failureCount: 0                           // Consecutive failure count
 }
-// Initialize IPFS and register this node
-ipfs.id().then(r => {
-  live_stats.ipfsid = r.id                 // Store IPFS node ID
-  // Register this node with the network
-  exec(`node register_node.js`, (error, stdout, stderr) => {
-    console.log(stdout)
-    if (error) {
-      console.log(`error: ${error.message}`);
-      return;
-    }
-  })
-}).catch(e => console.log(e))
+// IPFS initialization and node registration handled in initializeIPFS()
 
 // Setup IPFS queue event listeners
 ipfsQueue.queueEvents.on('uploadCompleted', (item) => {
@@ -174,10 +197,13 @@ const DB = {
 }
 
 // Initialize system statistics gathering
-getStats()
+// Commented out - will be called from index.js after startup
+// getStats()
 
 // Main system monitoring and cleanup function - runs every minute
 function getStats() {
+  const startTime = Date.now()
+  
   try {
     const now = Date.now()
     
@@ -187,7 +213,7 @@ function getStats() {
     }
     
     live_stats.i = (live_stats.i + 1) % 10    // Increment cleanup index (0-9 cycle)
-    console.log(`Clean: ${live_stats.i} | Last run: ${live_stats.lastRun ? new Date(live_stats.lastRun).toISOString() : 'Never'}`)
+    console.log(`Clean: ${live_stats.i} | Last run: ${live_stats.lastRun ? new Date(live_stats.lastRun).toISOString() : 'Never'} | Started: ${new Date(startTime).toISOString()}`)
   inventory()                               // Check IPFS inventory
   
   // Fetch and process the latest feed from SPK API
@@ -233,19 +259,24 @@ function getStats() {
     })
   
   // Get IPFS repository statistics
-  ipfs.repo.stat((err, stats) => {
-    if (err) {
-      console.error('Error getting IPFS repo stats:', err)
-    } else {
+  if (ipfs) {
+    ipfs.repo.stat().then(stats => {
       live_stats.storageMax = BigInt(stats.storageMax)    // Maximum storage capacity
       live_stats.repoSize = BigInt(stats.repoSize)        // Current repository size
       live_stats.numObjects = BigInt(stats.numObjects)    // Number of stored objects
-    }
-  })
+    }).catch(err => {
+      console.error('Error getting IPFS repo stats:', err)
+    })
+  }
   
   // Exit early if blockchain head block is not yet available
   if (!live_stats.head_block) {
     console.log('No head_block yet, retrying in 3 seconds...')
+    // Try to initialize IPFS if not already done
+    if (!ipfs && !live_stats.ipfsInitAttempted) {
+      live_stats.ipfsInitAttempted = true;
+      initializeIPFS();
+    }
     return setTimeout(getStats, 3 * 1000)
   }
   
@@ -299,7 +330,7 @@ function getStats() {
                 var isMine = 0
                 const nodes = contract.n ? Object.keys(contract.n) : []
                 // Check if this node is assigned to the contract
-                for (var j = 1; j <= nodes.length; i++) {
+                for (var j = 1; j <= nodes.length; j++) {
                   if (contract.n[`${j}`] == config.account) {
                     isMine = j
                     break
@@ -329,6 +360,7 @@ function getStats() {
   // Mark successful run
   live_stats.lastRun = Date.now()
   live_stats.failureCount = 0
+  console.log(`getStats completed in ${Date.now() - startTime}ms`)
   
   } catch (err) {
     console.error('Critical error in getStats:', err)
@@ -347,56 +379,72 @@ function getStats() {
 }
 
 // Remove a file from IPFS pinning (allows garbage collection)
-function ipfsUnpin(cid) {
-  return new Promise((res, rej) => {
-    if (cid) ipfs.pin.rm(cid, (err, pinset) => {
-      if (err) return rej(err)
-      res(pinset)
-    })
-    else res('Not Pinned')
-  })
+async function ipfsUnpin(cid) {
+  if (!ipfs) {
+    return 'IPFS not initialized'
+  }
+  if (!cid) {
+    return 'Not Pinned'
+  }
+  
+  try {
+    const pinset = await ipfs.pin.rm(cid)
+    return pinset
+  } catch (err) {
+    throw err
+  }
 }
 
 // Check IPFS inventory and re-pin any missing files
-function inventory() {
-  DB.getKeys('contracts').then(keys => {
+async function inventory() {
+  if (!ipfs) {
+    console.log('IPFS not initialized, attempting initialization...')
+    initializeIPFS()
+    return
+  }
+  
+  try {
+    const keys = await DB.getKeys('contracts')
+    
     // Process each contract
     for (var i = 0; i < keys.length; i++) {
-      DB.read(keys[i]).then(contract => {
-        contract = JSON.parse(contract)
-        // Check each file in the contract
-        for (var j in contract.df) {
-          // Verify if file is pinned in IPFS
-          ipfs.pin.ls(j, (err, pinset) => {
-            if (err && j) {
-              try {
-                if (j.length < 10) {
-                  //console.log('contract failure artifact, deleting', contract.i)
-                } else {
-                  console.log('missing', j)
-                  // Re-pin missing files
-                  ipfs.pin.add(j, function (err, pin) {
-                    if (err) {
-                      console.log(err);
-                    }
-                    console.log(`pinned ${j}`)
-                  })
-                }
-              } catch (e) {
-                console.log(e)
-              }
-            } else if (!j) {
-              console.log('missing', j)
-              //
-            }
-            // setTimeout(() => { // slow it down, make a queue function
-            //   console.log('inventory', contract.df[j])
-            // })
-          })
+      const contractData = await DB.read(keys[i])
+      const contract = JSON.parse(contractData)
+      
+      // Check each file in the contract
+      for (var j in contract.df) {
+        if (!j || j.length < 10) {
+          continue // Skip invalid CIDs
         }
-      })
+        
+        try {
+          // Check if file is already pinned
+          let isPinned = false
+          for await (const pin of ipfs.pin.ls({ paths: [j] })) {
+            if (pin.cid.toString() === j) {
+              isPinned = true
+              break
+            }
+          }
+          
+          if (!isPinned) {
+            console.log('missing', j)
+            // Re-pin missing files
+            await ipfs.pin.add(j)
+            console.log(`pinned ${j}`)
+          }
+        } catch (err) {
+          if (err.message && err.message.includes('not found')) {
+            console.log('File not found in IPFS:', j)
+          } else {
+            console.error('Error checking/pinning file:', j, err.message)
+          }
+        }
+      }
     }
-  })
+  } catch (e) {
+    console.error('Error in inventory:', e)
+  }
 }
 
 // Upload a file to IPFS and update the contract with file information
@@ -830,6 +878,9 @@ exports.live = (req, res, next) => {
   const timeSinceLastRun = live_stats.lastRun ? (now - live_stats.lastRun) / 1000 : null
   const isHealthy = timeSinceLastRun ? timeSinceLastRun < 120 : false // Healthy if ran within 2 minutes
   
+  // Add IPFS connection status
+  const ipfsConnected = !!ipfs && !!live_stats.ipfsid
+  
   return res.status(200).json({
     ipfsid: live_stats.ipfsid,          // IPFS node identifier
     pubKey: live_stats.pubKey,          // Node's public key
@@ -844,7 +895,8 @@ exports.live = (req, res, next) => {
       lastRun: live_stats.lastRun ? new Date(live_stats.lastRun).toISOString() : null,
       timeSinceLastRun: timeSinceLastRun,
       failureCount: live_stats.failureCount,
-      cleanupIndex: live_stats.i
+      cleanupIndex: live_stats.i,
+      ipfsConnected: ipfsConnected
     }
   })
 }
@@ -1577,22 +1629,31 @@ function getContract(contract, chain = 'spk') {
 }
 
 // Store files for contracts specified in a comma-separated string
-function storeByContract(str) {
+async function storeByContract(str) {
   const contracts = str.split(',')
   for (var i = 0; i < contracts.length; i++) {
-    getActiveContract(contracts[i]).then(contract => {
-      contract = contract[1].result
-      DB.write(contract.i, JSON.stringify(contract))  // Store contract locally
+    try {
+      const contractData = await getActiveContract(contracts[i])
+      const contract = contractData[1].result
+      await DB.write(contract.i, JSON.stringify(contract))  // Store contract locally
+      
       // Pin all files in the contract to IPFS
       for (var cid in contract.df) {
-        ipfs.pin.add(cid, function (err, data) {
-          console.log(err, data)
-          if (err) {
-            console.log(err)
-          }
-        })
+        if (!ipfs) {
+          console.log('IPFS not initialized, skipping pin for', cid)
+          continue
+        }
+        
+        try {
+          await ipfs.pin.add(cid)
+          console.log('Pinned:', cid)
+        } catch (err) {
+          console.error('Failed to pin', cid, ':', err.message)
+        }
       }
-    })
+    } catch (err) {
+      console.error('Error processing contract', contracts[i], ':', err)
+    }
   }
 }
 
@@ -1620,3 +1681,9 @@ exports.ipfs = ipfs;
 
 // Export getStats function to be called from index.js
 exports.getStats = getStats;
+
+// Export initializeIPFS function
+exports.initializeIPFS = initializeIPFS;
+
+// Export function to get IPFS instance (avoids circular dependency)
+exports.getIPFSInstance = () => ipfs;
