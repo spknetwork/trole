@@ -15,8 +15,8 @@ var { exec } = require('child_process');    // Execute shell commands
 const { Blob } = require("buffer");         // Binary large object handling
 // Helper function to generate file paths for uploaded files
 const getFilePath = (fileCid, contract) => `./uploads/${fileCid}-${contract}`
-// Use centralized IPFS client to avoid circular dependencies
-const { initializeIPFS: initIPFS, getIPFSInstance } = require('./ipfsClient');
+// Use direct HTTP client for IPFS v32 compatibility
+const { initializeIPFS: initIPFS, getIPFSInstance } = require('./ipfsDirectClient');
 var ipfs = null;
 
 // Function to initialize IPFS connection and register node
@@ -27,26 +27,23 @@ function initializeIPFS() {
   if (!ipfs) return;
   
   // Try to get ID to verify connection
-  ipfs.id().then(r => {
-    live_stats.ipfsid = r.id;
-    console.log('IPFS connected, ID:', r.id);
-    
-    // Register node after successful IPFS connection
-    exec(`node register_node.js`, (error, stdout, stderr) => {
-      console.log(stdout);
-      if (error) {
-        console.log(`error: ${error.message}`);
-      }
-    });
-  }).catch(e => {
-    if (e.message && e.message.includes('no protocol with name: tls')) {
-      console.error('IPFS connection failed: TLS protocol not supported in this client version');
-      console.error('This usually means the IPFS daemon is using a newer API format');
-    } else {
+  if (ipfs && ipfs.connect) {
+    ipfs.connect().then(() => {
+      live_stats.ipfsid = ipfs.id;
+      console.log('IPFS connected via direct HTTP API, ID:', ipfs.id);
+      
+      // Register node after successful IPFS connection
+      exec(`node register_node.js`, (error, stdout, stderr) => {
+        console.log(stdout);
+        if (error) {
+          console.log(`error: ${error.message}`);
+        }
+      });
+    }).catch(e => {
       console.error('IPFS connection test failed:', e.message || e);
-    }
-    ipfs = null; // Reset on failure
-  });
+      ipfs = null; // Reset on failure
+    });
+  }
 }
 
 // Delay IPFS initialization by 5 seconds to avoid startup segfault

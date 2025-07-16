@@ -11,12 +11,8 @@ var registered = false, vcode = ENV.VALIDATOR != "false" ? true : false, vreg = 
 var client = new dhive.Client(["https://api.hive.blog", "https://anyx.io"]);
 var key = dhive.PrivateKey.fromString(active_key);
 var price = 2000
-const { create } = require('ipfs-http-client')
-var ipfs = create({
-    host: '127.0.0.1',
-    port: 5001,
-    protocol: 'http'
-})
+const { initializeIPFS } = require('./ipfsDirectClient')
+var ipfs = initializeIPFS()
 if(!active_key || !account){
     console.log("no key/account, Can't auto register")
     process.exit()
@@ -27,8 +23,14 @@ console.log('Account:', account)
 console.log('Domain:', domain)
 
 const RegisterService = (amount, type, api) => {
-    return new Promise((resolve, reject)=>{
-        ipfs.id().then(r => {
+    return new Promise(async (resolve, reject)=>{
+        try {
+            // Ensure IPFS is connected first
+            if (!ipfs.connected) {
+                await ipfs.connect();
+            }
+            const ipfsId = ipfs.id;
+            
             client.broadcast.json({
                 required_auths: [account],
                 required_posting_auths: [],
@@ -36,7 +38,7 @@ const RegisterService = (amount, type, api) => {
                 json: JSON.stringify({
                     amount,
                     type,
-                    id: r.id,
+                    id: ipfsId,
                     api,
     
                 })
@@ -45,9 +47,9 @@ const RegisterService = (amount, type, api) => {
             }).catch(e=>{
                 reject(e)
             })
-          }).catch(e => {
-            console.error(e)
-          })
+        } catch (error) {
+            reject(error);
+        }
     })
 }
 const RegisterVal = (amount) => {
@@ -118,7 +120,7 @@ const Pmarkets= () => {
     })
 }
 
-Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.id(), Pipfs()]).then(r => {
+Promise.all([Paccount(account), Pstats(), Pval(), Pmarkets(), ipfs.connect().then(() => ({ id: ipfs.id })), Pipfs()]).then(r => {
     const price = r[1].result.IPFSRate
     console.log(r[0].storage, r[4].id)
     if(r[0].storage == r[4].id){

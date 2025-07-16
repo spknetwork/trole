@@ -100,7 +100,7 @@ async function processQueue() {
 // Upload file to IPFS with retry logic
 async function uploadToIPFS(queueItem, fileBuffer) {
   // Get ipfs instance from centralized module
-  const { getIPFSInstance } = require('./ipfsClient');
+  const { getIPFSInstance } = require('./ipfsDirectClient');
   const ipfs = getIPFSInstance();
   
   if (!ipfs) {
