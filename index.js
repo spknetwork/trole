@@ -48,5 +48,8 @@ http.listen(config.port, function () {
   console.log(`API listening on port ${config.port}`);
   console.log('promo:', config.promo_contract);
   console.log('node region:', config.NODE_REGION);
+  
+  // Start the maintenance function
+  API.getStats();
 });
 
