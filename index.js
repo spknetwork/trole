@@ -49,7 +49,11 @@ http.listen(config.port, function () {
   console.log('promo:', config.promo_contract);
   console.log('node region:', config.NODE_REGION);
   
-  // Start the maintenance function
-  API.getStats();
+  // Start the maintenance function after a delay to ensure everything is initialized
+  // Commenting out for now due to segfault issue with IPFS module
+  // setTimeout(() => {
+  //   console.log('Starting maintenance function getStats()...');
+  //   API.getStats();
+  // }, 5000);
 });
 

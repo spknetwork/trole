@@ -1617,3 +1617,6 @@ function deleteByContract(str) {
 
 // Export ipfs instance for use in other modules
 exports.ipfs = ipfs;
+
+// Export getStats function to be called from index.js
+exports.getStats = getStats;
