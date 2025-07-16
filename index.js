@@ -49,11 +49,21 @@ http.listen(config.port, function () {
   console.log('promo:', config.promo_contract);
   console.log('node region:', config.NODE_REGION);
   
-  // Start the maintenance function after a delay to ensure everything is initialized
-  // Commenting out for now due to segfault issue with IPFS module
-  // setTimeout(() => {
-  //   console.log('Starting maintenance function getStats()...');
-  //   API.getStats();
-  // }, 5000);
+  // Start the maintenance function with error handling
+  try {
+    // Delay to ensure all modules are loaded
+    setTimeout(() => {
+      console.log('Starting maintenance function getStats()...');
+      try {
+        API.getStats();
+      } catch (e) {
+        console.error('Failed to start getStats:', e.message);
+        // Try again in 30 seconds
+        setTimeout(() => API.getStats(), 30000);
+      }
+    }, 10000);
+  } catch (e) {
+    console.error('Failed to schedule getStats:', e);
+  }
 });
 
