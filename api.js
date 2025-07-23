@@ -804,6 +804,8 @@ exports.upload = (req, res, next) => {
   busboy.on('file', async (name, file, info) => {
     // Simple debug - count bytes
     let debugBytes = 0;
+    let writeCompleted = false;
+    
     file.on('data', (chunk) => {
       debugBytes += chunk.length;
     });
@@ -812,6 +814,11 @@ exports.upload = (req, res, next) => {
     if (!fileId || !contract) {
       req.pause();
     }
+    
+    // Store write completion promise
+    req.writeCompletion = new Promise((resolve) => {
+      req.resolveWrite = resolve;
+    });
 
     // Check if partial file exists and validate chunk position
     fs.stat(filePath)
@@ -828,16 +835,20 @@ exports.upload = (req, res, next) => {
         }
 
         // Append chunk to existing file
-        file
-          .pipe(fs.createWriteStream(filePath, { flags: 'a' }))
-          .on('error', (e) => {
-            console.error('failed upload', e);
-            res.sendStatus(500);
-          })
-          .on('close', () => {
-            console.log('close')
-            console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
-          })
+        const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
+        
+        writeStream.on('error', (e) => {
+          console.error('failed upload', e);
+          res.sendStatus(500);
+        });
+        
+        writeStream.on('finish', () => {
+          console.log('Write stream finished');
+          console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
+          if (req.resolveWrite) req.resolveWrite();
+        });
+        
+        file.pipe(writeStream);
       })
       .catch(err => {
         console.log('File not found, checking if this is a valid first chunk...', err);
@@ -847,16 +858,20 @@ exports.upload = (req, res, next) => {
           console.log('Creating new file for first chunk:', filePath);
           try {
             // Create the file and write the first chunk
-            file
-              .pipe(fs.createWriteStream(filePath, { flags: 'w' }))
-              .on('error', (e) => {
-                console.error('failed upload', e);
-                res.sendStatus(500);
-              })
-              .on('close', () => {
-                console.log('First chunk written successfully')
-                console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
-              })
+            const writeStream = fs.createWriteStream(filePath, { flags: 'w' });
+            
+            writeStream.on('error', (e) => {
+              console.error('failed upload', e);
+              res.sendStatus(500);
+            });
+            
+            writeStream.on('finish', () => {
+              console.log('First chunk written successfully');
+              console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
+              if (req.resolveWrite) req.resolveWrite();
+            });
+            
+            file.pipe(writeStream);
           } catch (createErr) {
             console.error('Failed to create file for upload:', createErr);
             res.status(500).json({ message: 'Failed to create upload file' });
@@ -880,7 +895,12 @@ exports.upload = (req, res, next) => {
   })
 
   // Handle upload completion
-  busboy.on('finish', () => {
+  busboy.on('finish', async () => {
+    // Wait for write to complete if there's one in progress
+    if (req.writeCompletion) {
+      await req.writeCompletion;
+    }
+    
     // Check if this is the last chunk by comparing range end with file size
     const isLastChunk = rangeEnd + 1 >= fileSize;
     
