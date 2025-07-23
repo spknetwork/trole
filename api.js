@@ -478,24 +478,11 @@ function localIpfsUpload(cid, contractID) {
       const isValid = await ipfsQueue.verifyCID(filePath, cid);
       if (!isValid) {
         // get the first 64 chars and last 64 chars of the file
-        const buffer = fs.readFileSync(filePath);
-        const crypto = require('crypto');
-        
-        console.log('\n=== CID VERIFICATION FAILED ===');
-        console.log('Expected CID:', cid);
-        console.log('File size:', buffer.length, 'bytes');
-        console.log('SHA256 of full file:', crypto.createHash('sha256').update(buffer).digest('hex'));
-        
-        // Show hex comparison
-        console.log('\nFirst 64 bytes (hex):', buffer.slice(0, 64).toString('hex'));
-        console.log('Expected first 32 (hex): 474011100042f0250001c10000ff01ff0001fc80144812010646466d70656709');
-        console.log('Actual first 32 (hex):', buffer.slice(0, 32).toString('hex'));
-        console.log('Match:', buffer.slice(0, 32).toString('hex') === '474011100042f0250001c10000ff01ff0001fc80144812010646466d70656709');
-        
-        console.log('\nLast 64 bytes (hex):', buffer.slice(-64).toString('hex'));
-        
-        // ASCII representation (safe)
-        console.log('\nFirst 64 bytes (ASCII safe):', buffer.slice(0, 64).toString('ascii').replace(/[^\x20-\x7E]/g, '.'));
+        const head = fs.readFileSync(filePath, 'utf8', 0, 64).substring(0, 64)
+        const tail = fs.readFileSync(filePath, 'utf8', -64)
+        console.log('head', head)
+        console.log('tail', tail.substring(tail.length - 64, tail.length))
+        console.log('cid', cid)
         console.log('filePath', filePath)
         delete ipfsLock[contractID];
         console.log(`CID verification failed for ${cid}`);
@@ -796,6 +783,8 @@ exports.upload = (req, res, next) => {
   const rangeStart = Number(match[1]);          // Starting byte of this chunk
   const rangeEnd = Number(match[2]);            // Ending byte of this chunk
   const fileSize = Number(match[3]);            // Total file size
+  
+  console.log(`Processing chunk: bytes ${rangeStart}-${rangeEnd}/${fileSize} (${Math.round(((rangeEnd + 1) / fileSize) * 100)}% complete)`);
 
   // Validate range parameters
   if (
@@ -813,19 +802,10 @@ exports.upload = (req, res, next) => {
 
   // Handle file upload stream
   busboy.on('file', async (name, file, info) => {
-    console.log('\n=== BUSBOY FILE EVENT ===');
-    console.log('Field name:', name);
-    console.log('File info:', info);
-    console.log('Headers:', req.headers);
-    
-    // Collect chunks to analyze
-    const chunks = [];
-    let totalBytes = 0;
-    
+    // Simple debug - count bytes
+    let debugBytes = 0;
     file.on('data', (chunk) => {
-      chunks.push(chunk);
-      totalBytes += chunk.length;
-      console.log(`Received chunk ${chunks.length}: ${chunk.length} bytes, Buffer: ${Buffer.isBuffer(chunk)}`);
+      debugBytes += chunk.length;
     });
     
     const filePath = getFilePath(fileId, contract);
@@ -847,26 +827,6 @@ exports.upload = (req, res, next) => {
             });
         }
 
-        file.on('end', async () => {
-          // Analyze what we received
-          const fullBuffer = Buffer.concat(chunks);
-          const crypto = require('crypto');
-          const IpfsOnlyHash = require('ipfs-only-hash');
-          
-          const sha256 = crypto.createHash('sha256').update(fullBuffer).digest('hex');
-          const receivedCid = await IpfsOnlyHash.of(fullBuffer);
-          
-          console.log('\n=== STREAM ANALYSIS ===');
-          console.log('Total bytes received:', totalBytes);
-          console.log('Buffer length:', fullBuffer.length);
-          console.log('Expected bytes (from range):', rangeEnd - rangeStart + 1);
-          console.log('First 32 bytes (hex):', fullBuffer.slice(0, 32).toString('hex'));
-          console.log('SHA256:', sha256);
-          console.log('Calculated CID:', receivedCid);
-          console.log('Expected CID:', fileId);
-          console.log('Expected SHA256 (from spk-js): b303810d9f41305efeeeace4df1cae730467b94b06d6a25855d7e1ec1fc69b74');
-        });
-
         // Append chunk to existing file
         file
           .pipe(fs.createWriteStream(filePath, { flags: 'a' }))
@@ -876,6 +836,7 @@ exports.upload = (req, res, next) => {
           })
           .on('close', () => {
             console.log('close')
+            console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
           })
       })
       .catch(err => {
@@ -894,6 +855,7 @@ exports.upload = (req, res, next) => {
               })
               .on('close', () => {
                 console.log('First chunk written successfully')
+                console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
               })
           } catch (createErr) {
             console.error('Failed to create file for upload:', createErr);
@@ -919,12 +881,26 @@ exports.upload = (req, res, next) => {
 
   // Handle upload completion
   busboy.on('finish', () => {
-    // Process the uploaded file with IPFS
-    localIpfsUpload(fileId, contract).then(r => {
-      console.log('finish')
-      res.status(r.status).json(r.message)
-    })
-
+    // Check if this is the last chunk by comparing range end with file size
+    const isLastChunk = rangeEnd + 1 >= fileSize;
+    
+    if (isLastChunk) {
+      console.log('Last chunk received, verifying complete file...');
+      // Process the uploaded file with IPFS
+      localIpfsUpload(fileId, contract).then(r => {
+        console.log('finish')
+        res.status(r.status).json(r.message)
+      })
+    } else {
+      console.log(`Chunk received: ${rangeStart}-${rangeEnd} of ${fileSize}`);
+      // Just acknowledge the chunk was received
+      res.status(200).json({ 
+        message: 'Chunk received',
+        bytesReceived: rangeEnd + 1,
+        totalBytes: fileSize,
+        percentComplete: Math.round(((rangeEnd + 1) / fileSize) * 100)
+      });
+    }
   });
 
   // Pipe request to busboy for processing
