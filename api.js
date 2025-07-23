@@ -856,6 +856,14 @@ exports.upload = (req, res, next) => {
         if (stats.size !== rangeStart) {
           console.log(`Resume mismatch: client wants to write at ${rangeStart}, but file has ${stats.size} bytes`);
           
+          // Special case: if file is already complete, just verify and finish
+          if (stats.size === fileSize && rangeStart === 0) {
+            console.log('[DEBUG] File already complete, skipping to verification');
+            // Don't wait for file stream since we're not writing anything
+            req.resolveWrite?.();
+            return; // Let busboy finish event handle the response
+          }
+          
           // Tell the client where to resume from
           return res
             .status(409)  // 409 Conflict is more appropriate for resume scenarios
@@ -936,13 +944,18 @@ exports.upload = (req, res, next) => {
 
   // Handle upload completion
   busboy.on('finish', async () => {
+    console.log('[DEBUG] Busboy finish event triggered');
+    
     // Wait for write to complete if there's one in progress
     if (req.writeCompletion) {
+      console.log('[DEBUG] Waiting for write completion...');
       await req.writeCompletion;
+      console.log('[DEBUG] Write completed');
     }
     
     // Check if this is the last chunk by comparing range end with file size
     const isLastChunk = rangeEnd + 1 >= fileSize;
+    console.log(`[DEBUG] Is last chunk: ${isLastChunk} (rangeEnd: ${rangeEnd}, fileSize: ${fileSize})`);
     
     if (isLastChunk) {
       console.log('Last chunk received, verifying complete file...');
@@ -950,7 +963,10 @@ exports.upload = (req, res, next) => {
       localIpfsUpload(fileId, contract).then(r => {
         console.log('finish')
         res.status(r.status).json(r.message)
-      })
+      }).catch(err => {
+        console.error('Error in localIpfsUpload:', err);
+        res.status(500).json({ message: 'Upload processing failed' });
+      });
     } else {
       console.log(`Chunk received: ${rangeStart}-${rangeEnd} of ${fileSize}`);
       // Just acknowledge the chunk was received
