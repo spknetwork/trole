@@ -536,8 +536,21 @@ function localIpfsUpload(cid, contractID) {
       
       if (allVerified) {
         console.log('[DEBUG] All files verified, calling signNupdate...');
+        console.log('[DEBUG] Contract object:', JSON.stringify(contract, null, 2));
         // Sign and broadcast immediately - IPFS upload happens in background
-        signNupdate(contract);
+        try {
+          signNupdate(contract)
+            .then(result => {
+              console.log('[DEBUG] signNupdate completed successfully:', result);
+            })
+            .catch(err => {
+              console.error('[DEBUG] signNupdate failed:', err);
+              console.error('[DEBUG] Error stack:', err.stack);
+            });
+        } catch (err) {
+          console.error('[DEBUG] Error calling signNupdate:', err);
+          console.error('[DEBUG] Error stack:', err.stack);
+        }
       }
       
       delete ipfsLock[contractID];
@@ -1452,16 +1465,21 @@ function checkThenBuild(path) {
 
 // Sign and broadcast contract completion to the blockchain with chunk verification and retry
 function signNupdate(contract) {
+  console.log('[DEBUG] signNupdate called with contract:', contract.id);
   return new Promise((resolve, reject) => {
-    // Build the sizes string for all uploaded files
-    var sizes = '';
-    for (var i = 0; i < contract.df.length; i++) {
-      sizes += `${contract[contract.df[i]]},`;
-    }
-    sizes = sizes.substring(0, sizes.length - 1);
+    try {
+      // Build the sizes string for all uploaded files
+      var sizes = '';
+      for (var i = 0; i < contract.df.length; i++) {
+        const fileSize = contract[contract.df[i]];
+        console.log(`[DEBUG] File ${contract.df[i]} size: ${fileSize}`);
+        sizes += `${fileSize},`;
+      }
+      sizes = sizes.substring(0, sizes.length - 1);
+      console.log(`[DEBUG] Sizes string: ${sizes}`);
 
-    // Construct the contract completion data object
-    const data = {
+      // Construct the contract completion data object
+      const data = {
       fo: contract.fo, // file owner
       id: contract.id, // contract id
       sig: contract.sig, // signature of uploader  
@@ -1471,13 +1489,18 @@ function signNupdate(contract) {
       s: sizes,
       m: contract.m
     };
+    
+    console.log('[DEBUG] Contract completion data:', JSON.stringify(data, null, 2));
 
     // Stringify the data and define limits for blockchain transactions
     const jsonString = JSON.stringify(data);
-    const maxJsonLength = config.maxJsonLength; // Maximum characters per transaction
-    const chunkSize = config.chunkSize; // Chunk size to leave room for metadata
+    console.log(`[DEBUG] JSON string length: ${jsonString.length}`);
+    const maxJsonLength = config.maxJsonLength || 2048; // Maximum characters per transaction
+    const chunkSize = config.chunkSize || 1900; // Chunk size to leave room for metadata
+    console.log(`[DEBUG] Max JSON length: ${maxJsonLength}, chunk size: ${chunkSize}`);
 
     if (jsonString.length <= maxJsonLength) {
+      console.log('[DEBUG] Single transaction case - broadcasting channel update');
       // **Single Transaction Case** - data fits in one transaction
       const operations = [
         [
@@ -1490,24 +1513,38 @@ function signNupdate(contract) {
           }
         ]
       ];
+      console.log('[DEBUG] Operations:', JSON.stringify(operations, null, 2));
       const tx = new hiveTx.Transaction();
+      console.log('[DEBUG] Creating transaction...');
       tx.create(operations)
         .then(() => {
-          const privateKey = hiveTx.PrivateKey.from(config.active_key);
-          tx.sign(privateKey);
-          tx.broadcast()
-            .then(resolve)
-            .catch(err => {
-              console.log({ err });
-              reject(err);
-            });
+          console.log('[DEBUG] Transaction created, signing...');
+          try {
+            const privateKey = hiveTx.PrivateKey.from(config.active_key);
+            tx.sign(privateKey);
+            console.log('[DEBUG] Transaction signed, broadcasting...');
+            tx.broadcast()
+              .then(result => {
+                console.log('[DEBUG] Broadcast successful:', result);
+                resolve(result);
+              })
+              .catch(err => {
+                console.error('[DEBUG] Broadcast failed:', err);
+                console.error('[DEBUG] Broadcast error details:', JSON.stringify(err, null, 2));
+                reject(err);
+              });
+          } catch (signErr) {
+            console.error('[DEBUG] Signing error:', signErr);
+            reject(signErr);
+          }
         })
         .catch(err => {
-          console.log({ err });
+          console.error('[DEBUG] Transaction creation error:', err);
           reject(err);
         });
     } else {
       // **Chunked Transaction Case with Verification and Retry**
+      console.log('[DEBUG] Using chunked transaction approach');
       const chunks = splitString(jsonString, chunkSize);
       const total_chunks = chunks.length;
       const update_id = contract.id.split(':')[2]; // Unique part of contract.id
