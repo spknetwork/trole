@@ -828,10 +828,21 @@ exports.upload = (req, res, next) => {
       // Wait for all data to be collected
       file.on('end', async () => {
         console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
+        console.log(`[DEBUG] Chunks collected: ${chunks.length}`);
+        
+        // Log chunk sizes
+        let totalFromChunks = 0;
+        chunks.forEach((chunk, i) => {
+          totalFromChunks += chunk.length;
+          if (i < 3 || i >= chunks.length - 3) {
+            console.log(`[DEBUG] Chunk ${i}: ${chunk.length} bytes`);
+          }
+        });
+        console.log(`[DEBUG] Total from chunks: ${totalFromChunks} bytes`);
         
         // Write all collected data at once
         const fullBuffer = Buffer.concat(chunks);
-        console.log(`[DEBUG] Buffer size to write: ${fullBuffer.length} bytes`);
+        console.log(`[DEBUG] Buffer.concat result: ${fullBuffer.length} bytes`);
         
         try {
           await fs.promises.writeFile(filePath, fullBuffer);
@@ -840,6 +851,7 @@ exports.upload = (req, res, next) => {
           // Verify the file size
           const stats = await fs.promises.stat(filePath);
           console.log(`[DEBUG] File size on disk after write: ${stats.size} bytes`);
+          console.log(`[DEBUG] File size matches buffer: ${stats.size === fullBuffer.length}`);
           
           if (req.resolveWrite) req.resolveWrite();
         } catch (writeErr) {
@@ -878,10 +890,21 @@ exports.upload = (req, res, next) => {
         // Wait for all data to be collected
         file.on('end', async () => {
           console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
+          console.log(`[DEBUG] Chunks collected: ${chunks.length}`);
+          
+          // Log chunk sizes
+          let totalFromChunks = 0;
+          chunks.forEach((chunk, i) => {
+            totalFromChunks += chunk.length;
+            if (i < 3 || i >= chunks.length - 3) {
+              console.log(`[DEBUG] Chunk ${i}: ${chunk.length} bytes`);
+            }
+          });
+          console.log(`[DEBUG] Total from chunks: ${totalFromChunks} bytes`);
           
           // Write all collected data at once
           const fullBuffer = Buffer.concat(chunks);
-          console.log(`[DEBUG] Buffer size to write: ${fullBuffer.length} bytes`);
+          console.log(`[DEBUG] Buffer.concat result: ${fullBuffer.length} bytes`);
           
           try {
             await fs.promises.appendFile(filePath, fullBuffer);
