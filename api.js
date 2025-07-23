@@ -871,8 +871,13 @@ exports.upload = (req, res, next) => {
           // Special case: if file is already complete, just verify and finish
           if (stats.size === fileSize && rangeStart === 0) {
             console.log('[DEBUG] File already complete, skipping to verification');
-            // Don't wait for file stream since we're not writing anything
-            req.resolveWrite?.();
+            // Consume the file stream but don't write it
+            file.on('data', () => {}); // Drain the stream
+            file.on('end', () => {
+              console.log('[DEBUG] Drained stream for already-complete file');
+              // Resolve immediately since no write is needed
+              req.resolveWrite?.();
+            });
             return; // Let busboy finish event handle the response
           }
           
