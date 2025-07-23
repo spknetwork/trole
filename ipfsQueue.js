@@ -215,6 +215,7 @@ async function verifyCID(filePath, expectedCid) {
   try {
     const fileBuffer = await fs.readFile(filePath);
     const calculatedCid = await IpfsOnlyHash.of(fileBuffer);
+    if(calculatedCid != expectedCid)console.log('calculatedCid', calculatedCid, 'expectedCid', expectedCid)
     return calculatedCid === expectedCid;
   } catch (error) {
     console.error('Error verifying CID:', error);
