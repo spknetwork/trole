@@ -478,10 +478,10 @@ function localIpfsUpload(cid, contractID) {
       const isValid = await ipfsQueue.verifyCID(filePath, cid);
       if (!isValid) {
         // get the first 64 chars and last 64 chars of the file
-        const head = fs.readFileSync(filePath, 'utf8', 0, 64);
-        const tail = fs.readFileSync(filePath, 'utf8', -64);
+        const head = fs.readFileSync(filePath, 'utf8', 0, 64).substring(0, 64)
+        const tail = fs.readFileSync(filePath, 'utf8', -64)
         console.log('head', head)
-        console.log('tail', tail)
+        console.log('tail', tail.substring(tail.length - 64, tail.length))
         console.log('cid', cid)
         console.log('filePath', filePath)
         delete ipfsLock[contractID];
