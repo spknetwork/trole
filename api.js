@@ -762,9 +762,9 @@ exports.upload = (req, res, next) => {
       .json({ message: 'Missing "x-cid" header' });
   }
 
-  // Parse the Content-Range header (format: bytes=start-end/total)
+  // Parse the Content-Range header (format: bytes start-end/total or bytes=start-end/total)
   const match = contentRange
-    .match(/bytes=(\d+)-(\d+)\/(\d+)/);
+    .match(/bytes[=\s]+(\d+)-(\d+)\/(\d+)/);
 
   if (!match) {
     console.log('Invalid Content-Range Format');

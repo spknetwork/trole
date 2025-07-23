@@ -86,6 +86,10 @@ class IPFSDirectClient {
     const response = await fetch(`${this.baseURL}/pin/rm?arg=${cid}`, { method: 'POST' });
     if (!response.ok) {
       const error = await response.text();
+      // Don't throw error if file is not pinned - it's already unpinned
+      if (error.includes('not pinned')) {
+        return { Message: 'File was not pinned', Code: 0 };
+      }
       throw new Error(`Unpin failed: ${error}`);
     }
     return response.json();
