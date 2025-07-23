@@ -468,13 +468,18 @@ function localIpfsUpload(cid, contractID) {
       }, 100)
     }
     ipfsLock[contractID] = true
+    console.log(`[DEBUG] localIpfsUpload called:`)
+    console.log(`[DEBUG]   - CID: ${cid}`)
+    console.log(`[DEBUG]   - Contract ID: ${contractID}`)
 
     try {
       const str = await DB.read(contractID);
       const contract = JSON.parse(str);
       const filePath = getFilePath(cid, contractID);
+      console.log(`[DEBUG]   - File path: ${filePath}`)
       
       // First verify the CID matches what was signed
+      console.log(`[DEBUG] Verifying CID...`)
       const isValid = await ipfsQueue.verifyCID(filePath, cid);
       if (!isValid) {
         // get the first 64 chars and last 64 chars of the file
@@ -510,19 +515,27 @@ function localIpfsUpload(cid, contractID) {
       contract[cid] = fileSize;
       contract.t = (contract.t || 0) + fileSize;
       
+      console.log(`[DEBUG] Updating contract ${contractID}:`);
+      console.log(`[DEBUG]   - Added file ${cid} with size ${fileSize}`);
+      console.log(`[DEBUG]   - Total contract size: ${contract.t}`);
+      console.log(`[DEBUG]   - Contract expects files: ${contract.df.join(', ')}`);
+      
       await DB.write(contract.id, JSON.stringify(contract));
       
       // Check if all files in contract are verified
       let allVerified = true;
       for (let i = 0; i < contract.df.length; i++) {
         if (!contract[contract.df[i]]) {
+          console.log(`[DEBUG]   - Missing file: ${contract.df[i]}`);
           allVerified = false;
           break;
         }
       }
       
+      console.log(`[DEBUG] All files verified: ${allVerified}`);
+      
       if (allVerified) {
-        console.log('All files verified, ready for signing');
+        console.log('[DEBUG] All files verified, calling signNupdate...');
         // Sign and broadcast immediately - IPFS upload happens in background
         signNupdate(contract);
       }
@@ -931,27 +944,7 @@ exports.upload = (req, res, next) => {
         
         // If file doesn't exist and this is the first chunk (starts at 0), create it
         if (rangeStart === 0) {
-          console.log('Creating new file for first chunk:', filePath);
-          try {
-            // Create the file and write the first chunk
-            const writeStream = fs.createWriteStream(filePath, { flags: 'w' });
-            
-            writeStream.on('error', (e) => {
-              console.error('failed upload', e);
-              res.sendStatus(500);
-            });
-            
-            writeStream.on('finish', () => {
-              console.log('First chunk written successfully');
-              console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
-              if (req.resolveWrite) req.resolveWrite();
-            });
-            
-            file.pipe(writeStream);
-          } catch (createErr) {
-            console.error('Failed to create file for upload:', createErr);
-            res.status(500).json({ message: 'Failed to create upload file' });
-          }
+          handleFirstChunk();
         } else {
           // File doesn't exist and this isn't the first chunk - error
           console.log('No File Match for non-first chunk', err);
