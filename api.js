@@ -817,20 +817,41 @@ exports.upload = (req, res, next) => {
   busboy.on('file', async (name, file, info) => {
     console.log(`[DEBUG] Busboy file event: name=${name}, filename=${info.filename}, encoding=${info.encoding}, mimeType=${info.mimeType}`);
     
-    // Collect all chunks to ensure complete data
-    const chunks = [];
-    let debugBytes = 0;
-    
-    file.on('data', (chunk) => {
-      chunks.push(chunk);
-      debugBytes += chunk.length;
-    });
-    
     const filePath = getFilePath(fileId, contract);
     if (!fileId || !contract) {
       console.log('[DEBUG] Missing fileId or contract, pausing request');
       req.pause();
+      return;
     }
+    
+    // Collect all chunks to ensure complete data - MUST BE DONE IMMEDIATELY
+    const chunks = [];
+    let debugBytes = 0;
+    let streamEnded = false;
+    
+    // Set up stream handlers IMMEDIATELY before any async operations
+    let streamStarted = false;
+    file.on('data', (chunk) => {
+      if (!streamStarted) {
+        console.log('[DEBUG] File stream started receiving data');
+        streamStarted = true;
+      }
+      chunks.push(chunk);
+      debugBytes += chunk.length;
+    });
+    
+    file.on('error', (err) => {
+      console.error('[DEBUG] File stream error:', err);
+    });
+    
+    file.on('close', () => {
+      console.log('[DEBUG] File stream closed');
+    });
+    
+    file.on('end', () => {
+      console.log('[DEBUG] File stream end event (early handler)');
+      streamEnded = true;
+    });
     
     // Store write completion promise
     req.writeCompletion = new Promise((resolve) => {
@@ -841,10 +862,20 @@ exports.upload = (req, res, next) => {
     const handleFirstChunk = () => {
       console.log('Creating new file for first chunk:', filePath);
       
-      // Wait for all data to be collected
-      file.on('end', async () => {
-        console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
-        console.log(`[DEBUG] Chunks collected: ${chunks.length}`);
+      // Check if stream already ended
+      if (streamEnded) {
+        console.log('[DEBUG] Stream already ended, processing collected data immediately');
+        processCollectedData();
+      } else {
+        // Wait for all data to be collected
+        file.on('end', async () => {
+          console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
+          console.log(`[DEBUG] Chunks collected: ${chunks.length}`);
+          processCollectedData();
+        });
+      }
+      
+      async function processCollectedData() {
         
         // Log chunk sizes
         let totalFromChunks = 0;
@@ -874,13 +905,21 @@ exports.upload = (req, res, next) => {
           console.error('Failed to write file:', writeErr);
           res.status(500).json({ message: 'Failed to create upload file' });
         }
-      });
+      }
     };
 
     // Check if partial file exists and validate chunk position
     fs.stat(filePath)
       .then((stats) => {
         console.log(`[DEBUG] File exists at ${filePath}, size: ${stats.size}, rangeStart: ${rangeStart}, fileSize: ${fileSize}`);
+        
+        // Special case: if file exists but is empty and we're starting from 0, treat as new file
+        if (stats.size === 0 && rangeStart === 0) {
+          console.log('[DEBUG] File exists but is empty, treating as new file');
+          handleFirstChunk();
+          return;
+        }
+        
         // Ensure this chunk starts where the previous chunk ended
         if (stats.size !== rangeStart) {
           console.log(`Resume mismatch: client wants to write at ${rangeStart}, but file has ${stats.size} bytes`);
@@ -919,10 +958,21 @@ exports.upload = (req, res, next) => {
         }
 
         console.log('[DEBUG] File exists and range matches, setting up append handlers...');
-        // Wait for all data to be collected
-        file.on('end', async () => {
-          console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
-          console.log(`[DEBUG] Chunks collected: ${chunks.length}`);
+        // Check if stream already ended while we were checking the file
+        if (streamEnded || file.readableEnded) {
+          console.log('[DEBUG] WARNING: File stream already ended before handlers attached!');
+          console.log(`[DEBUG] Chunks collected so far: ${chunks.length}, bytes: ${debugBytes}`);
+          processAppendData();
+        } else {
+          // Wait for all data to be collected
+          file.on('end', async () => {
+            console.log(`[DEBUG] File stream 'end' event fired. Total bytes received: ${debugBytes}`);
+            console.log(`[DEBUG] Chunks collected: ${chunks.length}`);
+            processAppendData();
+          });
+        }
+        
+        async function processAppendData() {
           
           // Log chunk sizes
           let totalFromChunks = 0;
@@ -951,7 +1001,7 @@ exports.upload = (req, res, next) => {
             console.error('Failed to append to file:', writeErr);
             res.sendStatus(500);
           }
-        });
+        }
       })
       .catch(err => {
         console.log('File not found, checking if this is a valid first chunk...', err);
