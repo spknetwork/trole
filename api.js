@@ -819,18 +819,47 @@ exports.upload = (req, res, next) => {
     req.writeCompletion = new Promise((resolve) => {
       req.resolveWrite = resolve;
     });
+    
+    // Function to handle first chunk creation
+    const handleFirstChunk = () => {
+      console.log('Creating new file for first chunk:', filePath);
+      try {
+        // Create the file and write the first chunk
+        const writeStream = fs.createWriteStream(filePath, { flags: 'w' });
+        
+        writeStream.on('error', (e) => {
+          console.error('failed upload', e);
+          res.sendStatus(500);
+        });
+        
+        writeStream.on('finish', () => {
+          console.log('First chunk written successfully');
+          console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
+          if (req.resolveWrite) req.resolveWrite();
+        });
+        
+        file.pipe(writeStream);
+      } catch (createErr) {
+        console.error('Failed to create file for upload:', createErr);
+        res.status(500).json({ message: 'Failed to create upload file' });
+      }
+    };
 
     // Check if partial file exists and validate chunk position
     fs.stat(filePath)
       .then((stats) => {
         // Ensure this chunk starts where the previous chunk ended
         if (stats.size !== rangeStart) {
+          console.log(`Resume mismatch: client wants to write at ${rangeStart}, but file has ${stats.size} bytes`);
+          
+          // Tell the client where to resume from
           return res
-            .status(403)
+            .status(409)  // 409 Conflict is more appropriate for resume scenarios
             .json({
-              message: 'Bad "chunk" provided',
-              startByte: rangeStart,
-              haveByte: stats.size
+              message: 'Resume position mismatch',
+              expectedStartByte: stats.size,  // Client should send next chunk starting here
+              currentFileSize: stats.size,
+              suggestedRange: `bytes ${stats.size}-${Math.min(stats.size + 1048575, fileSize - 1)}/${fileSize}`
             });
         }
 
