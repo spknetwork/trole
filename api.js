@@ -815,6 +815,8 @@ exports.upload = (req, res, next) => {
 
   // Handle file upload stream
   busboy.on('file', async (name, file, info) => {
+    console.log(`[DEBUG] Busboy file event: name=${name}, filename=${info.filename}, encoding=${info.encoding}, mimeType=${info.mimeType}`);
+    
     // Collect all chunks to ensure complete data
     const chunks = [];
     let debugBytes = 0;
@@ -826,6 +828,7 @@ exports.upload = (req, res, next) => {
     
     const filePath = getFilePath(fileId, contract);
     if (!fileId || !contract) {
+      console.log('[DEBUG] Missing fileId or contract, pausing request');
       req.pause();
     }
     
@@ -877,6 +880,7 @@ exports.upload = (req, res, next) => {
     // Check if partial file exists and validate chunk position
     fs.stat(filePath)
       .then((stats) => {
+        console.log(`[DEBUG] File exists at ${filePath}, size: ${stats.size}, rangeStart: ${rangeStart}, fileSize: ${fileSize}`);
         // Ensure this chunk starts where the previous chunk ended
         if (stats.size !== rangeStart) {
           console.log(`Resume mismatch: client wants to write at ${rangeStart}, but file has ${stats.size} bytes`);
@@ -884,12 +888,21 @@ exports.upload = (req, res, next) => {
           // Special case: if file is already complete, just verify and finish
           if (stats.size === fileSize && rangeStart === 0) {
             console.log('[DEBUG] File already complete, skipping to verification');
+            console.log('[DEBUG] Setting up stream drain handlers...');
             // Consume the file stream but don't write it
-            file.on('data', () => {}); // Drain the stream
+            let drainedBytes = 0;
+            file.on('data', (chunk) => {
+              drainedBytes += chunk.length;
+            }); // Drain the stream
             file.on('end', () => {
-              console.log('[DEBUG] Drained stream for already-complete file');
+              console.log(`[DEBUG] Drained stream for already-complete file, drained ${drainedBytes} bytes`);
               // Resolve immediately since no write is needed
-              req.resolveWrite?.();
+              if (req.resolveWrite) {
+                console.log('[DEBUG] Resolving write promise for already-complete file');
+                req.resolveWrite();
+              } else {
+                console.log('[DEBUG] WARNING: req.resolveWrite is not defined!');
+              }
             });
             return; // Let busboy finish event handle the response
           }
@@ -905,6 +918,7 @@ exports.upload = (req, res, next) => {
             });
         }
 
+        console.log('[DEBUG] File exists and range matches, setting up append handlers...');
         // Wait for all data to be collected
         file.on('end', async () => {
           console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
@@ -967,8 +981,25 @@ exports.upload = (req, res, next) => {
   busboy.on('finish', async () => {
     console.log('[DEBUG] Busboy finish event triggered');
     
-    // Wait for write to complete if there's one in progress
-    if (req.writeCompletion) {
+    // If no file was received, we might need to check if file already exists
+    if (!req.writeCompletion) {
+      console.log('[DEBUG] No write completion promise found - checking if file already exists');
+      const filePath = getFilePath(fileId, contract);
+      try {
+        const stats = await fs.promises.stat(filePath);
+        if (stats.size === fileSize) {
+          console.log('[DEBUG] File already exists with correct size, proceeding with verification');
+          // File already exists, proceed as if upload completed
+        } else {
+          console.log(`[DEBUG] File exists but wrong size: ${stats.size} vs expected ${fileSize}`);
+          return res.status(400).json({ message: 'File size mismatch' });
+        }
+      } catch (err) {
+        console.log('[DEBUG] File does not exist, but no file data received');
+        return res.status(400).json({ message: 'No file data received' });
+      }
+    } else {
+      // Wait for write to complete if there's one in progress
       console.log('[DEBUG] Waiting for write completion...');
       await req.writeCompletion;
       console.log('[DEBUG] Write completed');
