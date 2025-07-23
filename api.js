@@ -1469,10 +1469,17 @@ function signNupdate(contract) {
   return new Promise((resolve, reject) => {
     try {
       // Build the sizes string for all uploaded files
+      console.log(`[DEBUG] Contract df array:`, contract.df);
+      console.log(`[DEBUG] Contract df length:`, contract.df ? contract.df.length : 0);
+      
       var sizes = '';
       for (var i = 0; i < contract.df.length; i++) {
-        const fileSize = contract[contract.df[i]];
-        console.log(`[DEBUG] File ${contract.df[i]} size: ${fileSize}`);
+        const cid = contract.df[i];
+        const fileSize = contract[cid];
+        console.log(`[DEBUG] File ${i}: CID=${cid}, size=${fileSize}`);
+        if (!fileSize) {
+          console.error(`[DEBUG] ERROR: No size found for file ${cid}`);
+        }
         sizes += `${fileSize},`;
       }
       sizes = sizes.substring(0, sizes.length - 1);
@@ -1498,6 +1505,9 @@ function signNupdate(contract) {
       const maxJsonLength = config.maxJsonLength || 2048; // Maximum characters per transaction
       const chunkSize = config.chunkSize || 1900; // Chunk size to leave room for metadata
       console.log(`[DEBUG] Max JSON length: ${maxJsonLength}, chunk size: ${chunkSize}`);
+      console.log(`[DEBUG] Config account: ${config.account}`);
+      console.log(`[DEBUG] Config active_key exists: ${!!config.active_key}`);
+      console.log(`[DEBUG] Config active_key length: ${config.active_key ? config.active_key.length : 0}`);
 
       if (jsonString.length <= maxJsonLength) {
         console.log('[DEBUG] Single transaction case - broadcasting channel update');
