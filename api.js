@@ -802,11 +802,12 @@ exports.upload = (req, res, next) => {
 
   // Handle file upload stream
   busboy.on('file', async (name, file, info) => {
-    // Simple debug - count bytes
+    // Collect all chunks to ensure complete data
+    const chunks = [];
     let debugBytes = 0;
-    let writeCompleted = false;
     
     file.on('data', (chunk) => {
+      chunks.push(chunk);
       debugBytes += chunk.length;
     });
     
@@ -823,26 +824,29 @@ exports.upload = (req, res, next) => {
     // Function to handle first chunk creation
     const handleFirstChunk = () => {
       console.log('Creating new file for first chunk:', filePath);
-      try {
-        // Create the file and write the first chunk
-        const writeStream = fs.createWriteStream(filePath, { flags: 'w' });
+      
+      // Wait for all data to be collected
+      file.on('end', async () => {
+        console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
         
-        writeStream.on('error', (e) => {
-          console.error('failed upload', e);
-          res.sendStatus(500);
-        });
+        // Write all collected data at once
+        const fullBuffer = Buffer.concat(chunks);
+        console.log(`[DEBUG] Buffer size to write: ${fullBuffer.length} bytes`);
         
-        writeStream.on('finish', () => {
-          console.log('First chunk written successfully');
-          console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
+        try {
+          await fs.promises.writeFile(filePath, fullBuffer);
+          console.log(`[DEBUG] Successfully wrote ${fullBuffer.length} bytes to ${filePath}`);
+          
+          // Verify the file size
+          const stats = await fs.promises.stat(filePath);
+          console.log(`[DEBUG] File size on disk after write: ${stats.size} bytes`);
+          
           if (req.resolveWrite) req.resolveWrite();
-        });
-        
-        file.pipe(writeStream);
-      } catch (createErr) {
-        console.error('Failed to create file for upload:', createErr);
-        res.status(500).json({ message: 'Failed to create upload file' });
-      }
+        } catch (writeErr) {
+          console.error('Failed to write file:', writeErr);
+          res.status(500).json({ message: 'Failed to create upload file' });
+        }
+      });
     };
 
     // Check if partial file exists and validate chunk position
@@ -863,21 +867,28 @@ exports.upload = (req, res, next) => {
             });
         }
 
-        // Append chunk to existing file
-        const writeStream = fs.createWriteStream(filePath, { flags: 'a' });
-        
-        writeStream.on('error', (e) => {
-          console.error('failed upload', e);
-          res.sendStatus(500);
+        // Wait for all data to be collected
+        file.on('end', async () => {
+          console.log(`[DEBUG] File stream ended. Total bytes received: ${debugBytes}`);
+          
+          // Write all collected data at once
+          const fullBuffer = Buffer.concat(chunks);
+          console.log(`[DEBUG] Buffer size to write: ${fullBuffer.length} bytes`);
+          
+          try {
+            await fs.promises.appendFile(filePath, fullBuffer);
+            console.log(`[DEBUG] Successfully appended ${fullBuffer.length} bytes to ${filePath}`);
+            
+            // Verify the file size
+            const stats = await fs.promises.stat(filePath);
+            console.log(`[DEBUG] File size on disk after append: ${stats.size} bytes`);
+            
+            if (req.resolveWrite) req.resolveWrite();
+          } catch (writeErr) {
+            console.error('Failed to append to file:', writeErr);
+            res.sendStatus(500);
+          }
         });
-        
-        writeStream.on('finish', () => {
-          console.log('Write stream finished');
-          console.log(`[DEBUG] Received ${debugBytes} bytes from busboy, wrote to ${filePath}`);
-          if (req.resolveWrite) req.resolveWrite();
-        });
-        
-        file.pipe(writeStream);
       })
       .catch(err => {
         console.log('File not found, checking if this is a valid first chunk...', err);
