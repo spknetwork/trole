@@ -477,11 +477,13 @@ function localIpfsUpload(cid, contractID) {
       // First verify the CID matches what was signed
       const isValid = await ipfsQueue.verifyCID(filePath, cid);
       if (!isValid) {
-        // cat the head and tail of the file
-        const head = fs.readFileSync(filePath, 'utf8', 0, 1);
-        const tail = fs.readFileSync(filePath, 'utf8', -1);
+        // get the first 64 chars and last 64 chars of the file
+        const head = fs.readFileSync(filePath, 'utf8', 0, 64);
+        const tail = fs.readFileSync(filePath, 'utf8', -64);
         console.log('head', head)
         console.log('tail', tail)
+        console.log('cid', cid)
+        console.log('filePath', filePath)
         delete ipfsLock[contractID];
         console.log(`CID verification failed for ${cid}`);
         fs.rmSync(filePath);
