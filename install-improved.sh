@@ -355,9 +355,8 @@ install_trole_dependencies() {
     # Check if package.json includes ProofOfAccess dependency
     if ! grep -q "@disregardfiat/proofofaccess" package.json; then
         log WARN "ProofOfAccess dependency not found in package.json"
-        log INFO "Adding @disregardfiat/proofofaccess to dependencies..."
-        # This should already be in package.json, but warn if missing
-        error_exit "Please ensure package.json includes '@disregardfiat/proofofaccess' dependency"
+        log WARN "ProofOfAccess binary may not be available"
+        # Continue anyway - the package.json might be from an older version
     fi
     
     if [[ -d "node_modules" ]]; then
@@ -911,16 +910,16 @@ main() {
     backup_existing_config
     create_directories
     
-    # System updates and install Node.js first (needed for SPK key generation)
+    # System updates and install Node.js first
     update_system
     install_nodejs
     
-    # Now collect configuration (can use node for key generation)
+    # Install npm dependencies BEFORE configuration (includes ProofOfAccess binary)
+    install_trole_dependencies
+    
+    # Now collect configuration (node and npm packages are available)
     collect_configuration
     source "$ENV_FILE"  # Reload updated environment
-    
-    # Install remaining dependencies
-    install_trole_dependencies
     install_ipfs
     configure_ipfs
     # Go installation removed - using pre-built ProofOfAccess binaries
