@@ -10,6 +10,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@disregardfiat/proofofaccess": "^0.4.5",
     "@hiveio/dhive": "^1.2.4",
     "axios": "^1.9.0",
     "body-parser": "^1.19.0",
