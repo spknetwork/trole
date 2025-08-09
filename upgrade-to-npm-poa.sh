@@ -191,6 +191,12 @@ update_service_files() {
     
     local whoami_user=$(whoami)
     
+    # Ensure ProofOfAccess data directory exists
+    local poa_working_dir="/home/${whoami_user}/proofofaccess"
+    local poa_data_dir="${poa_working_dir}/data"
+    mkdir -p "$poa_data_dir"
+    log INFO "Ensured PoA data directory exists at $poa_data_dir"
+    
     # Update PoA service
     if [[ -f "/lib/systemd/system/poa.service" ]]; then
         log INFO "Updating poa.service..."
@@ -203,7 +209,7 @@ Requires=ipfs.service
 
 [Service]
 Type=simple
-WorkingDirectory=/home/${whoami_user}
+WorkingDirectory=/home/${whoami_user}/proofofaccess
 ExecStart=/home/${whoami_user}/trole/node_modules/.bin/proofofaccess -node 2 -username ${ACCOUNT:-${whoami_user}} -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001
 Restart=on-failure
 RestartSec=5
@@ -229,7 +235,7 @@ Requires=ipfs.service
 
 [Service]
 Type=simple
-WorkingDirectory=/home/${whoami_user}
+WorkingDirectory=/home/${whoami_user}/proofofaccess
 ExecStart=/home/${whoami_user}/trole/node_modules/.bin/proofofaccess -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001
 Restart=on-failure
 RestartSec=5

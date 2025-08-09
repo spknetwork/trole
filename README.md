@@ -297,8 +297,6 @@ docker-compose -f full-docker.yml up -d
    ```bash
    git clone https://github.com/spknetwork/trole
    cd trole
-   cp env.sample .env
-   nano .env  # Configure your credentials
    ```
 
 2. **Run installation script**
@@ -308,11 +306,15 @@ docker-compose -f full-docker.yml up -d
    ```
 
 The installer will:
-- ✅ Install Node.js, Go, IPFS, and Caddy
+- ✅ Install Node.js and npm dependencies
+- ✅ Install ProofOfAccess (via pre-built npm binaries - no Go required!)
+- ✅ Install IPFS and Caddy web server
 - ✅ Configure systemd services
 - ✅ Set up SSL certificates (via Caddy)
 - ✅ Configure firewall rules
 - ✅ Register your node on the network
+
+**Note**: The script will prompt you for configuration details including your Hive account credentials and whether to install optional components like SPK Node and Validator mode.
 
 #### What Gets Installed
 
@@ -320,8 +322,39 @@ The installer will:
 |-----------|---------|------|  
 | IPFS Kubo | Decentralized storage | 4001, 5001, 8080 |
 | Trole API | Authentication gateway | 5050 |
-| SPK Node | Network participation | 8000-8003 |
+| ProofOfAccess | Storage validation | 8000-8001 |
+| SPK Node (optional) | Network participation | 3001 |
 | Caddy | Reverse proxy & SSL | 80, 443 |
+
+#### Upgrading Existing Installation
+
+To upgrade an existing installation to the latest versions:
+
+```bash
+cd trole
+./upgrade.sh
+```
+
+This will:
+- Pull latest code from git
+- Update all npm dependencies
+- Update ProofOfAccess to latest version
+- Restart all services
+- Create backups before making changes
+
+#### Alternative Installation Methods
+
+**Legacy Installation (builds from source)**:
+If you need to build ProofOfAccess from source (requires Go):
+```bash
+./install-legacy-from-source.sh
+```
+
+**Migration from Go to npm-based ProofOfAccess**:
+If you have an older installation using Go-compiled ProofOfAccess:
+```bash
+./upgrade-to-npm-poa.sh
+```
 
 ### 4. 📦 Standalone Development
 

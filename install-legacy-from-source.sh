@@ -2,18 +2,14 @@
 set -euo pipefail  # Exit on error, undefined variables, pipe failures
 
 # =============================================================================
-# TROLE INSTALLATION SCRIPT - IMPROVED VERSION (NO GO DEPENDENCY)
+# TROLE INSTALLATION SCRIPT - IMPROVED VERSION
 # =============================================================================
 # This script installs and configures the Trole ecosystem including:
 # - IPFS (InterPlanetary File System)
 # - SPK Network Node (HoneyComb)
 # - Caddy web server with reverse proxy
-# - Proof of Access (PoA) services (using pre-built binaries via npm)
-# =============================================================================
-# IMPROVEMENTS:
-# - No Go installation required - uses pre-built ProofOfAccess binaries
-# - Faster installation - no compilation from source
-# - Smaller footprint - no Snap packages needed for Go
+# - Proof of Access (PoA) services
+# - Go development environment
 # =============================================================================
 
 # Configuration
@@ -32,7 +28,7 @@ readonly NC='\033[0m' # No Color
 # Version constraints
 readonly MIN_NODE_VERSION=14
 readonly REQUIRED_IPFS_VERSION="v0.26.0"
-# Go is no longer required - using pre-built ProofOfAccess binaries
+readonly REQUIRED_GO_VERSION="1.19"
 
 # =============================================================================
 # UTILITY FUNCTIONS
@@ -272,23 +268,15 @@ handle_spk_keys() {
                     prompt_user_input SPKPUB "Enter your SPK public key"
                     break;;
                 [Nn]*)
-                    # Check if Node.js is available for key generation
-                    if ! command_exists node; then
-                        log WARN "Node.js is not installed yet. You'll need to provide SPK keys manually."
-                        log INFO "You can generate keys later using: node generate_key_pair.js"
-                        prompt_user_input SPKPRIV "Enter your SPK private key (or a placeholder to generate later)" "" true
-                        prompt_user_input SPKPUB "Enter your SPK public key (or a placeholder to generate later)"
+                    log INFO "Generating new SPK keypair..."
+                    if [[ -f "generate_key_pair.js" ]]; then
+                        local key_pair
+                        key_pair=$(node generate_key_pair.js)
+                        SPKPRIV=$(echo "$key_pair" | cut -d " " -f1)
+                        SPKPUB=$(echo "$key_pair" | cut -d " " -f2)
+                        log INFO "Generated new SPK keypair"
                     else
-                        log INFO "Generating new SPK keypair..."
-                        if [[ -f "generate_key_pair.js" ]]; then
-                            local key_pair
-                            key_pair=$(node generate_key_pair.js)
-                            SPKPRIV=$(echo "$key_pair" | cut -d " " -f1)
-                            SPKPUB=$(echo "$key_pair" | cut -d " " -f2)
-                            log INFO "Generated new SPK keypair"
-                        else
-                            error_exit "generate_key_pair.js not found. Cannot generate SPK keys."
-                        fi
+                        error_exit "generate_key_pair.js not found. Cannot generate SPK keys."
                     fi
                     break;;
                 *) log WARN "Please answer y or n.";;
@@ -352,13 +340,6 @@ install_trole_dependencies() {
         error_exit "package.json not found. Please run this script from the Trole directory."
     fi
     
-    # Check if package.json includes ProofOfAccess dependency
-    if ! grep -q "@disregardfiat/proofofaccess" package.json; then
-        log WARN "ProofOfAccess dependency not found in package.json"
-        log WARN "ProofOfAccess binary may not be available"
-        # Continue anyway - the package.json might be from an older version
-    fi
-    
     if [[ -d "node_modules" ]]; then
         log INFO "Node modules already exist, updating..."
         if ! npm update; then
@@ -368,18 +349,12 @@ install_trole_dependencies() {
     fi
     
     if [[ ! -d "node_modules" ]]; then
-        log INFO "Installing npm dependencies (this includes ProofOfAccess binaries)..."
         if ! npm install; then
             error_exit "Failed to install Node.js dependencies"
         fi
     fi
     
-    # Verify ProofOfAccess binary was installed
-    if [[ ! -f "node_modules/.bin/proofofaccess" ]]; then
-        error_exit "ProofOfAccess binary not found after npm install. Please check npm logs."
-    fi
-    
-    log INFO "Trole dependencies installed successfully (including ProofOfAccess binary)"
+    log INFO "Trole dependencies installed successfully"
 }
 
 install_ipfs() {
@@ -463,9 +438,37 @@ configure_ipfs() {
     fi
 }
 
-# Go installation is no longer needed - using pre-built ProofOfAccess binaries
-# This function is kept for reference but not called
-# install_go() - REMOVED
+install_go() {
+    if command_exists go; then
+        log INFO "Go $(go version | awk '{print $3}') is already installed"
+        return 0
+    fi
+    
+    log INFO "Installing Go via Snap..."
+    
+    if ! command_exists snap; then
+        log INFO "Installing Snap package manager..."
+        if ! sudo apt install -y snapd; then
+            error_exit "Failed to install Snap"
+        fi
+    fi
+    
+    if ! sudo snap install go --classic; then
+        error_exit "Failed to install Go"
+    fi
+    
+    # Add snap bin to PATH if not already there
+    if [[ ":$PATH:" != *":/snap/bin:"* ]]; then
+        echo 'export PATH="/snap/bin:$PATH"' >> "${HOME}/.bashrc"
+        export PATH="/snap/bin:$PATH"
+    fi
+    
+    if ! command_exists go; then
+        error_exit "Go installation verification failed"
+    fi
+    
+    log INFO "Go $(go version | awk '{print $3}') installed successfully"
+}
 
 install_caddy() {
     if command_exists caddy; then
@@ -678,22 +681,25 @@ WantedBy=multi-user.target"
 setup_poa_service() {
     local whoami_user
     whoami_user=$(whoami)
+    local poa_dir="${HOME}/proofofaccess"
     
-    # ProofOfAccess binary is installed via npm as @disregardfiat/proofofaccess
-    # The binary will be available at node_modules/.bin/proofofaccess after npm install
-    local poa_binary="${HOME}/trole/node_modules/.bin/proofofaccess"
-    
-    # Check if binary exists after npm install
-    if [[ ! -f "$poa_binary" ]]; then
-        log ERROR "ProofOfAccess binary not found at $poa_binary"
-        log INFO "Please ensure npm install has completed successfully"
-        error_exit "ProofOfAccess binary not found"
+    # Clone and build PoA if not exists
+    if [[ ! -d "$poa_dir" ]]; then
+        log INFO "Cloning and building Proof of Access..."
+        if ! git clone https://github.com/spknetwork/proofofaccess.git "$poa_dir"; then
+            error_exit "Failed to clone Proof of Access repository"
+        fi
+        
+        pushd "$poa_dir" >/dev/null
+        mkdir -p data
+        
+        # Build the Go application
+        if ! /snap/bin/go build -o main main.go; then
+            error_exit "Failed to build Proof of Access"
+        fi
+        
+        popd >/dev/null
     fi
-    
-    # Create data directory for PoA
-    local poa_data_dir="${HOME}/proofofaccess/data"
-    mkdir -p "$poa_data_dir"
-    log INFO "Created PoA data directory at $poa_data_dir"
     
     local service_content="[Unit]
 Description=Proof of Access Node
@@ -703,12 +709,11 @@ Requires=ipfs.service
 [Service]
 Type=simple
 WorkingDirectory=/home/${whoami_user}
-ExecStart=/home/${whoami_user}/trole/node_modules/.bin/proofofaccess -node 2 -username ${ACCOUNT} -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001
+ExecStart=/home/${whoami_user}/proofofaccess/main -node 2 -username ${ACCOUNT} -WS_PORT=8000 -useWS=true -honeycomb=true -IPFS_PORT=5001
 Restart=on-failure
 RestartSec=5
 User=${whoami_user}
 Group=${whoami_user}
-Environment="HOME=/home/${whoami_user}"
 
 [Install]
 WantedBy=multi-user.target"
@@ -734,12 +739,11 @@ Requires=ipfs.service
 [Service]
 Type=simple
 WorkingDirectory=/home/${whoami_user}
-ExecStart=/home/${whoami_user}/trole/node_modules/.bin/proofofaccess -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001
+ExecStart=/home/${whoami_user}/proofofaccess/main -node 1 -username validator1 -WS_PORT=8001 -useWS=true -honeycomb=true -IPFS_PORT=5001
 Restart=on-failure
 RestartSec=5
 User=${whoami_user}
 Group=${whoami_user}
-Environment="HOME=/home/${whoami_user}"
 
 [Install]
 WantedBy=multi-user.target"
@@ -844,11 +848,9 @@ display_final_status() {
     log INFO "Installation completed successfully!"
     echo
     echo -e "${GREEN}=== TROLE INSTALLATION SUMMARY ===${NC}"
-    echo -e "${GREEN}=== (Improved Version - No Go Required) ===${NC}"
     echo -e "${BLUE}Domain:${NC} $DOMAIN"
     echo -e "${BLUE}Account:${NC} $ACCOUNT"
     echo -e "${BLUE}Upload Directory:${NC} ${UPLOAD_DIR:-/home/$(whoami)/trole/uploads}"
-    echo -e "${BLUE}ProofOfAccess:${NC} Using pre-built binary from npm"
     echo -e "${BLUE}Services installed:${NC}"
     
     local services=("ipfs" "trole")
@@ -910,19 +912,17 @@ main() {
     backup_existing_config
     create_directories
     
-    # System updates and install Node.js first
-    update_system
-    install_nodejs
-    
-    # Install npm dependencies BEFORE configuration (includes ProofOfAccess binary)
-    install_trole_dependencies
-    
-    # Now collect configuration (node and npm packages are available)
+    # Collect configuration
     collect_configuration
     source "$ENV_FILE"  # Reload updated environment
+    
+    # System updates and dependencies
+    update_system
+    install_nodejs
+    install_trole_dependencies
     install_ipfs
     configure_ipfs
-    # Go installation removed - using pre-built ProofOfAccess binaries
+    install_go
     install_caddy
     
     # Service setup
