@@ -176,23 +176,49 @@ upgrade_trole() {
     
     # Git pull if it's a git repo
     if check_git_status; then
+        # Check and fix git remote URL if needed
+        local remote_url=$(git config --get remote.origin.url 2>/dev/null || echo "")
+        if [[ -n "$remote_url" ]]; then
+            log DEBUG "Git remote URL: $remote_url"
+            # Remove any trailing slashes from the remote URL
+            if [[ "$remote_url" =~ /$ ]]; then
+                log INFO "Fixing trailing slash in git remote URL..."
+                remote_url="${remote_url%/}"
+                git remote set-url origin "$remote_url"
+                log INFO "Updated remote URL to: $remote_url"
+            fi
+        fi
+        
         log INFO "Pulling latest Trole code..."
-        local current_branch=$(git branch --show-current)
+        local current_branch=$(git branch --show-current 2>/dev/null || git rev-parse --abbrev-ref HEAD)
         log INFO "Current branch: $current_branch"
         
-        if ! git pull origin "$current_branch"; then
-            log ERROR "Git pull failed"
-            log INFO "Trying to fetch and reset..."
-            git fetch origin
-            read -p "Reset to origin/$current_branch? (y/n): " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                git reset --hard "origin/$current_branch"
-            else
-                log WARN "Skipping git update"
-            fi
-        else
+        # Try git pull with timeout for network issues
+        if timeout 30 git pull origin "$current_branch" 2>&1 | tee -a "$LOG_FILE"; then
             log INFO "Trole code updated successfully"
+        else
+            log ERROR "Git pull failed"
+            
+            # Check if it's a network issue
+            if ! timeout 5 curl -s -o /dev/null -w "%{http_code}" https://github.com | grep -q "200\|301\|302"; then
+                log ERROR "Cannot connect to GitHub. Network issue detected."
+                log INFO "Skipping git updates - will continue with npm updates only"
+                log INFO "You can try running the upgrade again when network is available"
+            else
+                log INFO "Network OK. Trying git fetch..."
+                if timeout 30 git fetch origin 2>&1 | tee -a "$LOG_FILE"; then
+                    read -p "Reset to origin/$current_branch? (y/n): " -n 1 -r
+                    echo
+                    if [[ $REPLY =~ ^[Yy]$ ]]; then
+                        git reset --hard "origin/$current_branch"
+                        log INFO "Reset to origin/$current_branch"
+                    else
+                        log WARN "Skipping git update"
+                    fi
+                else
+                    log WARN "Git fetch also failed - continuing with local version"
+                fi
+            fi
         fi
     fi
     
@@ -456,6 +482,13 @@ main() {
     log INFO "Starting Trole system upgrade..."
     log INFO "Log file: $LOG_FILE"
     
+    # Check for command line options
+    local SKIP_GIT=false
+    if [[ "$1" == "--skip-git" ]] || [[ "$1" == "--local-only" ]]; then
+        SKIP_GIT=true
+        log INFO "Skipping git operations (--skip-git flag)"
+    fi
+    
     # Check if running as root
     if [[ $EUID -eq 0 ]]; then
         error_exit "Please run as regular user (not root)"
@@ -469,9 +502,16 @@ main() {
     echo
     echo -e "${YELLOW}This script will upgrade your Trole installation to the latest version.${NC}"
     echo -e "${YELLOW}A backup will be created before making changes.${NC}"
+    
+    if [[ "$SKIP_GIT" == "true" ]]; then
+        echo -e "${BLUE}Running in local-only mode (skipping git operations)${NC}"
+    fi
+    
     echo
     echo "The following will be updated:"
-    echo "  • Trole application (git pull)"
+    if [[ "$SKIP_GIT" != "true" ]]; then
+        echo "  • Trole application (git pull)"
+    fi
     echo "  • Node.js packages (npm install/update)"
     echo "  • SPK Network Node (if installed)"
     echo "  • ProofOfAccess (if installed)"
@@ -486,8 +526,21 @@ main() {
     # Run upgrade steps
     create_backup
     stop_services
-    upgrade_trole
-    upgrade_spk
+    
+    if [[ "$SKIP_GIT" != "true" ]]; then
+        upgrade_trole
+        upgrade_spk
+    else
+        log INFO "Skipping git operations for Trole and SPK"
+        # Still update npm packages even in skip-git mode
+        cd "$SCRIPT_DIR"
+        log INFO "Updating npm packages..."
+        if [[ -f "package-lock.json" ]]; then
+            rm package-lock.json
+        fi
+        npm install || error_exit "Failed to update npm packages"
+    fi
+    
     upgrade_proofofaccess
     upgrade_ipfs
     update_env_file
